@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="description" content="Drag0nf1y" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    ucore_lab0_理论 |  Drag0nf1y
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="/favicon.ico" />
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+<script src="/js/pace.min.js"></script>
+
+
+  
+
+  
+
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content">
+      <section class="outer">
+  <article id="post-ucore_lab0_理论" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  ucore_lab0_理论
+</h1>
+  
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2021/03/24/ucore_lab0_%E7%90%86%E8%AE%BA/" class="article-date">
+  <time datetime="2021-03-24T01:47:25.114Z" itemprop="datePublished">2021-03-24</time>
+</a>
+      
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a> / <a class="article-category-link" href="/categories/linux/ucore/">ucore</a>
+  </div>
+
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">5.8k字</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">23分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+      <h1 id="ucore-lab0-理论"><a href="#ucore-lab0-理论" class="headerlink" title="ucore lab0 理论"></a>ucore lab0 理论</h1><h2 id="AT-amp-T格式汇编"><a href="#AT-amp-T格式汇编" class="headerlink" title="AT&amp;T格式汇编"></a>AT&amp;T格式汇编</h2><p>Ucore中用到的是AT&amp;T格式的汇编，与Intel格式的汇编有一些不同。二者语法上主要有以下几个不同：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">* 寄存器命名原则</span><br><span class="line">        AT&amp;T: %eax                      Intel: eax</span><br><span class="line">    * 源&#x2F;目的操作数顺序 </span><br><span class="line">        AT&amp;T: movl %eax, %ebx           Intel: mov ebx, eax</span><br><span class="line">    * 常数&#x2F;立即数的格式　</span><br><span class="line">        AT&amp;T: movl $_value, %ebx        Intel: mov eax, _value</span><br><span class="line">      把value的地址放入eax寄存器</span><br><span class="line">        AT&amp;T: movl $0xd00d, %ebx        Intel: mov ebx, 0xd00d</span><br><span class="line">    * 操作数长度标识 </span><br><span class="line">        AT&amp;T: movw %ax, %bx             Intel: mov bx, ax</span><br><span class="line">    * 寻址方式 </span><br><span class="line">        AT&amp;T:   immed32(basepointer, indexpointer, indexscale)</span><br><span class="line">        Intel:  [basepointer + indexpointer × indexscale + imm32)</span><br></pre></td></tr></table></figure>
+
+<p>如果操作系统工作于保护模式下，用的是32位线性地址，所以在计算地址时不用考虑<code>segment:offset</code>的问题。上式中的地址应为： <code>imm32 + basepointer + indexpointer × indexscale</code></p>
+<p>下面是一些例子：</p>
+<ul>
+<li>直接寻址<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">AT&amp;T:  foo                         Intel: [foo]</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<p>boo是一个全局变量。注意加上$是表示地址引用，不加是表示值引用。对于局部变量，可以通过堆栈指针引用。</p>
+<ul>
+<li>寄存器间接寻址</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">AT&amp;T: (%eax)                        Intel: [eax]</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>变址寻址<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">AT&amp;T: _variable(%eax)               Intel: [eax + _variable]</span><br><span class="line"> AT&amp;T: _array( ,%eax, 4)             Intel: [eax × 4 + _array]</span><br><span class="line"> AT&amp;T: _array(%ebx, %eax,8)          Intel: [ebx + eax × 8 + _array]</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<h2 id="内联汇编"><a href="#内联汇编" class="headerlink" title="内联汇编"></a>内联汇编</h2><p>GCC 提供了两内内联汇编语句（inline asm statements）：基本内联汇编语句（basic inline asm statement)和扩展内联汇编语句（extended inline asm statement）。GCC基本内联汇编很简单，一般是按照下面的格式： asm(“statements”);</p>
+<p>例如： asm(“nop”); asm(“cli”);</p>
+<p>“asm” 和 “<code>__asm__</code>“ 的含义是完全一样的。如果有多行汇编，则每一行都要加上 “\n\t”。其中的 “\n” 是换行符，”\t” 是 tab 符，在每条命令的 结束加这两个符号，是为了让 gcc 把内联汇编代码翻译成一般的汇编代码时能够保证换行和留有一定的空格。对于基本asm语句，GCC编译出来的汇编代码就是双引号里的内容。例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">asm( &quot;pushl %eax\n\t&quot;</span><br><span class="line">             &quot;movl $0,%eax\n\t&quot;</span><br><span class="line">             &quot;popl %eax&quot;</span><br><span class="line">        );</span><br></pre></td></tr></table></figure>
+
+<p>实际上gcc在处理汇编时，是要把asm(…)的内容”打印”到汇编文件中，所以格式控制字符是必要的。再例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">asm(&quot;movl %eax, %ebx&quot;);</span><br><span class="line">    asm(&quot;xorl %ebx, %edx&quot;);</span><br><span class="line">    asm(&quot;movl $0, _boo);</span><br></pre></td></tr></table></figure>
+
+<p>在上面的例子中，由于我们在内联汇编中改变了 edx 和 ebx 的值，但是由于 gcc 的特殊的处理方法，即先形成汇编文件，再交给 GAS 去汇编，所以 GAS 并不知道我们已经改变了 edx和 ebx 的值，如果程序的上下文需要 edx 或 ebx 作其他内存单元或变量的暂存，就会产生没有预料的多次赋值，引起严重的后果。对于变量<code>_boo</code>也存在一样的问题。为了解决这个问题，就要用到扩展 GCC 内联汇编语法。</p>
+<p>使用GCC扩展内联汇编的例子如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">#define read_cr0() (&#123; \</span><br><span class="line">    unsigned int __dummy; \</span><br><span class="line">    __asm__( \</span><br><span class="line">        &quot;movl %%cr0,%0\n\t&quot; \</span><br><span class="line">        :&quot;&#x3D;r&quot; (__dummy)); \</span><br><span class="line">    __dummy; \</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<p>它代表什么含义呢？这需要从其基本格式讲起。GCC扩展内联汇编的基本格式是：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">asm [volatile] ( Assembler Template</span><br><span class="line">   : Output Operands</span><br><span class="line">   [ : Input Operands</span><br><span class="line">   [ : Clobbers ] ])</span><br></pre></td></tr></table></figure>
+
+<p>其中，<strong>asm</strong> 表示汇编代码的开始，其后可以跟 <code>__volatile__（</code>这是可选项），其含义是避免 “asm” 指令被删除、移动或组合，在执行代码时，如果不希望汇编语句被 gcc 优化而改变位置，就需要在 asm 符号后添加 volatile 关键词：asm volatile(…)；或者更详细地说明为：<code>__asm__ __volatile__(...)</code>；</p>
+<p>然后就是小括弧，括弧中的内容是具体的内联汇编指令代码。 “” 为汇编指令部分，例如，”movl %%cr0,%0\n\t”。数字前加前缀 “％“，如％1，％2等表示使用寄存器的样板操作数。可以使用的操作数总数取决于具体CPU中通用寄存器的数 量，如Intel可以有8个。</p>
+<p>指令中有几个操作数，就说明有几个变量需要与寄存器结合，由gcc在编译时根据后面输出部分和输入部分的约束条件进行相应的处理。由于这些样板操作数的前缀使用了”％“，因此，在用到具体的寄存器时就在前面加两个“％”，如%%cr0。</p>
+<p>输出部分（output operand list），用以规定对输出变量（目标操作数）如何与寄存器结合的约束（constraint）,输出部分可以有多个约束，互相以逗号分开。每个约束以“＝”开头，接着用一个字母来表示操作数的类型，然后是关于变量结合的约束。例如，上例中：:<code>&quot;=r&quot; (__dummy)</code></p>
+<p>“＝r”表示相应的目标操作数（指令部分的%0）可以使用任何一个通用寄存器，并且变量__dummy 存放在这个寄存器中，但如果是：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:“＝m”(__dummy)</span><br></pre></td></tr></table></figure>
+
+<p>“＝m”就表示相应的目标操作数是存放在内存单元__dummy中。表示约束条件的字母很多，下表给出几个主要的约束字母及其含义：</p>
+<p>字母含义m, v, o内存单元</p>
+<p>R任何通用寄存器Q寄存器eax, ebx, ecx,edx之一</p>
+<p>I, h直接操作数</p>
+<p>E, F浮点数</p>
+<p>G任意a, b, c, d寄存器eax/ax/al, ebx/bx/bl, ecx/cx/cl或edx/dx/dlS,</p>
+<p>D寄存器esi或ediI常数（0～31）</p>
+<p>输入部分（input operand list）：输入部分与输出部分相似，但没有“＝”。如果输入部分一个操作数所要求使用的寄存器，与前面输出部分某个约束所要求的是同一个寄存器，那就把对应操作数的编号（如“1”，“2”等）放在约束条件中。在后面的例子中，可看到这种情况。修改部分（clobber list,也称 乱码列表）:这部分常常以“memory”为约束条件，以表示操作完成后内存中的内容已有改变，如果原来某个寄存器的内容来自内存，那么现在内存中这个单元的内容已经改变。乱码列表通知编译器，有些寄存器或内存因内联汇编块造成乱码，可隐式地破坏了条件寄存器的某些位（字段）。 注意，指令部分为必选项，而输入部分、输出部分及修改部分为可选项，当输入部分存在，而输出部分不存在时，分号“：“要保留，当“memory”存在时，三个分号都要保留，例如</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">#define __cli() __asm__ __volatile__(&quot;cli&quot;: : :&quot;memory&quot;)</span><br></pre></td></tr></table></figure>
+
+<p>下面是一个例子：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">int count&#x3D;1;</span><br><span class="line">    int value&#x3D;1;</span><br><span class="line">    int buf[10];</span><br><span class="line">    void main()</span><br><span class="line">    &#123;</span><br><span class="line">        asm(</span><br><span class="line">            &quot;cld nt&quot;</span><br><span class="line">            &quot;rep nt&quot;</span><br><span class="line">            &quot;stosl&quot;</span><br><span class="line">        :&#x2F;&#x2F;输入</span><br><span class="line">        : &quot;c&quot; (count), &quot;a&quot; (value) , &quot;D&quot; (buf[0])&#x2F;&#x2F;输出</span><br><span class="line">        : &quot;%ecx&quot;,&quot;%edi&quot;&#x2F;&#x2F;修改部分</span><br><span class="line">        );</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>得到的主要汇编代码为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">movl count,%ecx</span><br><span class="line">    movl value,%eax</span><br><span class="line">    movl buf,%edi</span><br><span class="line">    #APP</span><br><span class="line">    cld</span><br><span class="line">    rep</span><br><span class="line">    stosl</span><br><span class="line">    #NO_APP</span><br></pre></td></tr></table></figure>
+
+<p>cld,rep,stos这几条语句的功能是向buf中写上count个value值。冒号后的语句指明输入，输出和被改变的寄存器。通过冒号以后的语句，编译器就知道你的指令需要和改变哪些寄存器，从而可以优化寄存器的分配。其中符号”c”(count)指示要把count的值放入ecx寄存器。类似的还有：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">a eax</span><br><span class="line">b ebx</span><br><span class="line">c ecx</span><br><span class="line">d edx</span><br><span class="line">S esi</span><br><span class="line">D edi</span><br><span class="line">I 常数值，(0 - 31)</span><br><span class="line">q,r 动态分配的寄存器</span><br><span class="line">g eax,ebx,ecx,edx或内存变量</span><br><span class="line">A 把eax和edx合成一个64位的寄存器(use long longs)</span><br></pre></td></tr></table></figure>
+
+<p>也可以让gcc自己选择合适的寄存器。如下面的例子：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">asm(&quot;leal (%1,%1,4),%0&quot;</span><br><span class="line">        : &quot;&#x3D;r&quot; (x)</span><br><span class="line">        : &quot;0&quot; (x)</span><br><span class="line">    );</span><br></pre></td></tr></table></figure>
+
+<p>这段代码到的主要汇编代码为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">movl x,%eax</span><br><span class="line">#APP</span><br><span class="line">leal (%eax,%eax,4),%eax</span><br><span class="line">#NO_APP</span><br><span class="line">movl %eax,x</span><br></pre></td></tr></table></figure>
+
+<p>几点说明：[1] 使用q指示编译器从eax, ebx, ecx, edx分配寄存器。 使用r指示编译器从eax, ebx, ecx, edx, esi, edi分配寄存器。[2] 不必把编译器分配的寄存器放入改变的寄存器列表，因为寄存器已经记住了它们。[3] “=”是标示输出寄存器，必须这样用。[4] 数字%n的用法：数字表示的寄存器是按照出现和从左到右的顺序映射到用”r”或”q”请求的寄存器．如果要重用”r”或”q”请求的寄存器的话，就可以使用它们。[5] 如果强制使用固定的寄存器的话，如不用%1，而用ebx，则：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">asm(&quot;leal (%%ebx,%%ebx,4),%0&quot;</span><br><span class="line">     : &quot;&#x3D;r&quot; (x)</span><br><span class="line">     : &quot;0&quot; (x) </span><br><span class="line"> );</span><br></pre></td></tr></table></figure>
+
+<p>注意要使用两个%,因为一个%的语法已经被%n用掉了</p>
+<h2 id="make-进行代码维护"><a href="#make-进行代码维护" class="headerlink" title="make 进行代码维护"></a>make 进行代码维护</h2><p>makefile的规则在讲述这个makefile之前，还是让我们先来粗略地看一看makefile的规则。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">target ... : prerequisites ...</span><br><span class="line">    command</span><br><span class="line">    ...</span><br><span class="line">    ...</span><br></pre></td></tr></table></figure>
+
+<p>target也就是一个目标文件，可以是object file，也可以是执行文件。还可以是一个标签（label）。prerequisites就是，要生成那个target所需要的文件或是目标。command也就是make需要执行的命令（任意的shell命令）。 这是一个文件的依赖关系，也就是说，target这一个或多个的目标文件依赖于prerequisites中的文件，其生成规则定义在 command中。如果prerequisites中有一个以上的文件比target文件要新，那么command所定义的命令就会被执行。这就是makefile的规则。也就是makefile中最核心的内容。</p>
+<h2 id="gdb使用"><a href="#gdb使用" class="headerlink" title="gdb使用"></a>gdb使用</h2><p>gdb 是功能强大的调试程序，可完成如下的调试任务：</p>
+<p>设置断点监视程序变量的值程序的单步(step in/step over)</p>
+<p>执行显示/修改变量的值显示/修改寄存器</p>
+<p>查看程序的堆栈情况</p>
+<p>远程调试调试线程</p>
+<p>在可以使用 gdb 调试程序之前，必须使用 -g 或 –ggdb编译选项编译源文件。运行 gdb 调试程序时通常使用如下的命令：gdb progname</p>
+<p>在 gdb 提示符处键入help，将列出命令的分类，主要的分类有：</p>
+<p>aliases：命令别名</p>
+<p>breakpoints：断点定义；</p>
+<p>data：数据查看；</p>
+<p>files：指定并查看文件；</p>
+<p>internals：维护命令；</p>
+<p>running：程序执行；</p>
+<p>stack：调用栈查看；</p>
+<p>status：状态查看；</p>
+<p>tracepoints：跟踪程序执行。</p>
+<p>键入 help 后跟命令的分类名，可获得该类命令的详细清单。gdb的常用命令如下表所示。表 gdb 的常用命令</p>
+<p><img src="/2021/03/24/ucore_lab0_%E7%90%86%E8%AE%BA/8e52a79065fad0c3947bf03dbbd089af.png" alt="8e52a79065fad0c3947bf03dbbd089af.png"></p>
+<p>gdb下面以一个有错误的例子程序来介绍gdb的使用：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;*bugging.c*&#x2F; #include </span><br><span class="line">#include static char buff [256]; </span><br><span class="line">static char* string; </span><br><span class="line">int main () &#123; </span><br><span class="line">    printf (&quot;Please input a string: &quot;); </span><br><span class="line">    gets (string); </span><br><span class="line">    printf (&quot;\nYour string is: %s\n&quot;, string); &#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个程序是接受用户的输入，然后将用户的输入打印出来。该程序使用了一个未经过初始化的字符串地址 string，因此，编译并运行之后，将出现 “Segment Fault”错误：</p>
+<p>$ gcc -o bugging -g bugging.c</p>
+<p>$ ./bugging Please input a string: asdf Segmentation fault (core dumped)</p>
+<p>为了查找该程序中出现的问题，我们利用 gdb，并按如下的步骤进行：</p>
+<p>[1] 运行 “gdb bugging” ，加载 bugging 可执行文件； $gdb bugging</p>
+<p>[2] 执行装入的 bugging 命令； (gdb) run</p>
+<p>[3] 使用 where 命令查看程序出错的地方； (gdb) where</p>
+<p>[4] 利用 list 命令查看调用 gets 函数附近的代码； (gdb) list</p>
+<p>[5] 在 gdb 中，我们在第 11 行处设置断点，看看是否是在第11行出错； (gdb) break 11</p>
+<p>[6] 程序重新运行到第 11 行处停止，这时程序正常，然后执行单步命令next； (gdb) next</p>
+<p>[7] 程序确实出错，能够导致 gets 函数出错的因素就是变量 string。重新执行测试程，用 print 命令查看 string 的值； (gdb) run (gdb) print string (gdb) $1=0x0</p>
+<p>[8] 问题在于string指向的是一个无效指针，修改程序，在10行和11行之间增加一条语句 “string=buff; ”，重新编译程序，然后继续运行，将看到正确的程序运行结果。</p>
+<p>用gdb查看源代码可以用list命令，但是这个不够灵活。可以使用”layout src”命令，或者按Ctrl-X再按A，就会出现一个窗口可以查看源代码。也可以用使用-tui参数，这样进入gdb里面后就能直接打开代码查看窗口。其他代码窗口相关命令：</p>
+<p><img src="/2021/03/24/ucore_lab0_%E7%90%86%E8%AE%BA/9add24a5c26414ec82aeab3d6abfa7bf.png" alt="9add24a5c26414ec82aeab3d6abfa7bf.png"></p>
+<h2 id="基于硬件模拟器实现源码级调试"><a href="#基于硬件模拟器实现源码级调试" class="headerlink" title="基于硬件模拟器实现源码级调试"></a>基于硬件模拟器实现源码级调试</h2><h3 id="安装qemu"><a href="#安装qemu" class="headerlink" title="安装qemu"></a>安装qemu</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install qemu-system</span><br></pre></td></tr></table></figure>
+
+<h3 id="使用qemu"><a href="#使用qemu" class="headerlink" title="使用qemu"></a>使用qemu</h3><p>运行参数如果 qemu 使用的是默认 /usr/local/bin 安装路径，则在命令行中可以直接使用 qemu 命令运行程序。</p>
+<p>qemu 运行可以有多参数，格式如：qemu [options] [disk_image]</p>
+<p>其中 disk_image 即硬盘镜像文件。部分参数说明：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line">&#96;-hda file&#39;        &#96;-hdb file&#39; &#96;-hdc file&#39; &#96;-hdd file&#39;</span><br><span class="line">    使用 file  作为硬盘0、1、2、3镜像。</span><br><span class="line">&#96;-fda file&#39;  &#96;-fdb file&#39;</span><br><span class="line">    使用 file  作为软盘镜像，可以使用 &#x2F;dev&#x2F;fd0 作为 file 来使用主机软盘。</span><br><span class="line">&#96;-cdrom file&#39;</span><br><span class="line">    使用 file  作为光盘镜像，可以使用 &#x2F;dev&#x2F;cdrom 作为 file 来使用主机 cd-rom。</span><br><span class="line">&#96;-boot [a|c|d]&#39;</span><br><span class="line">    从软盘(a)、光盘(c)、硬盘启动(d)，默认硬盘启动。</span><br><span class="line">&#96;-snapshot&#39;</span><br><span class="line">    写入临时文件而不写回磁盘镜像，可以使用 C-a s 来强制写回。</span><br><span class="line">&#96;-m megs&#39;</span><br><span class="line">    设置虚拟内存为 msg M字节，默认为 128M 字节。</span><br><span class="line">&#96;-smp n&#39;</span><br><span class="line">    设置为有 n 个 CPU 的 SMP 系统。以 PC 为目标机，最多支持 255 个 CPU。</span><br><span class="line">&#96;-nographic&#39;</span><br><span class="line">    禁止使用图形输出。</span><br><span class="line">其他：</span><br><span class="line">    可用的主机设备 dev 例如：</span><br><span class="line">        vc</span><br><span class="line">            虚拟终端。</span><br><span class="line">        null</span><br><span class="line">            空设备</span><br><span class="line">        &#x2F;dev&#x2F;XXX</span><br><span class="line">            使用主机的 tty。</span><br><span class="line">        file: filename</span><br><span class="line">            将输出写入到文件 filename 中。</span><br><span class="line">        stdio</span><br><span class="line">            标准输入&#x2F;输出。</span><br><span class="line">        pipe：pipename</span><br><span class="line">            命令管道 pipename。</span><br><span class="line">        等。</span><br><span class="line">    使用 dev 设备的命令如：</span><br><span class="line">        &#96;-serial dev&#39;</span><br><span class="line">            重定向虚拟串口到主机设备 dev 中。</span><br><span class="line">        &#96;-parallel dev&#39;</span><br><span class="line">            重定向虚拟并口到主机设备 dev 中。</span><br><span class="line">        &#96;-monitor dev&#39;</span><br><span class="line">            重定向 monitor 到主机设备 dev 中。</span><br><span class="line">    其他参数：</span><br><span class="line">        &#96;-s&#39;</span><br><span class="line">            等待 gdb 连接到端口 1234。</span><br><span class="line">        &#96;-p port&#39;</span><br><span class="line">            改变 gdb 连接端口到 port。</span><br><span class="line">        &#96;-S&#39;</span><br><span class="line">            在启动时不启动 CPU， 需要在 monitor 中输入 &#39;c&#39;，才能让qemu继续模拟工作。</span><br><span class="line">        &#96;-d&#39;</span><br><span class="line">            输出日志到 qemu.log 文件。</span><br></pre></td></tr></table></figure>
+
+<p>其他参数说明可以参考：<a href="http://bellard.org/qemu/qemu-doc.html#SEC15" target="_blank" rel="noopener">http://bellard.org/qemu/qemu-doc.html#SEC15</a> 。其他qemu的安装和使用的说明可以参考<a href="http://bellard.org/qemu/user-doc.html。或者在命令行收入" target="_blank" rel="noopener">http://bellard.org/qemu/user-doc.html。或者在命令行收入</a> qemu (没有参数) 显示帮助。在实验中，例如 lab1，可能用到的命令如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">qemu -hda ucore.img -parallel stdio        # 让ucore在qemu模拟的x86硬件环境中执行</span><br><span class="line">或qemu -S -s -hda ucore.img -monitor stdio    # 用于与gdb配合进行源码调试</span><br></pre></td></tr></table></figure>
+
+<h3 id="moniter-debug"><a href="#moniter-debug" class="headerlink" title="moniter debug"></a>moniter debug</h3><p>常用调试命令qemu中monitor的常用命令：</p>
+<p><img src="/2021/03/24/ucore_lab0_%E7%90%86%E8%AE%BA/278962d110c236fa93ec258f727e25a4.png" alt="278962d110c236fa93ec258f727e25a4.png"></p>
+<h2 id="ucore-编译"><a href="#ucore-编译" class="headerlink" title="ucore 编译"></a>ucore 编译</h2><p>ucore 代码编译</p>
+<p>(1) 编译过程：在解压缩后的 ucore 源码包中使用 make 命令即可。例如 lab1中：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[email protected]: ~&#x2F;lab1$  make</span><br></pre></td></tr></table></figure>
+
+<p>在lab1目录下的bin目录中，生成一系列的目标文件：</p>
+<p>ucore.img：被qemu访问的虚拟硬盘文件</p>
+<p>kernel: ELF格式的toy ucore kernel执行文，被嵌入到了ucore.img中</p>
+<p>bootblock: 虚拟的硬盘主引导扇区（512字节），包含了bootloader执行代码，被嵌入到了ucore.img中</p>
+<p>sign：外部执行程序，用来生成虚拟的硬盘主引导扇区</p>
+<p>还生成了其他很多文件，这里就不一一列举了。</p>
+<p>(2) 保存修改：</p>
+<p>使用 diff 命令对修改后的 ucore 代码和 ucore 源码进行比较，比较之前建议使用 make clean 命令清除不必要文件。(如果有ctags 文件，需要手工清除。)</p>
+<p>(3)应用修改：参见 patch 命令说明。</p>
+<h2 id="双向链表"><a href="#双向链表" class="headerlink" title="双向链表"></a>双向链表</h2><p>通用数据结构双向链表</p>
+<p>Core 的双向链表结构定义为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">struct list_entry &#123;</span><br><span class="line">    struct list_entry *prev, *next;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>需要注意 uCore 内核的链表节点 list_entry 没有包含传统的 data 数据域，，而是在具体的数据结构中包含链表节点。以 lab2 中的空闲内存块列表为例，空闲块链表的头指针定义（位于 lab2/kern/mm/memlayout.h 中）为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;* free_area_t - maintains a doubly linked list to record free (unused) pages *&#x2F;</span><br><span class="line">typedef struct &#123;</span><br><span class="line">    list_entry_t free_list;         &#x2F;&#x2F; the list header</span><br><span class="line">    unsigned int nr_free;           &#x2F;&#x2F; # of free pages in this free list</span><br><span class="line">&#125; free_area_t;</span><br></pre></td></tr></table></figure>
+
+<p>而每一个空闲块链表节点定义（位于 lab2/kern/mm/memlayout）为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;* *</span><br><span class="line"> * struct Page - Page descriptor structures. Each Page describes one</span><br><span class="line"> * physical page. In kern&#x2F;mm&#x2F;pmm.h, you can find lots of useful functions</span><br><span class="line"> * that convert Page to other data types, such as phyical address.</span><br><span class="line"> * *&#x2F;</span><br><span class="line">struct Page &#123;</span><br><span class="line">    atomic_t ref;          &#x2F;&#x2F; page frame&#39;s reference counter</span><br><span class="line">    ……</span><br><span class="line">    list_entry_t page_link;         &#x2F;&#x2F; free list link</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>这样以 free_area_t 结构的数据为双向循环链表的链表头指针，以 Page 结构的数据为双向循环链表的链表节点，就可以形成一个完整的双向循环链表，如下图所示：</p>
+<p>从上图中我们可以看到，这种通用的双向循环链表结构避免了为每个特定数据结构类型定义针对这个数据结构的特定链表的麻烦，而可以让所有的特定数据结构共享通用的链表操作函数。在实现对空闲块链表的管理过程（参见 lab2/kern/mm/default_pmm.c）中，就大量使用了通用的链表插入，链表删除等操作函数。有关这些链表操作函数的定义如下。</p>
+<p>(1) 初始化</p>
+<p>uCore 只定义了链表节点，并没有专门定义链表头，那么一个双向循环链表是如何建立起来的呢？让我们来看看 list_init 这个内联函数（inline funciton）：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">static inline void</span><br><span class="line">list_init(list_entry_t *elm) &#123;</span><br><span class="line">    elm-&gt;prev &#x3D; elm-&gt;next &#x3D; elm;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>参看文件 default_pmm.c 的函数 default_init，当我们调用 list_init (&amp;(free_area.free_list)) 时，就声明一个名为 free_area.free_list 的链表头时，它的 next、prev 指针都初始化为指向自己，这样，我们就有了一个表示空闲内存块链的空链表。而且我们可以用头指针的 next 是否指向自己来判断此链表是否为空，而这就是内联函数 list_empty 的实现。</p>
+<p>(2) 插入</p>
+<p>对链表的插入有两种操作，即在表头插入（list_add_after）或在表尾插入（list_add_before）。因为双向循环链表的链表头的 next、prev 分别指向链表中的第一个和最后一个节点，所以，list_add_after 和 list_add_before 的实现区别并不大，实际上 uCore 分别用 list_add (elm, listelm, listelm-&gt;next) 和 list_add (elm, listelm-&gt;prev, listelm) 来实现在表头插入和在表尾插入。而__list_add 的实现如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">static inline void</span><br><span class="line">__list_add(list_entry_t *elm, list_entry_t *prev, list_entry_t *next) &#123;</span><br><span class="line">    prev-&gt;next &#x3D; next-&gt;prev &#x3D; elm;</span><br><span class="line">    elm-&gt;next &#x3D; next;</span><br><span class="line">    elm-&gt;prev &#x3D; prev;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>从上述实现可以看出在表头插入是插入在 listelm 之后，即插在链表的最前位置。而在表尾插入是插入在 listelm-&gt;prev 之后，即插在链表的最后位置。注：list_add 等于 list_add_after。</p>
+<p>(3) 删除</p>
+<p>当需要删除空闲块链表中的 Page 结构的链表节点时，可调用内联函数 list_del，而 list_del 进一步调用了__list_del 来完成具体的删除操作。其实现为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">static inline void</span><br><span class="line">list_del(list_entry_t *listelm) &#123;</span><br><span class="line">    __list_del(listelm-&gt;prev, listelm-&gt;next);</span><br><span class="line">&#125;</span><br><span class="line">static inline void</span><br><span class="line">__list_del(list_entry_t *prev, list_entry_t *next) &#123;</span><br><span class="line">    prev-&gt;next &#x3D; next;</span><br><span class="line">    next-&gt;prev &#x3D; prev;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果要确保被删除的节点 listelm 不再指向链表中的其他节点，这可以通过调用 list_init 函数来把 listelm 的 prev、next 指针分别自身，即将节点置为空链状态。这可以通过 list_del_init 函数来完成。</p>
+<p>(4) 访问链表节点所在的宿主数据结构</p>
+<p>通过上面的描述可知，list_entry_t 通用双向循环链表中仅保存了某特定数据结构中链表节点成员变量的地址，那么如何通过这个链表节点成员变量访问到它的所有者（即某特定数据结构的变量）呢？Linux 为此提供了针对数据结构 XXX 的 le2XXX (le, member) 的宏，其中 le，即 list entry 的简称，是指向数据结构 XXX 中 list_entry_t 成员变量的指针，也就是存储在双向循环链表中的节点地址值， member 则是 XXX 数据类型中包含的链表节点的成员变量。例如，我们要遍历访问空闲块链表中所有节点所在的基于 Page 数据结构的变量，则可以采用如下编程方式（基于 lab2/kern/mm/default_pmm.c）：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">&#x2F;&#x2F;free_area是空闲块管理结构，free_area.free_list是空闲块链表头</span><br><span class="line">free_area_t free_area;</span><br><span class="line">list_entry_t * le &#x3D; &amp;free_area.free_list;  &#x2F;&#x2F;le是空闲块链表头指针</span><br><span class="line">while((le&#x3D;list_next(le)) !&#x3D; &amp;free_area.free_list) &#123; &#x2F;&#x2F;从第一个节点开始遍历</span><br><span class="line">    struct Page *p &#x3D; le2page(le, page_link); &#x2F;&#x2F;获取节点所在基于Page数据结构的变量</span><br><span class="line">    ……</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>le2page 宏（定义位于 lab2/kern/mm/memlayout.h）的使用相当简单：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; convert list entry to page</span><br><span class="line">#define le2page(le, member)                 \</span><br><span class="line">to_struct((le), struct Page, member)</span><br></pre></td></tr></table></figure>
+
+<p>而相比之下，它的实现用到的 to_struct 宏和 offsetof 宏（定义位于 lab2/libs/defs.h）则有一些难懂：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;* Return the offset of &#39;member&#39; relative to the beginning of a struct type *&#x2F;</span><br><span class="line">#define offsetof(type, member)                                      \</span><br><span class="line">((size_t)(&amp;((type *)0)-&gt;member))</span><br><span class="line"></span><br><span class="line">&#x2F;* *</span><br><span class="line"> * to_struct - get the struct from a ptr</span><br><span class="line"> * @ptr:    a struct pointer of member</span><br><span class="line"> * @type:   the type of the struct this is embedded in</span><br><span class="line"> * @member: the name of the member within the struct</span><br><span class="line"> * *&#x2F;</span><br><span class="line">#define to_struct(ptr, type, member)                               \</span><br><span class="line">((type *)((char *)(ptr) - offsetof(type, member)))</span><br></pre></td></tr></table></figure>
+
+<p>这里采用了一个利用 gcc 编译器技术的技巧，即先求得数据结构的成员变量在本宿主数据结构中的偏移量，然后根据成员变量的地址反过来得出属主数据结构的变量的地址。</p>
+<p>我们首先来看 offsetof 宏，size_t 最终定义与 CPU 体系结构相关，本实验都采用 Intel X86-32 CPU，顾 szie_t 等价于 unsigned int。 <code>((type *) 0)-&gt;member</code> 的设计含义是什么？其实这是为了求得数据结构的成员变量在本宿主数据结构中的偏移量。为了达到这个目标，首先将 0 地址强制” 转换” 为 type 数据结构（比如 struct Page）的指针，再访问到 type 数据结构中的 member 成员（比如 page_link）的地址，即是 type 数据结构中 member 成员相对于数据结构变量的偏移量。在 offsetof 宏中，这个 member 成员的地址（即 <code>“&amp;((type *) 0)-&gt;member)”）</code>实际上就是 type 数据结构中 member 成员相对于数据结构变量的偏移量。对于给定一个结构，offsetof (type,member) 是一个常量，to_struct 宏正是利用这个不变的偏移量来求得链表数据项的变量地址。接下来再分析一下 to_struct 宏，可以发现 to_struct 宏中用到的 ptr 变量是链表节点的地址，把它减去 offsetof 宏所获得的数据结构内偏移量，即就得到了包含链表节点的属主数据结构的变量的地址。</p>
+<p>参考文献：</p>
+<p><a href="https://objectkuan.gitbooks.io/ucore-docs/content/lab0/lab0_2_5_1_intel_80386_modes.html" target="_blank" rel="noopener">https://objectkuan.gitbooks.io/ucore-docs/content/lab0/lab0_2_5_1_intel_80386_modes.html</a></p>
+<p><a href="https://blog.csdn.net/qq_43169112/article/details/104529767" target="_blank" rel="noopener">https://blog.csdn.net/qq_43169112/article/details/104529767</a></p>
+<p><a href="https://blog.csdn.net/Love_Star_/article/details/105005607" target="_blank" rel="noopener">https://blog.csdn.net/Love_Star_/article/details/105005607</a></p>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong s>
+              本博客所有文章除特别声明外，均采用 <a href="https://www.apache.org/licenses/LICENSE-2.0.html" rel="external nofollow"
+                target="_blank">Apache License 2.0</a> 许可协议。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://drag0nf1y.github.io/2021/03/24/ucore_lab0_%E7%90%86%E8%AE%BA/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux-%E5%86%85%E6%A0%B8/" rel="tag">linux 内核</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ucore/" rel="tag">ucore</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+      <a href="/2021/03/24/ucore_lab0_%E5%AE%9E%E9%AA%8C/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            ucore_lab0_实验
+          
+        </div>
+      </a>
+    
+    
+      <a href="/2021/03/22/CVE-2018-7273_%E5%A4%8D%E7%8E%B0%E5%88%86%E6%9E%90/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">CVE-2018-7273_复现分析</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: '',
+        app_key: '',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'mp',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2021
+        Drag0nf1y
+      </li>
+      <li>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+    <div class="to_top">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+      </div>
+    </main>
+      <aside class="sidebar">
+        <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.svg" alt="Drag0nf1y"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives/">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/">标签</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E7%A0%94%E7%A9%B6/">研究</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about/">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="Search">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+      </aside>
+      <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>请我喝杯咖啡吧~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+      
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script src="/js/share.js"></script>
+
+
+
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+
+
+
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer:'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto',
+    onClick: (e) => {
+      $('.toc-link').removeClass('is-active-link');
+      $(`a[href=${e.target.hash}]`).addClass('is-active-link');
+      $(e.target.hash).scrollIntoView();
+      return false;
+    }
+  });
+</script>
+
+
+<script>
+  var ayerConfig = {
+    mathjax: false
+  }
+</script>
+
+
+<script src="/js/ayer.js"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+  </div>
+</body>
+
+</html>

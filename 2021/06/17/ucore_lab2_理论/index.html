@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="description" content="Drag0nf1y" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    ucore_lab2_理论 |  Drag0nf1y
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="/favicon.ico" />
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+<script src="/js/pace.min.js"></script>
+
+
+  
+
+  
+
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content">
+      <section class="outer">
+  <article id="post-ucore_lab2_理论" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  ucore_lab2_理论
+</h1>
+  
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2021/06/17/ucore_lab2_%E7%90%86%E8%AE%BA/" class="article-date">
+  <time datetime="2021-06-17T08:35:04.440Z" itemprop="datePublished">2021-06-17</time>
+</a>
+      
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a> / <a class="article-category-link" href="/categories/linux/ucore/">ucore</a>
+  </div>
+
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">9.9k字</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">38分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+      <h1 id="ucore-lab2-理论"><a href="#ucore-lab2-理论" class="headerlink" title="ucore_lab2_理论"></a>ucore_lab2_理论</h1><h2 id="物理内存管理"><a href="#物理内存管理" class="headerlink" title="物理内存管理"></a>物理内存管理</h2><h3 id="01-写在前面"><a href="#01-写在前面" class="headerlink" title="01 写在前面"></a>01 写在前面</h3><p>在进入pmm_init函数之前，在kern_init函数中，进行总控。同时相比于lab1的工作，lab2的bootloader也增加关于物理内存资源探测的工作。</p>
+<p>内存管理相关的总体控制函数是pmm_init函数，它完成的主要工作包括：</p>
+<ol>
+<li>初始化物理内存页管理器框架pmm_manager；</li>
+<li>建立空闲的page链表，这样就可以分配以页（4KB）为单位的空闲内存了；</li>
+<li>检查物理内存页分配算法；</li>
+<li>为确保切换到分页机制后，代码能够正常执行，先建立一个临时二级页表；</li>
+<li>建立一一映射关系的二级页表；</li>
+<li>使能分页机制；</li>
+<li>从新设置全局段描述符表；</li>
+<li>取消临时二级页表；</li>
+<li>检查页表建立是否正确；</li>
+<li>通过自映射机制完成页表的打印输出（这部分是扩展知识）</li>
+</ol>
+<h3 id="02-探测物理内存布局"><a href="#02-探测物理内存布局" class="headerlink" title="02 探测物理内存布局"></a>02 探测物理内存布局</h3><p>操作系统被启动之后，由操作系统来进行内存分配和管理，所以操作系统必须知道还有多少可用的内存以供分配使用。</p>
+<ul>
+<li>BIOS中断调用<ul>
+<li>实模式：bootloader进入保护模式之前进行</li>
+<li>基于int 15h中断：88h\e801h\e820h</li>
+<li>在Linux kernel中是循环尝试这三种方式，在ucore os中是不断使用e820h这种方式</li>
+<li>ucore 在探测时，将e820h映射结构保存在物理地址0x8000处</li>
+</ul>
+</li>
+<li>直接探测<ul>
+<li>保护模式</li>
+</ul>
+</li>
+</ul>
+<h4 id="理论"><a href="#理论" class="headerlink" title="理论"></a>理论</h4><p>在bootloader进入保护模式之前探测物理内存：</p>
+<p>在ucore上使用到int 15h（参数：e820h）来探测物理内存。</p>
+<p><strong>调用</strong>：INT15h BIOS中断的详细调用参数:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">eax：e820h：INT <span class="number">15</span>的中断调用参数；</span><br><span class="line">ebx：如果是第一次调用或内存区域扫描完毕，则为<span class="number">0</span>。 如果不是，则存放上次调用之后的计数值；</span><br><span class="line">ecx：保存地址范围描述符的内存大小,应该大于等于<span class="number">20</span>字节；</span><br><span class="line">edx：<span class="number">534</span>D4150h (即<span class="number">4</span>个ASCII字符“SMAP”) ，这只是一个签名而已；</span><br><span class="line">es:di：指向保存地址范围描述符结构的缓冲区，BIOS把信息写入这个结构的起始地址。</span><br></pre></td></tr></table></figure>
+
+<p><strong>参数返回</strong>：中断的返回值为:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">cflags的CF位：若INT <span class="number">15</span>中断执行成功，则不置位，否则置位；</span><br><span class="line">eax：534D4150h ('SMAP') ；</span><br><span class="line">ebx：下一个地址范围描述符的计数地址</span><br><span class="line">ecx    ：返回BIOS往ES:DI处写的地址范围描述符的字节大小</span><br><span class="line">es:di：指向保存地址范围描述符的缓冲区,此时缓冲区内的数据已由BIOS填写完毕</span><br><span class="line">ah：失败时保存出错代码</span><br></pre></td></tr></table></figure>
+
+<p>递增di的值（20的倍数），让BIOS帮我们查找出一个一个的内存布局entry，并放入到一个保存地址范围描述符结构的缓冲区0x8000h中，供后续的ucore进一步进行物理内存管理。</p>
+<p>在后续os读取这个缓冲区（0x8000h+4这4个字节为mmap格式的描述符）的时候具体的读取格式为：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//memlayout.h</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">e820map</span> &#123;</span></span><br><span class="line">                  <span class="keyword">int</span> nr_map;</span><br><span class="line">                  <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">                                    <span class="keyword">long</span> <span class="keyword">long</span> addr;</span><br><span class="line">                                    <span class="keyword">long</span> <span class="keyword">long</span> <span class="built_in">size</span>;</span><br><span class="line">                                    <span class="keyword">long</span> type;</span><br><span class="line">                  &#125; <span class="built_in">map</span>[E820MAX];</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>其中nr_map:Values for System Memory Map address type</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Values <span class="keyword">for</span> System Memory Map address type:</span><br><span class="line"><span class="number">01</span>h    memory, <span class="built_in">available</span> to OS</span><br><span class="line"><span class="number">02</span>h    reserved, <span class="function"><span class="keyword">not</span> <span class="title">available</span> <span class="params">(e.g. system ROM, memory-mapped device)</span></span></span><br><span class="line"><span class="function">03h    ACPI Reclaim <span class="title">Memory</span> <span class="params">(usable by OS after reading ACPI tables)</span></span></span><br><span class="line"><span class="function">04h    ACPI NVS <span class="title">Memory</span> <span class="params">(OS is required to save <span class="keyword">this</span> memory between NVS sessions)</span></span></span><br><span class="line">other  not defined yet -- treat as Reserved</span><br></pre></td></tr></table></figure>
+
+<p>map：（Address Range Descriptor）格式来表示系统物理内存布局</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Offset  Size    Description</span><br><span class="line"><span class="number">00</span>h    <span class="number">8</span>字节   base address               #系统内存块基地址</span><br><span class="line"><span class="number">08</span>h    <span class="number">8</span>字节   length in bytes            #系统内存大小</span><br><span class="line"><span class="number">10</span>h    <span class="number">4</span>字节   type of address range     #内存类型</span><br></pre></td></tr></table></figure>
+
+<h4 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h4><p>使用int 15h探测物理内存</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">#boot&#x2F;bootasm.S</span><br><span class="line">probe_memory:</span><br><span class="line">&#x2F;&#x2F;对0x8000处的32位单元清零,即给位于0x8000处的</span><br><span class="line">&#x2F;&#x2F;struct e820map的成员变量nr_map清零</span><br><span class="line">           		  movl $0, 0x8000</span><br><span class="line">                  xorl %ebx, %ebx</span><br><span class="line">&#x2F;&#x2F;表示设置调用INT 15h BIOS中断后，BIOS返回的映射地址描述符的起始地址</span><br><span class="line">                  movw $0x8004, %di</span><br><span class="line">start_probe:</span><br><span class="line">                  movl $0xE820, %eax &#x2F;&#x2F; INT 15的中断调用参数</span><br><span class="line">&#x2F;&#x2F;设置地址范围描述符的大小为20字节，其大小等于struct e820map的成员变量map的大小</span><br><span class="line">                  movl $20, %ecx</span><br><span class="line">&#x2F;&#x2F;设置edx为534D4150h (即4个ASCII字符“SMAP”)，这是一个约定</span><br><span class="line">                  movl $SMAP, %edx</span><br><span class="line">&#x2F;&#x2F;调用int 0x15中断，要求BIOS返回一个用地址范围描述符表示的内存段信息</span><br><span class="line">                  int $0x15</span><br><span class="line">&#x2F;&#x2F;如果eflags的CF位为0，则表示还有内存段需要探测</span><br><span class="line">                  jnc cont</span><br><span class="line">&#x2F;&#x2F;探测有问题，结束探测</span><br><span class="line">                  movw $12345, 0x8000</span><br><span class="line">                  jmp finish_probe</span><br><span class="line">cont:</span><br><span class="line">&#x2F;&#x2F;设置下一个BIOS返回的映射地址描述符的起始地址</span><br><span class="line">                  addw $20, %di</span><br><span class="line">&#x2F;&#x2F;递增struct e820map的成员变量nr_map</span><br><span class="line">                  incl 0x8000</span><br><span class="line">&#x2F;&#x2F;如果INT0x15返回的ebx为零，表示探测结束，否则继续探测</span><br><span class="line">                  cmpl $0, %ebx</span><br><span class="line">                  jnz start_probe</span><br><span class="line">finish_probe:</span><br><span class="line">	切换到保护模式</span><br></pre></td></tr></table></figure>
+
+<p>在0x8000地址处保存了从BIOS中获得的内存分布信息，此信息按照struct e820map的设置来进行填充。</p>
+<p>由ucore的page_init函数来根据struct e820map的memmap（定义了起始地址为0x8000）来完成对整个机器中的物理内存的总体管理。</p>
+<h3 id="03-以页为单位管理物理内存"><a href="#03-以页为单位管理物理内存" class="headerlink" title="03 以页为单位管理物理内存"></a>03 以页为单位管理物理内存</h3><p>在获得可用物理内存范围后，系统需要建立相应的数据结构来管理以物理页（按4KB对齐，且大小为4KB的物理内存单元）为最小单位的整个物理内存，以配合后续涉及的分页管理机制。每个物理页可以用一个 Page数据结构来表示。<strong>由于一个物理页需要占用一个Page结构的空间，Page结构在设计时须尽可能小，以减少对内存的占用</strong>。Page的定义在kern/mm/memlayout.h中。以页为单位的物理内存分配管理的实现在kern/default_pmm.[ch]。</p>
+<p>为了与以后的分页机制配合，我们首先需要建立对整个计算机的每一个物理页的属性用结构Page来表示，它包含了映射此物理页的虚拟页个数，描述物理页属性的flags和双向链接各个Page结构的page_link双向链表。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Page</span> &#123;</span></span><br><span class="line">    <span class="keyword">int</span> ref;        <span class="comment">// page frame's reference counter</span></span><br><span class="line">    <span class="keyword">uint32_t</span> flags; <span class="comment">// array of flags that describe the status of the page frame</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> property;<span class="comment">// the num of free block, used in first fit pm manager</span></span><br><span class="line">    <span class="keyword">list_entry_t</span> page_link;<span class="comment">// free list link</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>ref表示这样页被页表的引用记数（在“实现分页机制”一节会讲到）。如果这个页被页表引用了，即在某页表中有一个页表项设置了一个虚拟页到这个Page管理的物理页的映射关系，就会把Page的ref加一；反之，若页表项取消，即映射关系解除，就会把Page的ref减一。</p>
+</li>
+<li><p>flags表示此物理页的状态标记，进一步查看kern/mm/memlayout.h中的定义，可以看到：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;* Flags describing the status of a page frame *&#x2F;</span><br><span class="line">#define PG_reserved                 0       &#x2F;&#x2F; the page descriptor is reserved for kernel or unusable</span><br><span class="line">#define PG_property                 1       &#x2F;&#x2F; the member &#39;property&#39; is valid</span><br></pre></td></tr></table></figure>
+
+<p>这表示flags<strong>目前用到了两个bit</strong>表示页目前具有的两种属性，<strong>bit 0表示此页是否被保留（reserved），如果是被保留的页，则bit 0会设置为1，且不能放到空闲页链表中，即这样的页不是空闲页，不能动态分配与释放</strong>。比如目前内核代码占用的空间就属于这样“被保留”的页。在本实验中<strong>，bit 1表示此页是否是free的，如果设置为1，表示这页是free的，可以被分配；如果设置为0，表示这页已经被分配出去了，不能被再二次分配</strong>。另外，本实验这里取的名字PG_property比较不直观 ，主要是我们可以设计不同的页分配算法（best fit, buddy system等），那么这个PG_property就有不同的含义了。</p>
+</li>
+<li><p>property用来记录某连续内存空闲块的大小（即地址连续的空闲页的个数）。这里需要注意的是用到此成员变量的这个Page比较特殊，是这个连续内存空闲块地址最小的一页（即头一页， Head Page）。连续内存空闲块利用这个页的成员变量property来记录在此块内的空闲页的个数。这里去的名字property也不是很直观，原因与上面类似，在不同的页分配算法中，property有不同的含义。</p>
+</li>
+<li><p>page_link是便于把多个连续内存空闲块链接在一起的双向链表指针（可回顾在lab0实验指导书中有关双向链表数据结构的介绍）。这里需要注意的是用到此成员变量的这个Page比较特殊，是这个连续内存空闲块地址最小的一页（即头一页， Head Page）。连续内存空闲块利用这个页的成员变量page_link来链接比它地址小和大的其他连续内存空闲块。</p>
+</li>
+</ul>
+<p>在初始情况下，也许这个物理内存的空闲物理页都是连续的，这样就形成了一个大的连续内存空闲块。但随着物理页的分配与释放，这个大的连续内存空闲块会分裂为一系列地址不连续的<strong>多个小连续内存空闲块</strong>，且每个连续内存空闲块内部的物理页是连续的。那么为了有效地管理这些小连续内存空闲块。所有的连续内存空闲块可用一个双向链表管理起来，便于分配和释放，为此定义了一个free_area_t数据结构，包含了一个</p>
+<ul>
+<li><strong>list_entry结构的双向链表指针</strong>，其中的链表指针指向了空闲的物理页</li>
+<li><strong>记录当前空闲页的个数的无符号整型变量nr_free</strong>。</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;* free_area_t - maintains a doubly linked list to record free (unused) pages *&#x2F;</span><br><span class="line">typedef struct &#123;</span><br><span class="line">            list_entry_t free_list;                                &#x2F;&#x2F; the list header</span><br><span class="line">            unsigned int nr_free;                                 &#x2F;&#x2F; # of free pages in this free list</span><br><span class="line">&#125; free_area_t;</span><br></pre></td></tr></table></figure>
+
+<p>有了这两个数据结构，ucore就可以管理起来整个以页为单位的物理内存空间。接下来需要解决两个问题：</p>
+<p>• 管理页级物理内存空间所需的Page结构的内存空间从哪里开始，占多大空间？</p>
+<p> • 空闲内存空间的起始地址在哪里？</p>
+<p>对于这两个问题，我们首先根据bootloader给出的内存布局信息找出最大的物理内存地址maxpa（定义在page_init函数中的局部变量），由于x86的起始物理内存地址为0，所以可以得知需要管理的<strong>物理页个数</strong>为</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npage &#x3D; maxpa &#x2F; PGSIZE</span><br></pre></td></tr></table></figure>
+
+<p>这样，我们就可以预估出管理页级物理内存空间所需的Page结构的内存空间所需的<strong>内存大小</strong>为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sizeof(struct Page) * npage)</span><br></pre></td></tr></table></figure>
+
+<p>由于<strong>bootloader加载ucore的结束地址（用全局指针变量end记录）以上的空间没有被使用</strong>，所以我们可以把end按页大小为边界去整后，作为管理页级物理内存空间所需的Page结构的内存空间，记为：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pages = (struct Page *)ROUNDUP((<span class="keyword">void</span> *)<span class="built_in">end</span>, PGSIZE);<span class="comment">//向上取整：roudup</span></span><br></pre></td></tr></table></figure>
+
+<p>为了简化起见，从地址0到地址<code>pages+ sizeof(struct Page) * npage)</code>结束的物理内存空间设定为已占用物理内存空间（起始0~640KB的空间是空闲的），地址<code>pages+ sizeof(struct Page) * npage)</code>以上的空间为空闲物理内存空间，这时的空闲空间起始地址为</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">uintptr_t</span> freemem = PADDR((<span class="keyword">uintptr_t</span>)pages + <span class="keyword">sizeof</span>(struct Page) * npage);<span class="comment">//paddr:取地址</span></span><br></pre></td></tr></table></figure>
+
+<p>为此我们需要把这<strong>两部分空间给标识</strong>出来。首先，对于所有物理空间，通过如下语句即可实现占用标记：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; npage; i ++) &#123;</span><br><span class="line">SetPageReserved(pages + i);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后，根据探测到的空闲物理空间，通过如下语句即可<strong>实现空闲标记</strong>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//获得空闲空间的起始地址begin和结束地址end</span></span><br><span class="line">……</span><br><span class="line">init_memmap(pa2page(<span class="built_in">begin</span>), (<span class="built_in">end</span> - <span class="built_in">begin</span>) / PGSIZE);</span><br></pre></td></tr></table></figure>
+
+<p>其实<strong>SetPageReserved只需把物理地址对应的Page结构中的flags标志设置为PG_reserved</strong> ，表示这些页已经被使用了，将来不能被用于分配。而<strong>init_memmap函数则是把空闲物理页对应的Page结构中的flags和引用计数ref清零</strong>，并加到free_area.free_list指向的双向列表中，为将来的空闲页管理做好初始化准备工作。</p>
+<p>关于内存分配的操作系统原理方面的知识有很多，但在本实验中只实现了<strong>最简单的内存页分配算法。相应的实现在default_pmm.c中的default_alloc_pages函数和default_free_pages函数</strong>，相关实现很简单，这里就不具体分析了，直接看源码，应该很好理解。</p>
+<p>其实<strong>实验二在内存分配和释放方面最主要的作用是建立了一个物理内存页管理器框架</strong>，这实际上是一个函数指针列表，定义如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">pmm_manager</span> &#123;</span></span><br><span class="line">            <span class="keyword">const</span> <span class="keyword">char</span> *name; <span class="comment">//物理内存页管理器的名字</span></span><br><span class="line">            <span class="keyword">void</span> (*init)(<span class="keyword">void</span>); <span class="comment">//初始化内存管理器</span></span><br><span class="line">            <span class="keyword">void</span> (*init_memmap)(struct Page *base, <span class="keyword">size_t</span> n); <span class="comment">//初始化管理空闲内存页的数据结构</span></span><br><span class="line">            <span class="class"><span class="keyword">struct</span> <span class="title">Page</span> *(*<span class="title">alloc_pages</span>)(<span class="title">size_t</span> <span class="title">n</span>);</span> <span class="comment">//分配n个物理内存页</span></span><br><span class="line">            <span class="keyword">void</span> (*free_pages)(struct Page *base, <span class="keyword">size_t</span> n); <span class="comment">//释放n个物理内存页</span></span><br><span class="line">            <span class="keyword">size_t</span> (*nr_free_pages)(<span class="keyword">void</span>); <span class="comment">//返回当前剩余的空闲页数</span></span><br><span class="line">            <span class="keyword">void</span> (*check)(<span class="keyword">void</span>); <span class="comment">//用于检测分配/释放实现是否正确的辅助函数</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h3 id="04-物理内存页分配算法的实现"><a href="#04-物理内存页分配算法的实现" class="headerlink" title="04 物理内存页分配算法的实现"></a>04 物理内存页分配算法的实现</h3><p>FirstFit内存分配算法</p>
+<p>首次适应算法（First Fit）：该算法从空闲分区链首开始查找，直至找到一个能满足其大小要求的空闲分区为止。然后再按      照作业的大小，从该分区中划出一块内存分配给请求者，余下的空闲分区仍留在空闲分区链    中。<br>     特点： 该算法倾向于使用内存中低地址部分的空闲区，在高地址部分的空闲区很少被利用，从而保留了高地址部分的大空闲        区。显然为以后到达的大作业分配大的内存空间创造了条件。<br>     缺点：低地址部分不断被划分，留下许多难以利用、很小的空闲区，而每次查找又都从低地址部分开始，会增加查找的开销。</p>
+<p>lab2的第一部分是完成first_fit的分配算法。原理FirstFit内存分配算法上很简单，但要在ucore中实现，需要充分了解和利用ucore已有的数据结构和相关操作、关键的一些全局变量等。</p>
+<p><strong>关键数据结构和变量</strong></p>
+<p>first_fit分配算法需要维护一个查找有序（地址按从小到大排列）空闲块（以页为最小单位的连续地址空间）的数据结构，而双向链表是一个很好的选择。</p>
+<p>libs/list.h定义了可挂接任意元素的通用双向链表结构和对应的操作，所以需要了解如何使用这个文件提供的各种函数，从而可以完成对双向链表的初始化/插入/删除等。</p>
+<p>kern/mm/memlayout.h中定义了一个 free_area_t 数据结构，包含成员结构</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">list_entry_t</span> free_list;         <span class="comment">// the list header   空闲块双向链表的头</span></span><br><span class="line"><span class="keyword">unsigned</span> <span class="keyword">int</span> nr_free;           <span class="comment">// # of free pages in this free list  空闲块的总数（以页为单位）</span></span><br></pre></td></tr></table></figure>
+
+<p>显然，我们可以通过此数据结构来完成对空闲块的管理。而default_pmm.c中定义的free_area变量就是干这个事情的。</p>
+<p>kern/mm/pmm.h中定义了一个通用的分配算法的函数列表，用pmm_manager 表示。其中init函数就是用来初始化free_area变量的, first_fit分配算法可直接重用default_init函数的实现。init_memmap函数需要根据现有的内存情况构建空闲块列表的初始状态。何时应该执行这个函数呢？</p>
+<p>通过分析代码，可以知道：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kern_init --&gt; pmm_init--&gt;page_init--&gt;init_memmap--&gt; pmm_manager-&gt;init_memmap</span><br></pre></td></tr></table></figure>
+
+<p>所以，default_init_memmap需要根据page_init函数中传递过来的参数（某个连续地址的空闲块的起始页，页个数）来建立一个连续内存空闲块的双向链表。这里有一个假定page_init函数是按地址从小到大的顺序传来的连续内存空闲块的。链表头是free_area.free_list，链表项是Page数据结构的base-&gt;page_link。这样我们就依靠Page数据结构中的成员变量page_link形成了连续内存空闲块列表。</p>
+<p><strong>设计实现</strong></p>
+<p>default_init_memmap函数根据每个物理页帧的情况来建立空闲页链表，且空闲页块应该是<strong>根据地址高低形成一个有序链表</strong>。根据上述变量的定义，default_init_memmap可大致实现如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">default_init_memmap(struct Page *base, <span class="keyword">size_t</span> n) &#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">Page</span> *<span class="title">p</span> = <span class="title">base</span>;</span></span><br><span class="line">    <span class="keyword">for</span> (; p != base + n; p ++) &#123;</span><br><span class="line">        p-&gt;flags = p-&gt;property = <span class="number">0</span>;</span><br><span class="line">        set_page_ref(p, <span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    base-&gt;property = n;</span><br><span class="line">    SetPageProperty(base);</span><br><span class="line">    nr_free += n;</span><br><span class="line">    list_add(&amp;free_list, &amp;(base-&gt;page_link));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果要分配一个页，那要考虑哪些呢？这里就需要考虑实现default_alloc_pages函数，注意参数n表示要分配n个页。另外，需要注意实现时尽量多考虑一些边界情况，这样确保软件的鲁棒性。比如</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (n &gt; nr_free) &#123;</span><br><span class="line"><span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这样可以确保分配不会超出范围。也可加一些 assert函数，在有错误出现时，能够迅速发现。比如 n应该大于0，我们就可以加上</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">assert(n \&gt; <span class="number">0</span>);</span><br></pre></td></tr></table></figure>
+
+<p>这样在n&lt;=0的情况下，ucore会迅速报错。firstfit需要从空闲链表头开始查找最小的地址，通过list_next找到下一个空闲块元素，通过le2page宏可以更加链表元素获得对应的Page指针p。通过p-&gt;property可以了解此空闲块的大小。如果&gt;=n，这就找到了！如果&lt;n，则list_next，继续查找。直到list_next== &amp;free_list，这表示找完了一遍了。找到后，就要从新组织空闲块，然后把找到的page返回。所以default_alloc_pages可大致实现如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">Page</span> *</span></span><br><span class="line"><span class="class"><span class="title">default_alloc_pages</span>(<span class="title">size_t</span> <span class="title">n</span>) &#123;</span></span><br><span class="line">    <span class="keyword">if</span> (n &gt; nr_free) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">Page</span> *<span class="title">page</span> = <span class="title">NULL</span>;</span></span><br><span class="line">    <span class="keyword">list_entry_t</span> *le = &amp;free_list;</span><br><span class="line">    <span class="keyword">while</span> ((le = list_next(le)) != &amp;free_list) &#123;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">Page</span> *<span class="title">p</span> = <span class="title">le2page</span>(<span class="title">le</span>, <span class="title">page_link</span>);</span></span><br><span class="line">        <span class="keyword">if</span> (p-&gt;property &gt;= n) &#123;</span><br><span class="line">            page = p;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (page != <span class="literal">NULL</span>) &#123;</span><br><span class="line">        list_del(&amp;(page-&gt;page_link));</span><br><span class="line">        <span class="keyword">if</span> (page-&gt;property &gt; n) &#123;</span><br><span class="line">            <span class="class"><span class="keyword">struct</span> <span class="title">Page</span> *<span class="title">p</span> = <span class="title">page</span> + <span class="title">n</span>;</span></span><br><span class="line">            p-&gt;property = page-&gt;property - n;</span><br><span class="line">            list_add(&amp;free_list, &amp;(p-&gt;page_link));</span><br><span class="line">        &#125;</span><br><span class="line">        nr_free -= n;</span><br><span class="line">        ClearPageProperty(page);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> page;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>default_free_pages函数的实现其实是default_alloc_pages的逆过程，不过需要考虑空闲块的合并问题。</p>
+<h3 id="05-实现分页机制"><a href="#05-实现分页机制" class="headerlink" title="05 实现分页机制"></a>05 实现分页机制</h3><h4 id="段页式管理基本概念"><a href="#段页式管理基本概念" class="headerlink" title="段页式管理基本概念"></a>段页式管理基本概念</h4><p>x86 体系结构将内存地址分成三种：逻辑地址（也称虚地址）、线性地址和物理地址。逻辑地址即是程序指令中使用的地址，物理地址是实际访问内存的地址。逻辑地址通过段式管理的地址映射可以得到线性地址，线性地址通过页式管理的地址映射得到物理地址。</p>
+<p><img src="/2021/06/17/ucore_lab2_%E7%90%86%E8%AE%BA/image-20210617160206927.png" alt="image-20210617160206927"></p>
+<p>页式管理将线性地址分成三部分（图中的 Linear Address 的 Directory 部分、 Table 部分和 Offset 部分）。ucore 的页式管理通过一个二级的页表实现。一级页表的起始物理地址存放在 cr3 寄存器中，这个地址必须是一个页对齐的地址，也就是低 12 位必须为 0。目前，ucore 用 boot_cr3（mm/pmm.c）记录这个值。</p>
+<p><img src="/2021/06/17/ucore_lab2_%E7%90%86%E8%AE%BA/image-20210617160229436.png" alt="image-20210617160229436"></p>
+<h4 id="建立段页式管理中需要考虑的关键问题"><a href="#建立段页式管理中需要考虑的关键问题" class="headerlink" title="建立段页式管理中需要考虑的关键问题"></a>建立段页式管理中需要考虑的关键问题</h4><p>为了实现分页机制，需要建立好虚拟内存和物理内存的页映射关系，即正确建立二级页表。此过程涉及硬件细节，不同的地址映射关系组合，相对比较复杂。总体而言，我们需要思考如下问题：</p>
+<ul>
+<li>如何在建立页表的过程中维护全局段描述符表（GDT）和页表的关系，确保ucore能够在各个时间段上都能正常寻址？</li>
+<li>对于哪些物理内存空间需要建立页映射关系？</li>
+<li>具体的页映射关系是什么？</li>
+<li>页目录表的起始地址设置在哪里？</li>
+<li>页表的起始地址设置在哪里，需要多大空间？</li>
+<li>如何设置页目录表项的内容？</li>
+<li>如何设置页表项的内容？</li>
+</ul>
+<h4 id="系统执行中地址映射的四个阶段"><a href="#系统执行中地址映射的四个阶段" class="headerlink" title="系统执行中地址映射的四个阶段"></a>系统执行中地址映射的四个阶段</h4><p>lab2 中，为了建立正确的地址映射关系，ld 在链接阶段生成了 ucore OS 执行代码的虚拟地址，而 bootloader 与 ucore OS 协同工作，通过在运行时对地址映射的一系列 “腾挪转移”，从计算机加电，启动段式管理机制，启动段页式管理机制，在段页式管理机制下运行这整个过程中，虚地址到物理地址的映射产生了多次变化，实现了最终的段页式映射关系：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">virt addr = linear addr = phy addr + <span class="number">0xC0000000</span></span><br></pre></td></tr></table></figure>
+
+
+<p>其具体实现过程写在了代码分析部分，不过先提前说一下 lab2 与 lab1 中的 ld 脚本的不同之处</p>
+<ul>
+<li><p>lab1：lab1 中通过 <strong>ld 工具</strong>形成的 ucore 的起始虚拟地址从 <strong>0x100000</strong> 开始，注意：这个地址是虚拟地址。由于 lab1 中建立的段地址映射关系为对等关系，所以 ucore 的物理地址也是 0x100000，lab1 中虚拟地址，线性地址以及物理地址之间的映射关系如下：</p>
+ <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">lab1： virt addr = linear addr = phy addr</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>lab2：lab2 中通过 <strong>ld 工具形成的 ucore 的起始虚拟地址从 0xC0100000</strong> 开始，注意：这个地址也是虚拟地址。入口函数为 kern_entry 函数（在 kern/init/entry.S 中）。这与 lab1 有很大差别。但其实在 lab1 和 lab2 中，bootloader 把 ucore 都放在了起始物理地址为 0x100000 的物理内存空间。这实际上说明了 ucore 在 lab1 和 lab2 中采用的地址映射不同。lab2 在不同阶段有不同的虚拟地址，线性地址以及物理地址之间的映射关系。</p>
+</li>
+</ul>
+<p>在 lab2 中对应着有四个阶段，分别是 bootloader 阶段（最开始的实模式转换保护模式的那个阶段）、执行内核代码阶段（也就是从 bootloader 开始跳转到执行 kern_entry 的那个步骤就开始是第二个阶段一直到打开页机制，所以就证明此时采用的寻址方式机制是分段机制），打开页机制阶段（启动了页机制，但是还没有更新映射机制），更新段映射为段页映射（这里是因为上一阶段中虽然启动了页机制，但是段到页的映射还没有修改，所以说需要进行更新段到页的映射之后，才算真正的达到了段页映射机制）</p>
+<p>对应着每个阶段都有着不同的映射关系，如下</p>
+<ul>
+<li><p>bootloader 阶段：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">lab2 stage <span class="number">1</span>： virt addr = linear addr = phy addr</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>执行内核代码阶段：</p>
+ <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">lab2 stage <span class="number">2</span>： virt addr - <span class="number">0xC0000000</span> = linear addr = phy addr</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>打开页机制阶段：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">lab2 stage <span class="number">3</span>: </span><br><span class="line"></span><br><span class="line"> virt addr - <span class="number">0xC0000000</span> = linear addr  = phy addr + <span class="number">0xC0000000</span> # 物理地址在<span class="number">0</span>~<span class="number">4</span>MB之外的三者映射关系</span><br><span class="line">              virt addr - <span class="number">0xC0000000</span> = linear addr  = phy addr # 物理地址在<span class="number">0</span>~<span class="number">4</span>MB之内的三者映射关系</span><br></pre></td></tr></table></figure>
+
+<p>请注意 pmm_init 函数中的一条语句：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">boot_pgdir[<span class="number">0</span>] = boot_pgdir[PDX(KERNBASE)];</span><br></pre></td></tr></table></figure>
+
+<p>就是用来建立物理地址在 0~4MB 之内的三个地址间的临时映射关系 virt addr - 0xC0000000 = linear addr = phy addr。</p>
+</li>
+<li><p>更新段映射为段页映射：</p>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">lab2 stage <span class="number">4</span>： virt addr = linear addr = phy addr + <span class="number">0xC0000000</span></span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<h3 id="链接地址"><a href="#链接地址" class="headerlink" title="链接地址"></a>链接地址</h3><p><strong>链接地址/虚地址/物理地址/加载地址以及edata/end/text的含义</strong></p>
+<p><strong>链接脚本简介</strong></p>
+<p>ucore kernel各个部分由组成kernel的各个.o或.a文件构成，且各个部分在内存中地址位置由ld工具根据kernel.ld链接脚本（linker script）来设定。ld工具使用命令-T指定链接脚本。链接脚本主要用于规定如何把输入文件（各个.o或.a文件）内的section放入输出文件（lab2/bin/kernel，即ELF格式的ucore内核）内， 并控制输出文件内各部分在程序地址空间内的布局。下面简单分析一下/lab2/tools/kernel.ld，来了解一下ucore内核的地址布局情况。kernel.ld的内容如下所示：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* Simple linker script for the ucore kernel.</span></span><br><span class="line"><span class="comment">   See the GNU ld 'info' manual ("info ld") to learn the syntax. */</span></span><br><span class="line"></span><br><span class="line">OUTPUT_FORMAT(<span class="string">"elf32-i386"</span>, <span class="string">"elf32-i386"</span>, <span class="string">"elf32-i386"</span>)</span><br><span class="line">OUTPUT_ARCH(i386)</span><br><span class="line">ENTRY(kern_entry)</span><br><span class="line"></span><br><span class="line">SECTIONS &#123;</span><br><span class="line">    <span class="comment">/* Load the kernel at this address: "." means the current address */</span></span><br><span class="line">    . = <span class="number">0xC0100000</span>;</span><br><span class="line"></span><br><span class="line">    .<span class="built_in">text</span> : &#123;</span><br><span class="line">        *(.<span class="built_in">text</span> .stub .<span class="built_in">text</span>.* .gnu.linkonce.t.*)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    PROVIDE(etext = .); <span class="comment">/* Define the 'etext' symbol to this value */</span></span><br><span class="line"></span><br><span class="line">    .rodata : &#123;</span><br><span class="line">        *(.rodata .rodata.* .gnu.linkonce.r.*)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* Include debugging information in kernel memory */</span></span><br><span class="line">    .stab : &#123;</span><br><span class="line">        PROVIDE(__STAB_BEGIN__ = .);</span><br><span class="line">        *(.stab);</span><br><span class="line">        PROVIDE(__STAB_END__ = .);</span><br><span class="line">        BYTE(<span class="number">0</span>)     <span class="comment">/* Force the linker to allocate space</span></span><br><span class="line"><span class="comment">                   for this section */</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    .stabstr : &#123;</span><br><span class="line">        PROVIDE(__STABSTR_BEGIN__ = .);</span><br><span class="line">        *(.stabstr);</span><br><span class="line">        PROVIDE(__STABSTR_END__ = .);</span><br><span class="line">        BYTE(<span class="number">0</span>)     <span class="comment">/* Force the linker to allocate space</span></span><br><span class="line"><span class="comment">                   for this section */</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* Adjust the address for the data segment to the next page */</span></span><br><span class="line">    . = ALIGN(<span class="number">0x1000</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* The data segment */</span></span><br><span class="line">    .data : &#123;</span><br><span class="line">        *(.data)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    PROVIDE(edata = .);</span><br><span class="line"></span><br><span class="line">    .bss : &#123;</span><br><span class="line">        *(.bss)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    PROVIDE(<span class="built_in">end</span> = .);</span><br><span class="line"></span><br><span class="line">    /DISCARD/ : &#123;</span><br><span class="line">        *(.eh_frame .note.GNU-<span class="built_in">stack</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其实从链接脚本的内容，可以大致猜出它指定告诉链接器的各种信息：</p>
+<ul>
+<li>内核加载地址：0xC0100000</li>
+<li>入口（起始代码）地址： ENTRY(kern_entry)</li>
+<li>cpu机器类型：i386</li>
+</ul>
+<p>其最主要的信息是告诉链接器各输入文件的各section应该怎么组合：应该从哪个地址开始放，各个section以什么顺序放，分别怎么对齐等等，最终组成输出文件的各section。除此之外，linker script还可以定义各种符号（如.text、.data、.bss等），形成最终生成的一堆符号的列表（符号表），每个符号包含了符号名字，符号所引用的内存地址，以及其他一些属性信息。符号实际上就是一个地址的符号表示，其本身不占用的程序运行的内存空间。</p>
+<h4 id="建立虚拟页和物理页帧的地址映射关系"><a href="#建立虚拟页和物理页帧的地址映射关系" class="headerlink" title="建立虚拟页和物理页帧的地址映射关系"></a>建立虚拟页和物理页帧的地址映射关系</h4><p><strong>建立二级页表</strong></p>
+<p>80368的采用了二级页表来建立线性地址与物理地址之间的映射关系。由于我们已经具有了一个物理内存页管理器default_pmm_manager，支持动态分配和释放内存页的功能，我们就可以用它来获得所需的空闲物理页。在二级页表结构中，页目录表占4KB空间，可通过alloc_page函数获得一个空闲物理页作为页目录表（Page Directory Table，PDT）。同理，ucore也通过这种类似方式获得一个页表(Page Table,PT)所需的4KB空间。</p>
+<p>整个页目录表和页表所占空间大小取决与二级页表要管理和映射的物理页数。假定当前物理内存0~16MB，每物理页（也称Page Frame）大小为4KB，则有4096个物理页，也就意味这有4个页目录项和4096个页表项需要设置。一个页目录项(Page Directory Entry，PDE)和一个页表项(Page Table Entry，PTE)占4B。即使是4个页目录项也需要一个完整的页目录表（占4KB）。而4096个页表项需要16KB（即4096*4B）的空间，也就是4个物理页，16KB的空间。所以对16MB物理页建立一一映射的16MB虚拟页，需要5个物理页，即20KB的空间来形成二级页表。</p>
+<p>为把0~KERNSIZE（明确ucore设定实际物理内存不能超过KERNSIZE值，即0x38000000字节，896MB，3670016个物理页）的物理地址一一映射到页目录项和页表项的内容，其大致流程如下：</p>
+<ol>
+<li><p>先通过alloc_page获得一个空闲物理页，用于页目录表；</p>
+</li>
+<li><p>调用boot_map_segment函数建立一一映射关系，具体处理过程以页为单位进行设置，即</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">virt addr &#x3D; phy addr + 0xC0000000</span><br></pre></td></tr></table></figure>
+
+<p>设一个32bit线性地址la有一个对应的32bit物理地址pa，如果在以la的高10位为索引值的页目录项中的存在位（PTE_P）为0，表示缺少对应的页表空间，则可通过alloc_page获得一个空闲物理页给页表，页表起始物理地址是按4096字节对齐的，这样填写页目录项的内容为</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">页目录项内容 &#x3D; (页表起始物理地址 &amp;0x0FFF) | PTE_U | PTE_W | PTE_P</span><br></pre></td></tr></table></figure>
+
+<p>进一步对于页表中以线性地址la的中10位为索引值对应页表项的内容为</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">页表项内容 &#x3D; (pa &amp; ~0x0FFF) | PTE_P | PTE_W</span><br></pre></td></tr></table></figure>
+
+<p>其中：</p>
+</li>
+<li><p>PTE_U：位3，表示用户态的软件可以读取对应地址的物理内存页内容</p>
+</li>
+<li><p>PTE_W：位2，表示物理内存页内容可写</p>
+</li>
+<li><p>PTE_P：位1，表示物理内存页存在</p>
+</li>
+</ol>
+<p>ucore 的内存管理经常需要查找页表：给定一个虚拟地址，找出这个虚拟地址在二级页表中对应的项。通过更改此项的值可以方便地将虚拟地址映射到另外的页上。可完成此功能的这个函数是get_pte函数。它的原型为</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pte_t  *get_pte (pde_t *pgdir,  uintptr_t la, bool  create)</span><br></pre></td></tr></table></figure>
+
+<p>下面的调用关系图可以比较好地看出get_pte在实现上诉流程中的位置：</p>
+<p><img src="/2021/06/17/ucore_lab2_%E7%90%86%E8%AE%BA/image007.png" alt="img"></p>
+<p>这里涉及到三个类型pte t、pde t和uintptr t。通过参见mm/mmlayout.h和libs/types.h，可知它们其实都是unsigned int类型。在此做区分，是为了分清概念。</p>
+<p>pde_t全称为 page directory entry，也就是一级页表的表项（注意：pgdir实际不是表 项，而是一级页表本身。实际上应该新定义一个类型pgd_t来表示一级页表本身）。pte t全 称为 page table entry，表示二级页表的表项。uintptr t表示为线性地址，由于段式管理只做直接映射，所以它也是逻辑地址。</p>
+<p>pgdir给出页表起始地址。通过查找这个页表，我们需要给出二级页表中对应项的地址。 虽然目前我们只有boot_pgdir一个页表，但是引入进程的概念之后每个进程都会有自己的页 表。</p>
+<p>有可能根本就没有对应的二级页表的情况，所以二级页表不必要一开始就分配，而是等到需要的时候再添加对应的二级页表。如果在查找二级页表项时，发现对应的二级页表不存在，则需要根据create参数的值来处理是否创建新的二级页表。如果create参数为0，则get_pte返回NULL；如果create参数不为0，则get_pte需要申请一个新的物理页（通过alloc_page来实现，可在mm/pmm.h中找到它的定义），再在一级页表中添加页目录项指向表示二级页表的新物理页。注意，新申请的页必须全部设定为零，因为这个页所代表的虚拟地址都没有被映射。</p>
+<p>当建立从一级页表到二级页表的映射时，需要注意设置控制位。这里应该设置同时设置 上PTE_U、PTE_W和PTE_P（定义可在mm/mmu.h）。如果原来就有二级页表，或者新建立了页表，则只需返回对应项的地址即可。</p>
+<p>虚拟地址只有映射上了物理页才可以正常的读写。在完成映射物理页的过程中，除了要象上面那样在页表的对应表项上填上相应的物理地址外，还要设置正确的控制位。有关 x86 中页表控制位的详细信息，请参照《Intel® 64 and IA-32 Architectures Software Developer ’s Manual – Volume 3A》4.11 节。</p>
+<p>只有当一级二级页表的项都设置了用户写权限后，用户才能对对应的物理地址进行读写。 所以我们可以在一级页表先给用户写权限，再在二级页表上面根据需要限制用户的权限，对物理页进行保护。由于一个物理页可能被映射到不同的虚拟地址上去（譬如一块内存在不同进程 间共享），当这个页需要在一个地址上解除映射时，操作系统不能直接把这个页回收，而是要先看看它还有没有映射到别的虚拟地址上。这是通过查找管理该物理页的Page数据结构的成员变量ref（用来表示虚拟页到物理页的映射关系的个数）来实现的，如果ref为0了，表示没有虚拟页到物理页的映射关系了，就可以把这个物理页给回收了，从而这个物理页是free的了，可以再被分配。page_insert函数将物理页映射在了页表上。可参看page_insert函数的实现来了解ucore内核是如何维护这个变量的。当不需要再访问这块虚拟地址时，可以把这块物理页回收并在将来用在其他地方。取消映射由page_remove来做，这其实是page insert的逆操作。</p>
+<p>建立好一一映射的二级页表结构后，接下来就要使能分页机制了，这主要是通过enable_paging函数实现的，这个函数主要做了两件事：</p>
+<ol>
+<li>通过lcr3指令把页目录表的起始地址存入CR3寄存器中；</li>
+<li>通过lcr0指令把cr0中的CR0_PG标志位设置上。</li>
+</ol>
+<p>执行完enable_paging函数后，计算机系统进入了分页模式！但到这一步还没建立好完整的段页式映射。还记得ucore在最开始通过kern_entry函数设置了临时的新段映射机制吗？这个临时的新段映射不是最简单的对等映射，导致虚拟地址和线性地址不相等。这里需要注意：刚进入分页模式的时刻是一个过渡过程。在这个过渡过程中，虚拟地址，线性地址以及物理地址之间的映射关系为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">virt addr &#x3D; linear addr + 0xC0000000 &#x3D; phy addr + 2 * 0xC0000000</span><br></pre></td></tr></table></figure>
+
+<p>而我们希望的段页式映射的最终映射关系为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">virt addr &#x3D; linear addr &#x3D; phy addr + 0xC0000000</span><br></pre></td></tr></table></figure>
+
+<p>这里最终的段映射是简单的段对等映射（virt addr = linear addr）。所以我们需要进一步调整段映射关系，即重新设置新的GDT，建立对等段映射。在这个特殊的阶段，如果不把段映射关系改为virt addr = linear addr，则通过段页式两次地址转换后，无法得到正确的物理地址。为此我们需要进一步调用gdt_init函数，根据新的gdt全局段描述符表内容（gdt定义位于pmm.c中），恢复简单的段对等映射关系，即使得virt addr = linear addr。这样在执行完gdt_init后，通过的段机制和页机制实现的地址映射关系为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">virt addr&#x3D;linear addr &#x3D; phy addr +0xC0000000</span><br></pre></td></tr></table></figure>
+
+<p>这里存在的一个问题是，在调用enable_page函数到执行gdt_init函数之前，内核使用的还是旧的段表映射，即：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">virt addr &#x3D; linear addr + 0xC0000000 &#x3D; phy addr + 2 * 0xC0000000</span><br></pre></td></tr></table></figure>
+
+<p>如何保证此时内核依然能够正常工作呢？其实只需让index为0的页目录项的内容等于以索引值为(KERNBASE&gt;&gt;22)的目录表项的内容即可。目前内核大小不超过 4M （实际上是3M，因为内核从 0x100000开始编址），这样就只需要让页表在0<del>4MB的线性地址与KERNBASE ~ KERNBASE+4MB的线性地址获得相同的映射即可，都映射到 0</del>4MB的物理地址空间，具体实现在pmm.c中pmm_init函数的语句：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">boot_pgdir[0] &#x3D; boot_pgdir[PDX(KERNBASE)];</span><br></pre></td></tr></table></figure>
+
+<p>实际上这种映射也限制了内核的大小。当内核大小超过预期的3MB 就可能导致打开分页之后内核crash，在后面的试验中，也的确出现了这种情况。解决方法同样简单，就是拷贝更多的高地址对应的页目录项内容到低地址对应的页目录项中即可。</p>
+<p>当执行完毕gdt_init函数后，新的段页式映射已经建立好了，上面的0<del>4MB的线性地址与0</del>4MB的物理地址一一映射关系已经没有用了。 所以可以通过如下语句解除这个老的映射关系。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">boot_pgdir[0] &#x3D; 0;</span><br></pre></td></tr></table></figure>
+
+<p>在page_init函数建立完实现物理内存一一映射和页目录表自映射的页目录表和页表后，一旦使能分页机制，则ucore看到的内核虚拟地址空间如下图所示：</p>
+<p><img src="/2021/06/17/ucore_lab2_%E7%90%86%E8%AE%BA/image008.png" alt="img"></p>
+<p>图7 使能分页机制后的虚拟地址空间图</p>
+<h2 id="代码分析"><a href="#代码分析" class="headerlink" title="代码分析"></a>代码分析</h2><h3 id="kern-init-init-c"><a href="#kern-init-init-c" class="headerlink" title="kern/init/init.c"></a>kern/init/init.c</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span></span><br><span class="line">kern_init(<span class="keyword">void</span>) &#123;</span><br><span class="line">    <span class="keyword">extern</span> <span class="keyword">char</span> edata[], <span class="built_in">end</span>[];</span><br><span class="line">    <span class="built_in">memset</span>(edata, <span class="number">0</span>, <span class="built_in">end</span> - edata);</span><br><span class="line"></span><br><span class="line">    cons_init();                <span class="comment">// init the console</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *message = <span class="string">"(THU.CST) os is loading ..."</span>;</span><br><span class="line">    cprintf(<span class="string">"%s\n\n"</span>, message);</span><br><span class="line"></span><br><span class="line">    print_kerninfo();</span><br><span class="line"></span><br><span class="line">    grade_backtrace();</span><br><span class="line"></span><br><span class="line">    pmm_init();                 <span class="comment">// init physical memory management</span></span><br><span class="line"></span><br><span class="line">    pic_init();                 <span class="comment">// init interrupt controller</span></span><br><span class="line">    idt_init();                 <span class="comment">// init interrupt descriptor table</span></span><br><span class="line"></span><br><span class="line">    clock_init();               <span class="comment">// init clock interrupt</span></span><br><span class="line">    intr_enable();              <span class="comment">// enable irq interrupt</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//LAB1: CAHLLENGE 1 If you try to do it, uncomment lab1_switch_test()</span></span><br><span class="line">    <span class="comment">// user/kernel mode switch test</span></span><br><span class="line">    <span class="comment">//lab1_switch_test();</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/* do nothing */</span></span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在初始化函数中，首先打印了一堆输出，然后调用了pmm_init()函数，这个函数跟我们的内存管理有关，再下来是初始化中断相关。</p>
+<h3 id="kern-mm-pmm-c"><a href="#kern-mm-pmm-c" class="headerlink" title="/kern/mm/pmm.c"></a>/kern/mm/pmm.c</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//pmm_init - setup a pmm to manage physical memory, build PDT&amp;PT to setup paging mechanism </span></span><br><span class="line"><span class="comment">//         - check the correctness of pmm &amp; paging mechanism, print PDT&amp;PT</span></span><br><span class="line"><span class="keyword">void</span></span><br><span class="line">pmm_init(<span class="keyword">void</span>) &#123;</span><br><span class="line">    <span class="comment">// We've already enabled paging</span></span><br><span class="line">    boot_cr3 = PADDR(boot_pgdir);</span><br><span class="line"></span><br><span class="line">    <span class="comment">//We need to alloc/free the physical memory (granularity is 4KB or other size). </span></span><br><span class="line">    <span class="comment">//So a framework of physical memory manager (struct pmm_manager)is defined in pmm.h</span></span><br><span class="line">    <span class="comment">//First we should init a physical memory manager(pmm) based on the framework.</span></span><br><span class="line">    <span class="comment">//Then pmm can alloc/free the physical memory. </span></span><br><span class="line">    <span class="comment">//Now the first_fit/best_fit/worst_fit/buddy_system pmm are available.</span></span><br><span class="line">    init_pmm_manager();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// detect physical memory space, reserve already used memory,</span></span><br><span class="line">    <span class="comment">// then use pmm-&gt;init_memmap to create free page list</span></span><br><span class="line">    page_init();</span><br><span class="line"></span><br><span class="line">    <span class="comment">//use pmm-&gt;check to verify the correctness of the alloc/free function in a pmm</span></span><br><span class="line">    check_alloc_page();</span><br><span class="line"></span><br><span class="line">    check_pgdir();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static_assert</span>(KERNBASE % PTSIZE == <span class="number">0</span> &amp;&amp; KERNTOP % PTSIZE == <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// recursively insert boot_pgdir in itself</span></span><br><span class="line">    <span class="comment">// to form a virtual page table at virtual address VPT</span></span><br><span class="line">    boot_pgdir[PDX(VPT)] = PADDR(boot_pgdir) | PTE_P | PTE_W;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// map all physical memory to linear memory with base linear addr KERNBASE</span></span><br><span class="line">    <span class="comment">// linear_addr KERNBASE ~ KERNBASE + KMEMSIZE = phy_addr 0 ~ KMEMSIZE</span></span><br><span class="line">    boot_map_segment(boot_pgdir, KERNBASE, KMEMSIZE, <span class="number">0</span>, PTE_W);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Since we are using bootloader's GDT,</span></span><br><span class="line">    <span class="comment">// we should reload gdt (second time, the last time) to get user segments and the TSS</span></span><br><span class="line">    <span class="comment">// map virtual_addr 0 ~ 4G = linear_addr 0 ~ 4G</span></span><br><span class="line">    <span class="comment">// then set kernel stack (ss:esp) in TSS, setup TSS in gdt, load TSS</span></span><br><span class="line">    gdt_init();</span><br><span class="line"></span><br><span class="line">    <span class="comment">//now the basic virtual memory map(see memalyout.h) is established.</span></span><br><span class="line">    <span class="comment">//check the correctness of the basic virtual memory map.</span></span><br><span class="line">    check_boot_pgdir();</span><br><span class="line"></span><br><span class="line">    print_pgdir();</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>boot_cr3:对应的就是取出 cr3 寄存器中的值，因为一级页表的起始物理地址是存储在 cr3 寄存器中的</li>
+<li>init_manager:初始化一个物理内存管理器，基于练习中设置的</li>
+<li>page_init:检测物理内存然后创建空闲页链表</li>
+<li>check_alloc_page/check_pgdir:检测 alloc/free 是否正确</li>
+<li>建立 2 级页表并且设置好对应的映射关系</li>
+<li>gdt_init:重新设置新的 GDT</li>
+</ul>
+<h2 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make qemu</span><br></pre></td></tr></table></figure>
+
+
+
+<p><img src="/2021/06/17/ucore_lab2_%E7%90%86%E8%AE%BA/image-20210617163114501.png" alt="image-20210617163114501"></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br></pre></td><td class="code"><pre><span class="line">.</span><br><span class="line">├── bin</span><br><span class="line">│   ├── bootblock</span><br><span class="line">│   ├── kernel</span><br><span class="line">│   ├── kernel_nopage</span><br><span class="line">│   ├── sign</span><br><span class="line">│   └── ucore.img</span><br><span class="line">├── boot</span><br><span class="line">│   ├── <span class="keyword">asm</span>.h</span><br><span class="line">│   ├── bootasm.S</span><br><span class="line">│   └── bootmain.c</span><br><span class="line">├── kern</span><br><span class="line">│   ├── debug</span><br><span class="line">│   │   ├── assert.h</span><br><span class="line">│   │   ├── kdebug.c</span><br><span class="line">│   │   ├── kdebug.h</span><br><span class="line">│   │   ├── kmonitor.c</span><br><span class="line">│   │   ├── kmonitor.h</span><br><span class="line">│   │   ├── panic.c</span><br><span class="line">│   │   └── stab.h</span><br><span class="line">│   ├── driver</span><br><span class="line">│   │   ├── clock.c</span><br><span class="line">│   │   ├── clock.h</span><br><span class="line">│   │   ├── console.c</span><br><span class="line">│   │   ├── console.h</span><br><span class="line">│   │   ├── intr.c</span><br><span class="line">│   │   ├── intr.h</span><br><span class="line">│   │   ├── kbdreg.h</span><br><span class="line">│   │   ├── picirq.c</span><br><span class="line">│   │   └── picirq.h</span><br><span class="line">│   ├── init</span><br><span class="line">│   │   ├── entry.S</span><br><span class="line">│   │   └── init.c</span><br><span class="line">│   ├── libs</span><br><span class="line">│   │   ├── readline.c</span><br><span class="line">│   │   └── stdio.c</span><br><span class="line">│   ├── mm</span><br><span class="line">│   │   ├── default_pmm.c</span><br><span class="line">│   │   ├── default_pmm.h</span><br><span class="line">│   │   ├── memlayout.h</span><br><span class="line">│   │   ├── mmu.h</span><br><span class="line">│   │   ├── pmm.c</span><br><span class="line">│   │   └── pmm.h</span><br><span class="line">│   ├── sync</span><br><span class="line">│   │   └── sync.h</span><br><span class="line">│   └── trap</span><br><span class="line">│       ├── trap.c</span><br><span class="line">│       ├── trapentry.S</span><br><span class="line">│       ├── trap.h</span><br><span class="line">│       └── vectors.S</span><br><span class="line">├── libs</span><br><span class="line">│   ├── atomic.h</span><br><span class="line">│   ├── defs.h</span><br><span class="line">│   ├── elf.h</span><br><span class="line">│   ├── error.h</span><br><span class="line">│   ├── <span class="built_in">list</span>.h</span><br><span class="line">│   ├── printfmt.c</span><br><span class="line">│   ├── stdarg.h</span><br><span class="line">│   ├── stdio.h</span><br><span class="line">│   ├── <span class="built_in">string</span>.c</span><br><span class="line">│   ├── <span class="built_in">string</span>.h</span><br><span class="line">│   └── x86.h</span><br><span class="line">├── Makefile</span><br><span class="line">├── obj</span><br><span class="line">│   ├── boot</span><br><span class="line">│   │   ├── bootasm.d</span><br><span class="line">│   │   ├── bootasm.o</span><br><span class="line">│   │   ├── bootmain.d</span><br><span class="line">│   │   └── bootmain.o</span><br><span class="line">│   ├── bootblock.<span class="keyword">asm</span></span><br><span class="line">│   ├── bootblock.o</span><br><span class="line">│   ├── bootblock.out</span><br><span class="line">│   ├── kern</span><br><span class="line">│   │   ├── debug</span><br><span class="line">│   │   │   ├── kdebug.d</span><br><span class="line">│   │   │   ├── kdebug.o</span><br><span class="line">│   │   │   ├── kmonitor.d</span><br><span class="line">│   │   │   ├── kmonitor.o</span><br><span class="line">│   │   │   ├── panic.d</span><br><span class="line">│   │   │   └── panic.o</span><br><span class="line">│   │   ├── driver</span><br><span class="line">│   │   │   ├── clock.d</span><br><span class="line">│   │   │   ├── clock.o</span><br><span class="line">│   │   │   ├── console.d</span><br><span class="line">│   │   │   ├── console.o</span><br><span class="line">│   │   │   ├── intr.d</span><br><span class="line">│   │   │   ├── intr.o</span><br><span class="line">│   │   │   ├── picirq.d</span><br><span class="line">│   │   │   └── picirq.o</span><br><span class="line">│   │   ├── init</span><br><span class="line">│   │   │   ├── entry.d</span><br><span class="line">│   │   │   ├── entry.o</span><br><span class="line">│   │   │   ├── init.d</span><br><span class="line">│   │   │   └── init.o</span><br><span class="line">│   │   ├── libs</span><br><span class="line">│   │   │   ├── readline.d</span><br><span class="line">│   │   │   ├── readline.o</span><br><span class="line">│   │   │   ├── stdio.d</span><br><span class="line">│   │   │   └── stdio.o</span><br><span class="line">│   │   ├── mm</span><br><span class="line">│   │   │   ├── default_pmm.d</span><br><span class="line">│   │   │   ├── default_pmm.o</span><br><span class="line">│   │   │   ├── pmm.d</span><br><span class="line">│   │   │   └── pmm.o</span><br><span class="line">│   │   └── trap</span><br><span class="line">│   │       ├── trap.d</span><br><span class="line">│   │       ├── trapentry.d</span><br><span class="line">│   │       ├── trapentry.o</span><br><span class="line">│   │       ├── trap.o</span><br><span class="line">│   │       ├── vectors.d</span><br><span class="line">│   │       └── vectors.o</span><br><span class="line">│   ├── kernel.<span class="keyword">asm</span></span><br><span class="line">│   ├── kernel_nopage.<span class="keyword">asm</span></span><br><span class="line">│   ├── kernel_nopage.sym</span><br><span class="line">│   ├── kernel.sym</span><br><span class="line">│   ├── libs</span><br><span class="line">│   │   ├── printfmt.d</span><br><span class="line">│   │   ├── printfmt.o</span><br><span class="line">│   │   ├── <span class="built_in">string</span>.d</span><br><span class="line">│   │   └── <span class="built_in">string</span>.o</span><br><span class="line">│   └── sign</span><br><span class="line">│       └── tools</span><br><span class="line">│           ├── sign.d</span><br><span class="line">│           └── sign.o</span><br><span class="line">└── tools</span><br><span class="line">    ├── boot.ld</span><br><span class="line">    ├── function.mk</span><br><span class="line">    ├── gdbinit</span><br><span class="line">    ├── grade.sh</span><br><span class="line">    ├── kernel.ld</span><br><span class="line">    ├── kernel_nopage.ld</span><br><span class="line">    ├── sign.c</span><br><span class="line">    └── <span class="built_in">vector</span>.c</span><br><span class="line"></span><br><span class="line"><span class="number">24</span> directories, <span class="number">108</span> files</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="任务"><a href="#任务" class="headerlink" title="任务"></a>任务</h3><p>重点是实现init_memmap/ alloc_pages/ free_pages这三个函数。当完成物理内存页管理初始化工作后，计算机系统的内存布局如下图所示：</p>
+<p><img src="/2021/06/17/ucore_lab2_%E7%90%86%E8%AE%BA/image003.png" alt="img"> </p>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong s>
+              本博客所有文章除特别声明外，均采用 <a href="https://www.apache.org/licenses/LICENSE-2.0.html" rel="external nofollow"
+                target="_blank">Apache License 2.0</a> 许可协议。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://drag0nf1y.github.io/2021/06/17/ucore_lab2_%E7%90%86%E8%AE%BA/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux-%E5%86%85%E6%A0%B8/" rel="tag">linux 内核</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ucore/" rel="tag">ucore</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+      <a href="/2021/06/21/ucore_lab2_%E5%AE%9E%E9%AA%8C/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            ucore_lab2_实验
+          
+        </div>
+      </a>
+    
+    
+      <a href="/2021/06/15/ucore_lab1_%E5%AE%9E%E9%AA%8C/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">ucore_lab1_实验</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: '',
+        app_key: '',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'mp',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2021
+        Drag0nf1y
+      </li>
+      <li>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+    <div class="to_top">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+      </div>
+    </main>
+      <aside class="sidebar">
+        <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.svg" alt="Drag0nf1y"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives/">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/">标签</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E7%A0%94%E7%A9%B6/">研究</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about/">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="Search">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+      </aside>
+      <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>请我喝杯咖啡吧~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+      
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script src="/js/share.js"></script>
+
+
+
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+
+
+
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer:'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto',
+    onClick: (e) => {
+      $('.toc-link').removeClass('is-active-link');
+      $(`a[href=${e.target.hash}]`).addClass('is-active-link');
+      $(e.target.hash).scrollIntoView();
+      return false;
+    }
+  });
+</script>
+
+
+<script>
+  var ayerConfig = {
+    mathjax: false
+  }
+</script>
+
+
+<script src="/js/ayer.js"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+  </div>
+</body>
+
+</html>

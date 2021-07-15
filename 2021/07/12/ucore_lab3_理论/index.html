@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="description" content="Drag0nf1y" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    ucore_lab3_理论 |  Drag0nf1y
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="/favicon.ico" />
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+<script src="/js/pace.min.js"></script>
+
+
+  
+
+  
+
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content">
+      <section class="outer">
+  <article id="post-ucore_lab3_理论" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  ucore_lab3_理论
+</h1>
+  
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2021/07/12/ucore_lab3_%E7%90%86%E8%AE%BA/" class="article-date">
+  <time datetime="2021-07-12T09:17:42.371Z" itemprop="datePublished">2021-07-12</time>
+</a>
+      
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a> / <a class="article-category-link" href="/categories/linux/ucore/">ucore</a>
+  </div>
+
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">9.1k字</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">32分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+      <h1 id="ucore-lab3-理论：虚拟内存管理"><a href="#ucore-lab3-理论：虚拟内存管理" class="headerlink" title="ucore_lab3_理论：虚拟内存管理"></a>ucore_lab3_理论：虚拟内存管理</h1><p>本次实验是在实验二的基础上，<strong>借助于页表机制和实验一中涉及的中断异常处理机制</strong>，完<strong>成Page Fault异常处理</strong>和<strong>FIFO页替换算法</strong>的实现。实验原理最大的区别是在设计了如何在磁盘上缓存内存页，从而能够支持虚存管理，提供一个比实际物理内存空间“更大”的虚拟内存空间给系统使用。</p>
+<h2 id="基本原理概述"><a href="#基本原理概述" class="headerlink" title="基本原理概述"></a>基本原理概述</h2><p>什么是虚拟内存？简单地说是指<strong>程序员或CPU“看到”的内存</strong>。但有几点需要注意：</p>
+<ol>
+<li>虚拟内存单元不一定有实际的物理内存单元对应，即实际的物理内存单元可能不存在；</li>
+<li>如果虚拟内存单元对应有实际的物理内存单元，那二者的地址一般是不相等的；</li>
+<li>通过操作系统实现的某种内存映射可建立虚拟内存与物理内存的对应关系，使得程序员或CPU访问的虚拟内存地址会自动转换为一个物理内存地址。</li>
+</ol>
+<p>那么这个“虚拟”的作用或意义在哪里体现呢？在操作系统中，虚拟内存其实包含多个虚拟层次，在不同的层次体现了不同的作用。首先，在有了分页机制后，程序员或CPU“看到”的地址已经不是实际的物理地址了，这已经有一层<strong>虚拟化，我们可简称为内存地址虚拟化</strong>。有了内存地址虚拟化，我们就可以通过设置页表项来限定软件运行时的访问空间，确保软件运行不越界，完成内存访问保护的功能。</p>
+<p>通过内存地址虚拟化，可以使得软件在没有访问某虚拟内存地址时不分配具体的物理内存，而只有在实际访问某虚拟内存地址时，操作系统再动态地分配物理内存，建立虚拟内存到物理内存的页映射关系，这种技术称为<strong>按需分页</strong>（demand paging）。把不经常访问的数据所占的内存空间临时写到硬盘上，这样可以腾出更多的空闲内存空间给经常访问的数据；当CPU访问到不经常访问的数据时，再把这些数据从硬盘读入到内存中，这种技术称为<strong>页换入换出（</strong>page　swap in/out）。这种内存管理技术给了程序员更大的内存“空间”，从而可以让更多的程序在内存中并发运行。</p>
+<h2 id="lab3-执行流程"><a href="#lab3-执行流程" class="headerlink" title="lab3 执行流程"></a>lab3 执行流程</h2><p>lab3 与之前的 lab 的不同之处，lab3 中有的三个新函数 vmm_init、ide_init 和 swap_init（都在 kern_init 下）。</p>
+<ul>
+<li>vmm_int：检查我们的练习 1 是否正确实现，为了表述不在物理内存中的 “合法” 虚拟页，需要有数据结构来描述这样的页，为此 ucore 建立了 mm_struct 和 vma_struct 数据结构，假定我们已经描述好了这样的 “合法” 虚拟页，当 ucore 访问这些 “合法” 虚拟页时，会由于没有虚实地址映射而产生页访问异常。如果我们正确实现了练习 1，则 do_pgfault 函数会申请一个空闲物理页，并建立好虚实映射关系，从而使得这样的 “合法” 虚拟页有实际的物理页帧对应。这样练习 1 就算完成了。</li>
+<li>ide_init：完成对用于页换入换出的硬盘（简称 swap 硬盘）的初始化工作。完成初始化之后内核就可以对 swap 进行读写</li>
+<li>swap_init：首先建立 swap_manager，swap_manager 是完成页面替换过程的主要功能模块，其中包含了页面置换算法的实现。然后会进一步调用执行 check_swap 函数在内核中分配一些页，模拟对这些页的访问，这会产生页访问异常。如果我们正确实现了练习 2，就可通过 do_pgfault 来调用 swap_map_swappable 函数来查询这些页的访问情况并间接调用实现页面置换算法的相关函数，把 “不常用” 的页换出到磁盘上。</li>
+</ul>
+<p>ucore在实现上述技术时，需要解决三个关键问题：</p>
+<ol>
+<li>当程序运行中访问内存产生<strong>page fault异常</strong>时，如何判定这个引起异常的虚拟地址内存访问是越界、写只读页的“非法地址”访问还是由于数据被临时换出到磁盘上或还没有分配内存的“合法地址”访问？</li>
+<li>何时进行请求调页/页换入换出处理？</li>
+<li>如何在现有ucore的基础上实现页替换算法？</li>
+</ol>
+<h2 id="相关的数据结构和函数"><a href="#相关的数据结构和函数" class="headerlink" title="相关的数据结构和函数"></a>相关的数据结构和函数</h2><p>对于第一个问题的出现，在于实验二中有关内存的数据结构和相关操作都是直接针对实际存在的资源–物理内存空间的管理，没有从一般应用程序对内存的“需求”考虑，即需要有相关的数据结构和操作来体现一般应用程序对虚拟内存的“需求”。一般应用程序的对虚拟内存的“需求”与物理内存空间的“供给”没有直接的对应关系，ucore是通过page fault异常处理来间接完成这二者之间的衔接。</p>
+<p>page_fault函数不知道哪些是“合法”的虚拟页，原因是ucore还缺少一定的数据结构来描述这种不在物理内存中的“合法”虚拟页。为此ucore通过建立mm_struct和vma_struct数据结构，描述了ucore模拟应用程序运行所需的合法内存空间。当访问内存产生page fault异常时，可获得访问的内存的方式（读或写）以及具体的虚拟内存地址，这样ucore就可以查询此地址，看是否属于vma_struct数据结构中描述的合法地址范围中，如果在，则可根据具体情况进行请求调页/页换入换出处理（这就是练习2涉及的部分）；如果不在，则报错。mm_struct和vma_struct数据结构结合页表表示虚拟地址空间和物理地址空间的示意图如下所示：</p>
+<p><img src="/2021/07/12/ucore_lab3_%E7%90%86%E8%AE%BA/image001.png" alt="虚拟地址空间和物理地址空间的示意图"></p>
+<p>在ucore中描述应用程序对虚拟内存“需求”的数据结构是vma_struct（定义在vmm.h中），以及针对vma_struct的函数操作。这里把一个vma_struct结构的变量简称为vma变量。vma_struct的定义如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">vma_struct</span> &#123;</span></span><br><span class="line">    <span class="comment">// the set of vma using the same PDT</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">mm_struct</span> *<span class="title">vm_mm</span>;</span></span><br><span class="line">    <span class="keyword">uintptr_t</span> vm_start; <span class="comment">// start addr of vma</span></span><br><span class="line">    <span class="keyword">uintptr_t</span> vm_end; <span class="comment">// end addr of vma</span></span><br><span class="line">    <span class="keyword">uint32_t</span> vm_flags; <span class="comment">// flags of vma</span></span><br><span class="line">    <span class="comment">//linear list link which sorted by start addr of vma</span></span><br><span class="line">    <span class="keyword">list_entry_t</span> list_link;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>vm_start和vm_end描述了一个连续地址的虚拟内存空间的起始位置和结束位置，这两个值都应该是PGSIZE 对齐的，而且描述的是一个合理的地址空间范围（即严格确保 vm_start &lt; vm_end的关系）；list_link是一个双向链表，按照从小到大的顺序把一系列用vma_struct表示的虚拟内存空间链接起来，并且还要求这些链起来的vma_struct应该是不相交的，即vma之间的地址空间无交集；vm_flags表示了这个虚拟内存空间的属性，目前的属性包括：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> VM_READ 0x00000001 <span class="comment">//只读</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> VM_WRITE 0x00000002 <span class="comment">//可读写</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> VM_EXEC 0x00000004 <span class="comment">//可执行</span></span></span><br></pre></td></tr></table></figure>
+
+<p>vm_mm是一个指针，指向一个比vma_struct更高的抽象层次的数据结构mm_struct，这里把一个mm_struct结构的变量简称为mm变量。这个数据结构表示了包含所有虚拟内存空间的共同属性，具体定义如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">mm_struct</span> &#123;</span></span><br><span class="line">    <span class="comment">// linear list link which sorted by start addr of vma</span></span><br><span class="line">    <span class="keyword">list_entry_t</span> mmap_list;</span><br><span class="line">    <span class="comment">// current accessed vma, used for speed purpose</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">vma_struct</span> *<span class="title">mmap_cache</span>;</span></span><br><span class="line">    <span class="keyword">pde_t</span> *pgdir; <span class="comment">// the PDT of these vma</span></span><br><span class="line">    <span class="keyword">int</span> map_count; <span class="comment">// the count of these vma</span></span><br><span class="line">    <span class="keyword">void</span> *sm_priv; <span class="comment">// the private data for swap manager</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>mmap_list是双向链表头，链接了所有属于同一页目录表的虚拟内存空间，mmap_cache是指向当前正在使用的虚拟内存空间，由于操作系统执行的“局部性”原理，当前正在用到的虚拟内存空间在接下来的操作中可能还会用到，这时就不需要查链表，而是直接使用此指针就可找到下一次要用到的虚拟内存空间。由于mmap_cache 的引入，可使得 mm_struct 数据结构的查询加速 30% 以上。pgdir 所指向的就是 mm_struct数据结构所维护的页表。通过访问pgdir可以查找某虚拟地址对应的页表项是否存在以及页表项的属性等。map_count记录mmap_list 里面链接的 vma_struct的个数。sm_priv指向用来链接记录页访问情况的链表头，这建立了mm_struct和后续要讲到的swap_manager之间的联系。</p>
+<p>涉及vma_struct的操作函数也比较简单，主要包括三个：</p>
+<ul>
+<li>vma_create–创建vma</li>
+<li>insert_vma_struct–插入一个vma</li>
+<li>find_vma–查询vma。</li>
+</ul>
+<p>vma_create函数根据输入参数vm_start、vm_end、vm_flags来创建并初始化描述一个虚拟内存空间的vma_struct结构变量。insert_vma_struct函数完成把一个vma变量按照其空间位置[vma-&gt;vm_start,vma-&gt;vm_end]从小到大的顺序插入到所属的mm变量中的mmap_list双向链表中。find_vma根据输入参数addr和mm变量，查找在mm变量中的mmap_list双向链表中某个vma包含此addr，即vma-&gt;vm_start&lt;=addr end。这三个函数与后续讲到的page fault异常处理有紧密联系。</p>
+<p>涉及mm_struct的操作函数比较简单，只有mm_create和mm_destroy两个函数，从字面意思就可以看出是是完成mm_struct结构的变量创建和删除。在mm_create中用kmalloc分配了一块空间，所以在mm_destroy中也要对应进行释放。在ucore运行过程中，会产生描述虚拟内存空间的vma_struct结构，所以在mm_destroy中也要进对这些mmap_list中的vma进行释放。</p>
+<h2 id="Page-fault-异常处理机制"><a href="#Page-fault-异常处理机制" class="headerlink" title="Page fault 异常处理机制"></a>Page fault 异常处理机制</h2><p>实现虚存管理的一个关键是page fault异常处理，其过程中主要涉及到函数 <code>-- do_pgfault</code>的具体实现。比如，在程序的执行过程中由于某种原因（页框不存在/写只读页等）而使 CPU 无法最终访问到相应的物理内存单元，即<strong>无法完成从虚拟地址到物理地址映射</strong>时，CPU 会产生一次页访问异常，从而需要进行相应的页访问异常的中断服务例程（进入中断，特权升级）。这个页访问异常处理的时机被操作系统充分利用来完成虚存管理，即实现“<strong>按需调页”/“页换入换出”处理</strong>的执行时机。（保存上下文）当相关处理完成后，页访问异常服务例程会返回到产生异常的指令处重新执行（恢复现场继续执行），使得应用软件可以继续正常运行下去。</p>
+<p>具体而言，当启动分页机制以后，如果一条指令或数据的虚拟地址所对应的物理页框不在内存中或者访问的类型有错误（比如写一个只读页或用户态程序访问内核态的数据等），就会发生页访问异常。产生<strong>页访问异常的原因</strong>主要有：</p>
+<ul>
+<li>目标页帧不存在（页表项全为0，即该线性地址与物理地址尚未建立映射或者已经撤销)；</li>
+<li>相应的物理页帧不在内存中（页表项非空，但Present标志位=0，比如在swap分区或磁盘文件上)，这在本次实验中会出现，我们将在下面介绍换页机制实现时进一步讲解如何处理；</li>
+<li>不满足访问权限(此时页表项P标志=1，但低权限的程序试图访问高权限的地址空间，或者有程序试图写只读页面).</li>
+</ul>
+<p>当出现上面情况之一，那么就会产生页面page fault（#PF）异常。<strong>CPU会把产生异常的线性地址存储在CR2中，并且把表示页访问异常类型的值（简称页访问异常错误码，errorCode）保存在中断栈中。</strong></p>
+<blockquote>
+<p>[提示]页访问异常错误码有32位。位0为１表示对应物理页不存在；位１为１表示写异常（比如写了只读页；位２为１表示访问权限异常（比如用户态程序访问内核空间的数据）</p>
+<p>[提示]　<strong>CR2是页故障线性地址寄存器</strong>，保存最后一次出现页故障的全32位线性地址。CR2用于发生页异常时报告出错信息。当发生页异常时，处理器把引起页异常的线性地址保存在CR2中。操作系统中对应的中断服务例程可以检查CR2的内容，从而查出线性地址空间中的哪个页引起本次异常。</p>
+</blockquote>
+<p>产生页访问异常后，CPU硬件和软件都会做一些事情来应对此事。首先页访问异常也是一种异常，所以针对一般异常的硬件处理操作是必须要做的，即<strong>CPU在当前内核栈保存当前被打断的程序现场，即依次压入当前被打断程序使用的EFLAGS，CS，EIP，errorCode</strong>；由于页访问异常的中断号是0xE，CPU把异常中断号0xE对应的中断服务例程的地址（vectors.S中的标号vector14处）加载到CS和EIP寄存器中，开始执行中断服务例程。这时ucore开始处理异常中断，首先需要保存硬件没有保存的寄存器。在vectors.S中的标号vector14处先把中断号压入内核栈，然后再在<code>trapentry.S</code>中的标号<code>__alltraps</code>处把DS、ES和其他通用寄存器都压栈。自此，被打断的程序执行现场（context）被保存在内核栈中。接下来，在trap.c的trap函数开始了中断服务例程的处理流程，大致调用关系为：</p>
+<blockquote>
+<p>trap–&gt; trap_dispatch–&gt;pgfault_handler–&gt;do_pgfault</p>
+</blockquote>
+<p>下面需要具体分析一下do_pgfault函数。do_pgfault的调用关系如下图所示：</p>
+<p>图 do_pgfault的调用关系图</p>
+<p><img src="/2021/07/12/ucore_lab3_%E7%90%86%E8%AE%BA/image002.png" alt="image"></p>
+<p>产生页访问异常后，CPU把引起页访问异常的线性地址装到寄存器CR2中，并给出了出错码errorCode，说明了页访问异常的类型。ucore　OS会把这个值保存在<code>struct trapframe</code> 中<code>tf_err</code>成员变量中。而中断服务例程会调用页访问异常处理函数<code>do_pgfault</code>进行具体处理。这里的页访问异常处理是实现按需分页、页换入换出机制的关键之处。</p>
+<p>ucore中<code>do_pgfault</code>函数是完成页访问异常处理的主要函数，它<strong>根据从CPU的控制寄存器CR2中获取的页访问异常的物理地址以及根据errorCode的错误类型来查找此地址是否在某个VMA的地址范围内以及是否满足正确的读写权限</strong>，如果在此范围内并且权限也正确，这认为这是一次合法访问，但没有建立虚实对应关系。所以需要分配一个空闲的内存页，并修改页表完成虚地址到物理地址的映射，刷新TLB，然后调用iret中断，返回到产生页访问异常的指令处重新执行此指令。如果该虚地址不在某VMA范围内，则认为是一次非法访问。</p>
+<h2 id="页面置换"><a href="#页面置换" class="headerlink" title="页面置换"></a>页面置换</h2><h3 id="页面替换算法"><a href="#页面替换算法" class="headerlink" title="页面替换算法"></a>页面替换算法</h3><p>操作系统为何要进行页面置换呢？这是由于操作系统给用户态的应用程序提供了一个虚拟的“大容量”内存空间，而实际的物理内存空间又没有那么大。所以<strong>操作系统就就“瞒着”应用程序，只把应用程序中“常用”的数据和代码放在物理内存中，而不常用的数据和代码放在了硬盘这样的存储介质上</strong>。如果应用程序访问的是“常用”的数据和代码，那么操作系统已经放置在内存中了，不会出现什么问题。但当应用程序访问它认为应该在内存中的的数据或代码时，如果这些数据或代码不在内存中，则根据上一小节的介绍，会产生页访问异常。这时，操作系统必须能够应对这种页访问异常，即尽快把应用程序当前需要的数据或代码放到内存中来，然后重新执行应用程序产生异常的访存指令。如果在把硬盘中对应的数据或代码调入内存前，操作系统发现物理内存已经没有空闲空间了，这时操作系统必须把它认为“不常用”的页换出到磁盘上去，以腾出内存空闲空间给应用程序所需的数据或代码。<strong>需要时换入。</strong></p>
+<p>操作系统迟早会碰到没有内存空闲空间而必须要置换出内存中某个“不常用”的页的情况。如何判断内存中哪些是“常用”的页，哪些是“不常用”的页，把“常用”的页保持在内存中，在物理内存空闲空间不够的情况下，把“不常用”的页置换到硬盘上就是页替换算法着重考虑的问题。容易理解，一个好的页替换算法会导致页访问异常次数少，也就意味着访问硬盘的次数也少，从而使得应用程序执行的效率就高。本次实验涉及的页替换算法（包括扩展练习）：</p>
+<ul>
+<li>先进先出(First In First Out, FIFO)页替换算法：<strong>该算法总是淘汰最先进入内存的页，即选择在内存中驻留时间最久的页予以淘汰</strong>。只需把一个应用程序在执行过程中已调入内存的页按先后次序链接成一个队列，队列头指向内存中驻留时间最久的页，队列尾指向最近被调入内存的页。这样需要淘汰页时，从队列头很容易查找到需要淘汰的页。FIFO算法只是在应用程序按线性顺序访问地址空间时效果才好，否则效率不高。因为那些常被访问的页，往往在内存中也停留得最久，结果它们因变“老”而不得不被置换出去。<strong>FIFO算法的另一个缺点是，它有一种异常现象（Belady现象），即在增加放置页的页帧的情况下，反而使页访问异常次数增多。</strong></li>
+<li>时钟（Clock）页替换算法：是LRU算法（LRU（Least recently used，最近最少使用）算法根据数据的历史访问记录来进行淘汰数据，其核心思想是”如果数据最近被访问过，那么将来被访问的几率也更高”。 ）的一种近似实现。时钟页替换算法把各个页面组织成环形链表的形式，类似于一个钟的表面。然后把一个<strong>指针（简称当前指针）指向最老的那个页面，即最先进来的那个页面。</strong>另外，时钟算法需要在页表项（PTE）中设置了一位访问位来表示此页表项对应的页当前是否被访问过。当该页被访问时，CPU中的MMU硬件将把访问位置“1”。当操作系统需要淘汰页时，对当前指针指向的页所对应的页表项进行查询，如果访问位为“0”，则淘汰该页，如果该页被写过，则还要把它换出到硬盘上；如果访问位为“1”，则将该页表项的此位置“0”，继续访问下一个页。该算法近似地体现了LRU的思想，且易于实现，开销少，需要硬件支持来设置访问位。<strong>时钟页替换算法在本质上与FIFO算法是类似的，不同之处是在时钟页替换算法中跳过了访问位为1的页。</strong></li>
+<li>改进的时钟（Enhanced Clock）页替换算法：在时钟置换算法中<strong>，淘汰一个页面时只考虑了页面是否被访问过，但在实际情况中，还应考虑被淘汰的页面是否被修改过。因为淘汰修改过的页面还需要写回硬盘，使得其置换代价大于未修改过的页面，所以优先淘汰没有修改的页，减少磁盘操作次数。</strong>改进的时钟置换算法除了考虑页面的访问情况，还需考虑页面的修改情况。即该算法不但希望淘汰的页面是最近未使用的页，而且还希望被淘汰的页是在主存驻留期间其页面内容未被修改过的。这需要为每一页的对应页表项内容中增加一位引用位和一位修改位。当该页被访问时，CPU中的MMU硬件将把访问位置“1”。当该页被“写”时，CPU中的MMU硬件将把修改位置“1”。这样这两位就存在四种可能的组合情况：（0，0）表示最近未被引用也未被修改，首先选择此页淘汰；（0，1）最近未被使用，但被修改，其次选择；（1，0）最近使用而未修改，再次选择；（1，1）最近使用且修改，最后选择。该算法与时钟算法相比，可进一步减少磁盘的I/O操作次数，但为了查找到一个尽可能适合淘汰的页面，可能需要经过多次扫描，增加了算法本身的执行开销。</li>
+</ul>
+<h3 id="页面置换机制"><a href="#页面置换机制" class="headerlink" title="页面置换机制"></a>页面置换机制</h3><p>如果要实现页面置换机制，只考虑页替换算法的设计与实现是远远不够的，还需考虑其他问题：</p>
+<ul>
+<li>哪些页可以被换出？</li>
+<li>一个虚拟的页如何与硬盘上的扇区建立对应关系？</li>
+<li>何时进行换入和换出操作？</li>
+<li>如何设计数据结构以支持页替换算法？</li>
+<li>如何完成页的换入换出操作？</li>
+</ul>
+<p>这些问题在下面会逐一进行分析。注意，在实验三中仅实现了简单的页面置换机制，但现在还没有涉及实验四和实验五才实现的内核线程和用户进程，所以还无法通过内核线程机制实现一个完整意义上的虚拟内存页面置换功能。</p>
+<h4 id="1-可以被换出的页"><a href="#1-可以被换出的页" class="headerlink" title="1. 可以被换出的页"></a>1. 可以被换出的页</h4><p>在操作系统的设计中，一个基本的原则是：并非所有的物理页都可以交换出去的<strong>，只有映射到用户空间且被用户程序直接访问的页面才能被交换，而被内核直接使用的内核空间的页面不能被换出。</strong>这里面的原因是什么呢？操作系统是执行的关键代码，需要保证运行的高效性和实时性，如果在操作系统执行过程中，发生了缺页现象，则操作系统不得不等很长时间（硬盘的访问速度比内存的访问速度慢2~3个数量级），这将导致整个系统运行低效。而且，不难想象，处理缺页过程所用到的内核代码或者数据如果被换出，整个内核都面临崩溃的危险。</p>
+<p>但在实验三实现的ucore中，我们只是实现了换入换出机制，还没有设计用户态执行的程序，所以我们在实验三中仅仅通过执行check_swap函数在内核中分配一些页，模拟对这些页的访问，然后通过do_pgfault来调用swap_map_swappable函数来查询这些页的访问情况并间接调用相关函数，换出“不常用”的页到磁盘上。</p>
+<h4 id="2-虚存中的页与硬盘上的扇区之间的映射关系"><a href="#2-虚存中的页与硬盘上的扇区之间的映射关系" class="headerlink" title="2. 虚存中的页与硬盘上的扇区之间的映射关系"></a>2. 虚存中的页与硬盘上的扇区之间的映射关系</h4><p>如果一个页被置换到了硬盘上，那操作系统如何能简捷来表示这种情况呢？在ucore的设计上，充分利用了页表中的PTE来表示这种情况：当一个PTE用来描述一般意义上的物理页时，显然它应该维护各种权限和映射关系，以及应该有<code>PTE_P</code>标记；但当它用来描述一个被置换出去的物理页时，它被用来维护该物理页与 swap 磁盘上扇区的映射关系，并且该 PTE 不应该由 MMU 将它解释成物理页映射(即没有 PTE_P 标记)，与此同时对应的权限则交由 <code>mm_struct</code> 来维护，当对位于该页的内存地址进行访问的时候，必然导致 page fault，然后ucore能够根据 PTE 描述的 swap 项将相应的物理页重新建立起来，并根据虚存所描述的权限重新设置好 PTE 使得内存访问能够继续正常进行。</p>
+<p>如果一个页（4KB/页）被置换到了硬盘某8个扇区（0.5KB/扇区），该PTE的最低位<code>--present</code>位应该为0 （即 PTE_P 标记为空，表示虚实地址映射关系不存在），接下来的7位暂时保留，可以用作各种扩展；而原来用来表示页帧号的高24位地址，恰好可以用来表示此页在硬盘上的起始扇区的位置（其从第几个扇区开始）。为了在页表项中区别 0 和 swap 分区的映射，将 swap 分区的一个 page 空出来不用，也就是说一个高24位不为0，而最低位为0的PTE表示了一个放在硬盘上的页的起始扇区号（见swap.h中对<code>swap_entry_t的</code>描述）：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">swap_entry_t</span></span><br><span class="line">-------------------------</span><br><span class="line">| offset | reserved | <span class="number">0</span> |</span><br><span class="line">-------------------------</span><br><span class="line"><span class="number">24</span> bits <span class="number">7</span> bits <span class="number">1</span> <span class="built_in">bit</span></span><br></pre></td></tr></table></figure>
+
+<p>考虑到硬盘的最小访问单位是一个扇区，而一个扇区的大小为512（2^8）字节，所以需要8个连续扇区才能放置一个4KB的页。在ucore中，用了第二个IDE硬盘来保存被换出的扇区，根据实验三的输出信息</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">“ide 1: 262144(sectors), 'QEMU HARDDISK'.”</span><br></pre></td></tr></table></figure>
+
+<p>我们可以知道实验三可以保存262144/8=32768个页，即128MB的内存空间。swap 分区的大小是 swapfs_init 里面根据磁盘驱动的接口计算出来的，目前 ucore 里面要求 swap 磁盘至少包含 1000 个 page，并且至多能使用 1&lt;&lt;24 个page。</p>
+<h4 id="3-执行换入换出的时机"><a href="#3-执行换入换出的时机" class="headerlink" title="3. 执行换入换出的时机"></a>3. 执行换入换出的时机</h4><p>在实验三中， <code>check_mm_struct</code>变量这个数据结构表示了目前 ucore认为合法的所有虚拟内存空间集合，而mm中的每个vma表示了一段地址连续的合法虚拟空间。当ucore或应用程序访问地址所在的页不在内存时，就会产生page fault异常，引起调用<code>do_pgfault</code>函数，此函数会判断产<strong>生访问异常的地址属于<code>check_mm_struct</code>某个vma表示的合法虚拟地址空间，且保存在硬盘swap文件中</strong>（即对应的PTE的高24位不为0，而最低位为0），则是执行页换入的时机，将调用swap_in函数完成页面换入。</p>
+<p>换出页面的时机相对复杂一些，针对不同的策略有不同的时机。ucore目前大致有两种策略，即积极换出策略和消极换出策略。积极换出策略是指操作系统周期性地（或在系统不忙的时候）主动把某些认为“不常用”的页换出到硬盘上，从而确保系统中总有一定数量的空闲页存在，这样当需要空闲页时，基本上能够及时满足需求；消极换出策略是指，只是当试图得到空闲页时，发现当前没有空闲的物理页可供分配，这时才开始查找“不常用”页面，并把一个或多个这样的页换出到硬盘上。</p>
+<p>在实验三中的基本练习中，支持上述的第二种情况。对于第一种积极换出策略，即每隔1秒执行一次的实现积极的换出策略，可考虑在扩展练习中实现。对于第二种消极的换出策略，则是在ucore调用<code>alloc_pages</code>函数获取空闲页时，此函数如果发现无法从物理内存页分配器获得空闲页，就会进一步调用swap_out函数换出某页，实现一种消极的换出策略。</p>
+<h4 id="4-页替换算法的数据结构设计"><a href="#4-页替换算法的数据结构设计" class="headerlink" title="4. 页替换算法的数据结构设计"></a>4. 页替换算法的数据结构设计</h4><p>到实验二为止，我们知道目前表示内存中物理页使用情况的变量是基于数据结构Page的全局变量pages数组，pages的每一项表示了计算机系统中一个物理页的使用情况。为了表示物理页可被换出或已被换出的情况，可对Page数据结构进行扩展：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Page</span> &#123;</span>  </span><br><span class="line">……   </span><br><span class="line"><span class="built_in">list</span>\_entry\<span class="keyword">_t</span> pra\_page\_link;   </span><br><span class="line">uintptr\<span class="keyword">_t</span> pra\_vaddr;   </span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p><code>pra_page_link</code>可用来构造按页的第一次访问时间进行排序的一个链表，这个链表的开始表示第一次访问时间最近的页，链表结尾表示第一次访问时间最远的页。当然链表头可以就可设置为<code>pra_list_head（</code>定义在swap_fifo.c中），构造的时机是在page fault发生后，进行<code>do_pgfault</code>函数时。<code>pra_vaddr</code>可以用来记录此物理页对应的虚拟页起始地址。</p>
+<p>当一个物理页 （<code>struct Page</code>） 需要被 swap 出去的时候，首先需要确保它已经分配了一个位于磁盘上的<code>swap page</code>（由连续的8个扇区组成）。这里为了简化设计，在swap_check函数中建立了每个虚拟页唯一对应的swap page，其对应关系设定为：虚拟页对应的PTE的索引值 = swap page的扇区起始位置*8。</p>
+<p>为了实现各种页替换算法，我们设计了一个页替换算法的类框架<code>swap_manager</code>:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">swap_manager</span>  </span></span><br><span class="line"><span class="class">&#123;</span>  </span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *name;  </span><br><span class="line">    <span class="comment">/* Global initialization for the swap manager */</span>  </span><br><span class="line">    <span class="keyword">int</span> (*init) (<span class="keyword">void</span>);  </span><br><span class="line">    <span class="comment">/* Initialize the priv data inside mm_struct */</span>  </span><br><span class="line">    <span class="keyword">int</span> (*init_mm) (struct mm_struct *mm);  </span><br><span class="line">    <span class="comment">/* Called when tick interrupt occured */</span>  </span><br><span class="line">    <span class="keyword">int</span> (*tick_event) (struct mm_struct *mm);  </span><br><span class="line">    <span class="comment">/* Called when map a swappable page into the mm_struct */</span>  </span><br><span class="line">    <span class="keyword">int</span> (*map_swappable) (struct mm_struct *mm, <span class="keyword">uintptr_t</span> addr, struct Page *page, <span class="keyword">int</span> swap_in);   </span><br><span class="line">    <span class="comment">/* When a page is marked as shared, this routine is called to delete the addr entry from the swap manager */</span></span><br><span class="line">    <span class="keyword">int</span> (*set_unswappable) (struct mm_struct *mm, <span class="keyword">uintptr_t</span> addr);  </span><br><span class="line">    <span class="comment">/* Try to swap out a page, return then victim */</span>  </span><br><span class="line">    <span class="keyword">int</span> (*swap_out_victim) (struct mm_struct *mm, struct Page *ptr_page, <span class="keyword">int</span> in_tick);  </span><br><span class="line">    <span class="comment">/* check the page relpacement algorithm */</span>  </span><br><span class="line">    <span class="keyword">int</span> (*check\_swap)(<span class="keyword">void</span>);   </span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>这里关键的两个函数指针是<code>map_swappable</code>和<code>swap_out_vistim</code>，前一个函数用于记录页访问情况相关属性，后一个函数用于挑选需要换出的页。显然第二个函数依赖于第一个函数记录的页访问情况。<code>tick_event</code>函数指针也很重要，结合定时产生的中断，可以实现一种积极的换页策略。</p>
+<h4 id="5-swap-check的检查实现"><a href="#5-swap-check的检查实现" class="headerlink" title="5. swap_check的检查实现"></a>5. swap_check的检查实现</h4><p>下面具体讲述一下实验三中实现置换算法的页面置换的检查执行逻辑，便于大家实现练习2。实验三的检查过程在函数swap_check（kern/mm/swap.c中）中，其大致流程如下。</p>
+<ol>
+<li>调用mm_create建立mm变量，并调用vma_create创建vma变量，设置合法的访问范围为4KB~24KB；</li>
+<li>调用free_page等操作，模拟形成一个只有4个空闲 physical page；并设置了从4KB~24KB的连续5个虚拟页的访问操作；</li>
+<li>设置记录缺页次数的变量pgfault_num=0，执行check_content_set函数，使得起始地址分别对起始地址为0x1000, 0x2000, 0x3000, 0x4000的虚拟页按时间顺序先后写操作访问，由于之前没有建立页表，所以会产生page fault异常，如果完成练习1，则这些从4KB~20KB的4虚拟页会与ucore保存的4个物理页帧建立映射关系；</li>
+<li>然后对虚页对应的新产生的页表项进行合法性检查；</li>
+<li>然后进入测试页替换算法的主体，执行函数check_content_access，并进一步调用到_fifo_check_swap函数，如果通过了所有的assert。这进一步表示FIFO页替换算法基本正确实现；</li>
+<li>最后恢复ucore环境。</li>
+</ol>
+<p>项目组成<br>表 1：实验三文件列表</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">|-- boot</span><br><span class="line">|-- kern</span><br><span class="line">| |-- driver</span><br><span class="line">| | |-- …</span><br><span class="line">| | |-- ide.c</span><br><span class="line">| | \`-- ide.h</span><br><span class="line">| |-- fs</span><br><span class="line">| | |-- fs.h</span><br><span class="line">| | |-- swapfs.c</span><br><span class="line">| | \`-- swapfs.h</span><br><span class="line">| |-- init</span><br><span class="line">| | |-- …</span><br><span class="line">| | \`-- init.c</span><br><span class="line">| |-- mm</span><br><span class="line">| | |-- <span class="keyword">default</span>\_pmm.c</span><br><span class="line">| | |-- <span class="keyword">default</span>\_pmm.h</span><br><span class="line">| | |-- memlayout.h</span><br><span class="line">| | |-- mmu.h</span><br><span class="line">| | |-- pmm.c</span><br><span class="line">| | |-- pmm.h</span><br><span class="line">| | |-- swap.c</span><br><span class="line">| | |-- swap.h</span><br><span class="line">| | |-- swap\_fifo.c</span><br><span class="line">| | |-- swap\_fifo.h</span><br><span class="line">| | |-- vmm.c</span><br><span class="line">| | \`-- vmm.h</span><br><span class="line">| |-- sync</span><br><span class="line">| \`-- trap</span><br><span class="line">| |-- trap.c</span><br><span class="line">| \`-- …</span><br><span class="line">|-- libs</span><br><span class="line">| |-- <span class="built_in">list</span>.h</span><br><span class="line">| \`-- …</span><br><span class="line">\`-- tools</span><br></pre></td></tr></table></figure>
+
+<p>相对与实验二，实验三主要改动如下：</p>
+<ul>
+<li>kern/mm/default_pmm.[ch]：实现基于 struct pmm_manager 类框架的 Fist-Fit 物理内存分配参考实现（分配最小单位为页，即 4096 字节），相关分配页和释放页等实现会间接被 kmalloc/kfree 等函数使用。</li>
+<li>kern/mm/pmm.[ch]：pmm.h 定义物理内存分配类框架 struct pmm_manager。pmm.c 包含了对此物理内存分配类框架的访问，以及与建立、修改、访问页表相关的各种函数实现。在本实验中会用到 kmalloc/kfree 等函数。</li>
+<li>libs/list.h：定义了通用双向链表结构以及相关的查找、插入等基本操作，这是建立基于链表方法的物理内存管理（以及其他内核功能）的基础。在 lab0 文档中有相关描述。其他有类似双向链表需求的内核功能模块可直接使用 list.h 中定义的函数。在本实验中会多次用到插入，删除等操作函数。</li>
+<li>kern/driver/ide.[ch]：定义和实现了内存页 swap 机制所需的磁盘扇区的读写操作支持；在本实验中会涉及通过 swapfs_* 函数间接使用文件中的函数。故了解即可。<br>_</li>
+<li>__kern/fs/*：定义和实现了内存页 swap 机制所需从磁盘读数据到内存页和写内存数据到磁盘上去的函数 swapfs_read/swapfs_write。在本实验中会涉及使用这两个函数。</li>
+<li><em>kern/mm/memlayout.h：修改了 struct Page，增加了两项 pra</em>* 成员结构，其中 pra_page_link 可以用来建立描述各个页访问情况（比如根据访问先后）的链表。在本实验中会涉及使用这两个成员结构，以及 le2page 等宏。</li>
+<li>kern/mm/vmm.[ch]：vmm.h 描述了 mm_struct，vma_struct 等表述可访问的虚存地址访问的一些信息，下面会进一步详细讲解。vmm.c 涉及 mm,vma 结构数据的创建 / 销毁 / 查找 / 插入等函数，这些函数在 check_vma、check_vmm 等中被使用，理解即可。而 page fault 处理相关的 do_pgfault 函数是本次实验需要涉及完成的。</li>
+<li>kern/mm/swap.[ch]：定义了实现页替换算法类框架 struct swap_manager。swap.c 包含了对此页替换算法类框架的初始化、页换入 / 换出等各种函数实现。重点是要理解何时调用 swap_out 和 swap_in 函数。和如何在此框架下连接具体的页替换算法实现。check_swap 函数以及被此函数调用的_fifo_check_swap 函数完成了对本次实验中的练习 2：FIFO 页替换算法基本正确性的检查，可了解，便于知道为何产生错误。<br>_</li>
+<li>_kern/mm/swap_fifo.[ch]：FIFO 页替换算法的基于页替换算法类框架 struct swap_manager 的简化实现，主要被 swap.c 的相关函数调用。重点是_fifo_map_swappable 函数（可用于建立页访问属性和关系，比如访问时间的先后顺序）和_fifo_swap_out_victim 函数（可用于实现挑选出要换出的页），当然换出哪个页需要借助于 fifo_map_swappable 函数建立的某种属性关系，已选出合适的页。</li>
+<li>kern/mm/mmu.h：其中定义了页表项的各种属性位，比如 PTE_P\PET_D\PET_A 等，对于实现扩展实验的 clock 算法会有帮助。</li>
+</ul>
+<p>reference：<br>Link: <a href="http://www.resery.top/2020/08/12/Ucore%20Lab%203/" target="_blank" rel="noopener">http://www.resery.top/2020/08/12/Ucore%20Lab%203/</a></p>
+<p>link: <a href="https://objectkuan.gitbooks.io/ucore-docs/content/lab3/lab3_5_2_page_swapping_principles.html" target="_blank" rel="noopener">https://objectkuan.gitbooks.io/ucore-docs/content/lab3/lab3_5_2_page_swapping_principles.html</a></p>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong s>
+              本博客所有文章除特别声明外，均采用 <a href="https://www.apache.org/licenses/LICENSE-2.0.html" rel="external nofollow"
+                target="_blank">Apache License 2.0</a> 许可协议。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://drag0nf1y.github.io/2021/07/12/ucore_lab3_%E7%90%86%E8%AE%BA/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux-%E5%86%85%E6%A0%B8/" rel="tag">linux 内核</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ucore/" rel="tag">ucore</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+      <a href="/2021/07/15/HA-VMSI%20A%20Lightweight%20Virtual%20Machine%20Isolation%20Approach%20with%20Commodity%20Hardware%20for%20ARM/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            HA-VMSI A Lightweight Virtual Machine Isolation Approach with Commodity Hardware for ARM
+          
+        </div>
+      </a>
+    
+    
+      <a href="/2021/07/12/%E5%AF%84%E5%AD%98%E5%99%A8/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">寄存器</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: '',
+        app_key: '',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'mp',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2021
+        Drag0nf1y
+      </li>
+      <li>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+    <div class="to_top">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+      </div>
+    </main>
+      <aside class="sidebar">
+        <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.svg" alt="Drag0nf1y"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives/">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/">标签</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E7%A0%94%E7%A9%B6/">研究</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about/">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="Search">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+      </aside>
+      <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>请我喝杯咖啡吧~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+      
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script src="/js/share.js"></script>
+
+
+
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+
+
+
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer:'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto',
+    onClick: (e) => {
+      $('.toc-link').removeClass('is-active-link');
+      $(`a[href=${e.target.hash}]`).addClass('is-active-link');
+      $(e.target.hash).scrollIntoView();
+      return false;
+    }
+  });
+</script>
+
+
+<script>
+  var ayerConfig = {
+    mathjax: false
+  }
+</script>
+
+
+<script src="/js/ayer.js"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+  </div>
+</body>
+
+</html>

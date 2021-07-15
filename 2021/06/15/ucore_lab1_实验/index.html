@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="description" content="Drag0nf1y" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    ucore_lab1_实验 |  Drag0nf1y
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="/favicon.ico" />
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+<script src="/js/pace.min.js"></script>
+
+
+  
+
+  
+
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content">
+      <section class="outer">
+  <article id="post-ucore_lab1_实验" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  ucore_lab1_实验
+</h1>
+  
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2021/06/15/ucore_lab1_%E5%AE%9E%E9%AA%8C/" class="article-date">
+  <time datetime="2021-06-15T07:55:54.372Z" itemprop="datePublished">2021-06-15</time>
+</a>
+      
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a> / <a class="article-category-link" href="/categories/linux/ucore/">ucore</a>
+  </div>
+
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">10.7k字</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">55分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+      <h1 id="ucore-lab1-实验"><a href="#ucore-lab1-实验" class="headerlink" title="ucore_lab1_实验"></a>ucore_lab1_实验</h1><blockquote>
+<p>/os_kernel_lab-master/labcodes/lab1$ </p>
+</blockquote>
+<h2 id="练习1"><a href="#练习1" class="headerlink" title="练习1"></a>练习1</h2><p>在此练习中，大家需要通过静态分析代码来了解：</p>
+<ol>
+<li>操作系统镜像文件ucore.img是如何一步一步生成的？(需要比较详细地解释Makefile中每一条相关命令和命令参数的含义，以及说明命令导致的结果)</li>
+<li>一个被系统认为是符合规范的硬盘主引导扇区的特征是什么？</li>
+</ol>
+<h3 id="问题1"><a href="#问题1" class="headerlink" title="问题1"></a>问题1</h3><blockquote>
+<p> 操作系统镜像文件ucore.img是如何一步一步生成的？(需要比较详细地解释Makefile中每一条相关命令和命令参数的含义，以及说明命令导致的结果)</p>
+</blockquote>
+<p>运行<code>make &quot;V=&quot;</code>：主要是编译链接生成ucore.img</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br></pre></td><td class="code"><pre><span class="line">giantbranch@ubuntu:~/Desktop/os_kernel_lab-master/labcodes/lab1$ make <span class="string">"V="</span></span><br><span class="line">+ cc kern/init/init.c</span><br><span class="line">gcc -Ikern/init/ -march=i686 -fno-builtin -fno-PIC -Wall -ggdb -m32 -gstabs -nostdinc  -fno-<span class="built_in">stack</span>-protector -Ilibs/ -Ikern/debug/ -Ikern/driver/ -Ikern/trap/ -Ikern/mm/ -c kern/init/init.c -o obj/kern/init/init.o</span><br><span class="line">kern/init/init.c:<span class="number">95</span>:<span class="number">1</span>: warning: ‘lab1_switch_test’ defined but <span class="keyword">not</span> used [-Wunused-function]</span><br><span class="line"> lab1_switch_test(<span class="keyword">void</span>) &#123;</span><br><span class="line"> ^</span><br><span class="line">+ cc kern/libs/stdio.c</span><br><span class="line">gcc -Ikern/libs/ -march=i686 -fno-builtin -fno-PIC -Wall -ggdb -m32 -gstabs -nostdinc  -fno-<span class="built_in">stack</span>-protector -Ilibs/ -Ikern/debug/ -Ikern/driver/ -Ikern/trap/ -Ikern/mm/ -c kern/libs/stdio.c -o obj/kern/libs/stdio.o</span><br><span class="line">+ cc kern/libs/readline.c</span><br><span class="line">gcc -Ikern/libs/ -march=i686 -fno-builtin -fno-PIC -Wall -ggdb -m32 -gstabs -nostdinc  -fno-<span class="built_in">stack</span>-protector -Ilibs/ -Ikern/debug/ -Ikern/driver/ -Ikern/trap/ -Ikern/mm/ -c kern/libs/readline.c -o obj/kern/libs/readline.o</span><br><span class="line">+ cc kern/debug/panic.c</span><br><span class="line">gcc -Ikern/debug/ -march=i686 -fno-builtin -fno-PIC -Wall -ggdb -m32 -gstabs -nostdinc  -fno-<span class="built_in">stack</span>-protector -Ilibs/ -Ikern/debug/ -Ikern/driver/ -Ikern/trap/ -Ikern/mm/ -c kern/debug/panic.c -o obj/kern/debug/panic.o</span><br><span class="line">kern/debug/panic.c: In function ‘__panic’:</span><br><span class="line">kern/debug/panic.c:<span class="number">27</span>:<span class="number">5</span>: warning: implicit declaration of function ‘print_stackframe’ [-Wimplicit-function-declaration]</span><br><span class="line">     print_stackframe();</span><br><span class="line">     ^</span><br><span class="line">+ cc kern/debug/kdebug.c</span><br><span class="line">gcc -Ikern/debug/ -march=i686 -fno-builtin -fno-PIC -Wall -ggdb -m32 -gstabs -nostdinc  -fno-<span class="built_in">stack</span>-protector -Ilibs/ -Ikern/debug/ -Ikern/driver/ -Ikern/trap/ -Ikern/mm/ -c kern/debug/kdebug.c -o obj/kern/debug/kdebug.o</span><br><span class="line">kern/debug/kdebug.c:<span class="number">251</span>:<span class="number">1</span>: warning: ‘read_eip’ defined but <span class="keyword">not</span> used [-Wunused-function]</span><br><span class="line"> read_eip(<span class="keyword">void</span>) &#123;</span><br><span class="line"> ^</span><br><span class="line">+ cc kern/debug/kmonitor.c</span><br><span class="line">gcc -Ikern/debug/ -march=i686 -fno-builtin -fno-PIC -Wall -ggdb -m32 -gstabs -nostdinc  -fno-<span class="built_in">stack</span>-protector -Ilibs/ -Ikern/debug/ -Ikern/driver/ -Ikern/trap/ -Ikern/mm/ -c kern/debug/kmonitor.c -o obj/kern/debug/kmonitor.o</span><br><span class="line">+ cc kern/driver/clock.c</span><br><span class="line">gcc -Ikern/driver/ -march=i686 -fno-builtin -fno-PIC -Wall -ggdb -m32 -gstabs -nostdinc  -fno-<span class="built_in">stack</span>-protector -Ilibs/ -Ikern/debug/ -Ikern/driver/ -Ikern/trap/ -Ikern/mm/ -c kern/driver/clock.c -o obj/kern/driver/clock.o</span><br><span class="line">+ cc kern/driver/console.c</span><br><span class="line">gcc -Ikern/driver/ -march=i686 -fno-builtin -fno-PIC -Wall -ggdb -m32 -gstabs -nostdinc  -fno-<span class="built_in">stack</span>-protector -Ilibs/ -Ikern/debug/ -Ikern/driver/ -Ikern/trap/ -Ikern/mm/ -c kern/driver/console.c -o obj/kern/driver/console.o</span><br><span class="line">+ cc kern/driver/picirq.c</span><br><span class="line">gcc -Ikern/driver/ -march=i686 -fno-builtin -fno-PIC -Wall -ggdb -m32 -gstabs -nostdinc  -fno-<span class="built_in">stack</span>-protector -Ilibs/ -Ikern/debug/ -Ikern/driver/ -Ikern/trap/ -Ikern/mm/ -c kern/driver/picirq.c -o obj/kern/driver/picirq.o</span><br><span class="line">+ cc kern/driver/intr.c</span><br><span class="line">gcc -Ikern/driver/ -march=i686 -fno-builtin -fno-PIC -Wall -ggdb -m32 -gstabs -nostdinc  -fno-<span class="built_in">stack</span>-protector -Ilibs/ -Ikern/debug/ -Ikern/driver/ -Ikern/trap/ -Ikern/mm/ -c kern/driver/intr.c -o obj/kern/driver/intr.o</span><br><span class="line">+ cc kern/trap/trap.c</span><br><span class="line">gcc -Ikern/trap/ -march=i686 -fno-builtin -fno-PIC -Wall -ggdb -m32 -gstabs -nostdinc  -fno-<span class="built_in">stack</span>-protector -Ilibs/ -Ikern/debug/ -Ikern/driver/ -Ikern/trap/ -Ikern/mm/ -c kern/trap/trap.c -o obj/kern/trap/trap.o</span><br><span class="line">kern/trap/trap.c:<span class="number">14</span>:<span class="number">13</span>: warning: ‘print_ticks’ defined but <span class="keyword">not</span> used [-Wunused-function]</span><br><span class="line"> <span class="keyword">static</span> <span class="keyword">void</span> print_ticks() &#123;</span><br><span class="line">             ^</span><br><span class="line">kern/trap/trap.c:<span class="number">30</span>:<span class="number">26</span>: warning: ‘idt_pd’ defined but <span class="keyword">not</span> used [-Wunused-variable]</span><br><span class="line"> <span class="keyword">static</span> struct pseudodesc idt_pd = &#123;</span><br><span class="line">                          ^</span><br><span class="line">+ cc kern/trap/vectors.S</span><br><span class="line">gcc -Ikern/trap/ -march=i686 -fno-builtin -fno-PIC -Wall -ggdb -m32 -gstabs -nostdinc  -fno-<span class="built_in">stack</span>-protector -Ilibs/ -Ikern/debug/ -Ikern/driver/ -Ikern/trap/ -Ikern/mm/ -c kern/trap/vectors.S -o obj/kern/trap/vectors.o</span><br><span class="line">+ cc kern/trap/trapentry.S</span><br><span class="line">gcc -Ikern/trap/ -march=i686 -fno-builtin -fno-PIC -Wall -ggdb -m32 -gstabs -nostdinc  -fno-<span class="built_in">stack</span>-protector -Ilibs/ -Ikern/debug/ -Ikern/driver/ -Ikern/trap/ -Ikern/mm/ -c kern/trap/trapentry.S -o obj/kern/trap/trapentry.o</span><br><span class="line">+ cc kern/mm/pmm.c</span><br><span class="line">gcc -Ikern/mm/ -march=i686 -fno-builtin -fno-PIC -Wall -ggdb -m32 -gstabs -nostdinc  -fno-<span class="built_in">stack</span>-protector -Ilibs/ -Ikern/debug/ -Ikern/driver/ -Ikern/trap/ -Ikern/mm/ -c kern/mm/pmm.c -o obj/kern/mm/pmm.o</span><br><span class="line">+ cc libs/<span class="built_in">string</span>.c</span><br><span class="line">gcc -Ilibs/ -march=i686 -fno-builtin -fno-PIC -Wall -ggdb -m32 -gstabs -nostdinc  -fno-<span class="built_in">stack</span>-protector -Ilibs/  -c libs/<span class="built_in">string</span>.c -o obj/libs/<span class="built_in">string</span>.o</span><br><span class="line">+ cc libs/printfmt.c</span><br><span class="line">gcc -Ilibs/ -march=i686 -fno-builtin -fno-PIC -Wall -ggdb -m32 -gstabs -nostdinc  -fno-<span class="built_in">stack</span>-protector -Ilibs/  -c libs/printfmt.c -o obj/libs/printfmt.o</span><br><span class="line">+ ld bin/kernel</span><br><span class="line">ld -m    elf_i386 -nostdlib -T tools/kernel.ld -o bin/kernel  obj/kern/init/init.o obj/kern/libs/stdio.o obj/kern/libs/readline.o obj/kern/debug/panic.o obj/kern/debug/kdebug.o obj/kern/debug/kmonitor.o obj/kern/driver/clock.o obj/kern/driver/console.o obj/kern/driver/picirq.o obj/kern/driver/intr.o obj/kern/trap/trap.o obj/kern/trap/vectors.o obj/kern/trap/trapentry.o obj/kern/mm/pmm.o  obj/libs/<span class="built_in">string</span>.o obj/libs/printfmt.o</span><br><span class="line">+ cc boot/bootasm.S</span><br><span class="line">gcc -Iboot/ -march=i686 -fno-builtin -fno-PIC -Wall -ggdb -m32 -gstabs -nostdinc  -fno-<span class="built_in">stack</span>-protector -Ilibs/ -Os -nostdinc -c boot/bootasm.S -o obj/boot/bootasm.o</span><br><span class="line">+ cc boot/bootmain.c</span><br><span class="line">gcc -Iboot/ -march=i686 -fno-builtin -fno-PIC -Wall -ggdb -m32 -gstabs -nostdinc  -fno-<span class="built_in">stack</span>-protector -Ilibs/ -Os -nostdinc -c boot/bootmain.c -o obj/boot/bootmain.o</span><br><span class="line">+ cc tools/sign.c</span><br><span class="line">gcc -Itools/ -g -Wall -O2 -c tools/sign.c -o obj/sign/tools/sign.o</span><br><span class="line">gcc -g -Wall -O2 obj/sign/tools/sign.o -o bin/sign</span><br><span class="line">+ ld bin/bootblock</span><br><span class="line">ld -m    elf_i386 -nostdlib -N -e start -Ttext <span class="number">0x7C00</span> obj/boot/bootasm.o obj/boot/bootmain.o -o obj/bootblock.o</span><br><span class="line">'obj/bootblock.out' size: 484 bytes</span><br><span class="line">build 512 bytes boot sector: 'bin/bootblock' success!</span><br><span class="line">dd <span class="keyword">if</span>=/dev/zero of=bin/ucore.img count=<span class="number">10000</span></span><br><span class="line"><span class="number">10000</span>+<span class="number">0</span> records in</span><br><span class="line"><span class="number">10000</span>+<span class="number">0</span> records out</span><br><span class="line"><span class="number">5120000</span> bytes (<span class="number">5.1</span> MB, <span class="number">4.9</span> MiB) copied, <span class="number">0.0290338</span> s, <span class="number">176</span> MB/s</span><br><span class="line">dd <span class="keyword">if</span>=bin/bootblock of=bin/ucore.img conv=notrunc</span><br><span class="line"><span class="number">1</span>+<span class="number">0</span> records in</span><br><span class="line"><span class="number">1</span>+<span class="number">0</span> records out</span><br><span class="line"><span class="number">512</span> bytes copied, <span class="number">0.00024594</span> s, <span class="number">2.1</span> MB/s</span><br><span class="line">dd <span class="keyword">if</span>=bin/kernel of=bin/ucore.img <span class="built_in">seek</span>=<span class="number">1</span> conv=notrunc</span><br><span class="line"><span class="number">146</span>+<span class="number">1</span> records in</span><br><span class="line"><span class="number">146</span>+<span class="number">1</span> records out</span><br><span class="line"><span class="number">74828</span> bytes (<span class="number">75</span> kB, <span class="number">73</span> KiB) copied, <span class="number">0.000518381</span> s, <span class="number">144</span> MB/s</span><br></pre></td></tr></table></figure>
+
+<p>1-32 行全部都是对 kern / 和 libs / 下的.c 文件进行编译，而具体是那部分导致了执行这些指令呢，具体就是生成 kern 那一步。随便拿一条 1-32 行的执行举例</p>
+<ul>
+<li>cc kern/init/init.c<br>gcc -Ikern/init/ -march=i686 -fno-builtin -fno-PIC -Wall -ggdb -m32 -gstabs -nostdinc  -fno-stack-protector -Ilibs/ -Ikern/debug/ -Ikern/driver/ -Ikern/trap/ -Ikern/mm/ -c kern/init/init.c -o obj/kern/init/init.o<br>可以看到它有多个 - Ikern/* 和 - Ilibs / 而这些定义都是在生成 kernel 那一步进行的。</li>
+</ul>
+<p>33-34 行，也是在生成 kernel 那一步进行的，做的就是链接工作</p>
+<p>35-41 行，就是编译 boot / 和 sign / 下的文件了，对应的也就是生成 bootblock 和生成 sign</p>
+<p>42-43 行，是在生成 bootblock 那步做的，主要的功能也就是链接</p>
+<p>45 行，是利用 sign 工具将 bin/bootblock.out 文件转化为 512 字节的 bin/bootblock 文件，并将 bin/bootblock 的最后两个字节设置为 0x55AA</p>
+<p>46 行，是给 ucore.img 分配空间，在生成 ucore.img 那步进行</p>
+<p>47-48 行，是把 bootblock 和 kernal 复制到 ucore.img 的第一块和第二块去</p>
+<p>整体步骤就是</p>
+<p>编译 libs 和 kern 目录下所有的.c 和.S 文件，生成.o 文件，并链接得到 bin/kernel 文件<br>编译 boot 目录下所有的.c 和.S 文件，生成.o 文件，并链接得到 bin/bootblock.out 文件<br>编译 tools/sign.c 文件，得到 bin/sign 文件<br>利用 bin/sign 工具将 bin/bootblock.out 文件转化为 512 字节的 bin/bootblock 文件，并将 bin/bootblock 的最后两个字节设置为 0x55AA<br>为 bin/ucore.img 分配 5000MB 的内存空间，并将 bin/bootblock 复制到 bin/ucore.img 的第一个 block，紧接着将 bin/kernel 复制到 bin/ucore.img 第二个 block 开始的位置</p>
+<blockquote>
+<p>Author: Resery<br>Link: <a href="http://www.resery.top/2020/08/07/Ucore%20Lab%201%20Exercise/" target="_blank" rel="noopener">http://www.resery.top/2020/08/07/Ucore%20Lab%201%20Exercise/</a></p>
+</blockquote>
+<p><code>Makefile</code>的内容：</p>
+<h4 id="1-1-1-设置环境和编译选项"><a href="#1-1-1-设置环境和编译选项" class="headerlink" title="1.1.1 设置环境和编译选项"></a>1.1.1 设置环境和编译选项</h4><figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br></pre></td><td class="code"><pre><span class="line">PROJ	:= challenge</span><br><span class="line">EMPTY	:=</span><br><span class="line">SPACE	:= <span class="variable">$(EMPTY)</span> <span class="variable">$(EMPTY)</span></span><br><span class="line">SLASH	:= /</span><br><span class="line"></span><br><span class="line">V       := @</span><br><span class="line"><span class="comment">#need llvm/cang-3.5+</span></span><br><span class="line"><span class="comment">#USELLVM := 1</span></span><br><span class="line"><span class="comment"># try to infer the correct GCCPREFX</span></span><br><span class="line"><span class="keyword">ifndef</span> GCCPREFIX</span><br><span class="line">GCCPREFIX := <span class="variable">$(<span class="built_in">shell</span> <span class="built_in">if</span> i386-elf-objdump -i 2&gt;&amp;1 | grep '^elf32-i386$$' &gt;/dev/null 2&gt;&amp;1; \</span></span><br><span class="line"><span class="variable">	then echo 'i386-elf-'; \</span></span><br><span class="line"><span class="variable">	elif objdump -i 2&gt;&amp;1 | grep 'elf32-i386' &gt;/dev/null 2&gt;&amp;1; \</span></span><br><span class="line"><span class="variable">	then echo ''; \</span></span><br><span class="line"><span class="variable">	else echo "***" 1&gt;&amp;2; \</span></span><br><span class="line"><span class="variable">	echo "*** Error: Couldn't find an i386-elf version of GCC/binutils." 1&gt;&amp;2; \</span></span><br><span class="line"><span class="variable">	echo "*** Is the directory with i386-elf-gcc in your PATH?" 1&gt;&amp;2; \</span></span><br><span class="line"><span class="variable">	echo "*** If your i386-elf toolchain is installed with a command" 1&gt;&amp;2; \</span></span><br><span class="line"><span class="variable">	echo "*** prefix other than 'i386-elf-', set your GCCPREFIX" 1&gt;&amp;2; \</span></span><br><span class="line"><span class="variable">	echo "*** environment variable to that prefix <span class="built_in">and</span> run 'make' again." 1&gt;&amp;2; \</span></span><br><span class="line"><span class="variable">	echo "*** To turn off this <span class="built_in">error</span>, run 'gmake GCCPREFIX= ...'." 1&gt;&amp;2; \</span></span><br><span class="line"><span class="variable">	echo "***" 1&gt;&amp;2; exit 1; fi)</span></span><br><span class="line"><span class="keyword">endif</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># try to infer the correct QEMU</span></span><br><span class="line"><span class="keyword">ifndef</span> QEMU</span><br><span class="line">QEMU := <span class="variable">$(<span class="built_in">shell</span> <span class="built_in">if</span> which qemu-system-i386 &gt; /dev/null; \</span></span><br><span class="line"><span class="variable">	then echo 'qemu-system-i386'; exit; \</span></span><br><span class="line"><span class="variable">	elif which i386-elf-qemu &gt; /dev/null; \</span></span><br><span class="line"><span class="variable">	then echo 'i386-elf-qemu'; exit; \</span></span><br><span class="line"><span class="variable">	elif which qemu &gt; /dev/null; \</span></span><br><span class="line"><span class="variable">	then echo 'qemu'; exit; \</span></span><br><span class="line"><span class="variable">	else \</span></span><br><span class="line"><span class="variable">	echo "***" 1&gt;&amp;2; \</span></span><br><span class="line"><span class="variable">	echo "*** Error: Couldn't find a working QEMU executable." 1&gt;&amp;2; \</span></span><br><span class="line"><span class="variable">	echo "*** Is the directory containing the qemu binary in your PATH" 1&gt;&amp;2; \</span></span><br><span class="line"><span class="variable">	echo "***" 1&gt;&amp;2; exit 1; fi)</span></span><br><span class="line"><span class="keyword">endif</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># eliminate default suffix rules</span></span><br><span class="line"><span class="section">.SUFFIXES: .c .S .h</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># delete target files if there is an error (or make is interrupted)</span></span><br><span class="line"><span class="section">.DELETE_ON_ERROR:</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># define compiler and flags</span></span><br><span class="line"><span class="keyword">ifndef</span>  USELLVM</span><br><span class="line">HOSTCC		:= gcc</span><br><span class="line">HOSTCFLAGS	:= -g -Wall -O2</span><br><span class="line">CC		:= <span class="variable">$(GCCPREFIX)</span>gcc</span><br><span class="line">CFLAGS	:= -march=i686 -fno-builtin -fno-PIC -Wall -ggdb -m32 -gstabs -nostdinc <span class="variable">$(DEFS)</span></span><br><span class="line">CFLAGS	+= <span class="variable">$(<span class="built_in">shell</span> <span class="variable">$(CC)</span> -fno-stack-protector -E -x c /dev/null &gt;/dev/null 2&gt;&amp;1 &amp;&amp; echo -fno-stack-protector)</span></span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">HOSTCC		:= clang</span><br><span class="line">HOSTCFLAGS	:= -g -Wall -O2</span><br><span class="line">CC		:= clang</span><br><span class="line">CFLAGS	:= -march=i686 -fno-builtin -fno-PIC -Wall -g -m32 -nostdinc <span class="variable">$(DEFS)</span></span><br><span class="line">CFLAGS	+= <span class="variable">$(<span class="built_in">shell</span> <span class="variable">$(CC)</span> -fno-stack-protector -E -x c /dev/null &gt;/dev/null 2&gt;&amp;1 &amp;&amp; echo -fno-stack-protector)</span></span><br><span class="line"><span class="keyword">endif</span></span><br><span class="line"></span><br><span class="line">CTYPE	:= c S</span><br><span class="line"></span><br><span class="line">LD      := <span class="variable">$(GCCPREFIX)</span>ld</span><br><span class="line">LDFLAGS	:= -m <span class="variable">$(<span class="built_in">shell</span> <span class="variable">$(LD)</span> -V | grep elf_i386 2&gt;/dev/null | head -n 1)</span></span><br><span class="line">LDFLAGS	+= -nostdlib</span><br><span class="line"></span><br><span class="line">OBJCOPY := <span class="variable">$(GCCPREFIX)</span>objcopy</span><br><span class="line">OBJDUMP := <span class="variable">$(GCCPREFIX)</span>objdump</span><br><span class="line"></span><br><span class="line">COPY	:= cp</span><br><span class="line">MKDIR   := mkdir -p</span><br><span class="line">MV		:= mv</span><br><span class="line">RM		:= rm -f</span><br><span class="line">AWK		:= awk</span><br><span class="line">SED		:= sed</span><br><span class="line">SH		:= sh</span><br><span class="line">TR		:= tr</span><br><span class="line">TOUCH	:= touch -c</span><br><span class="line"></span><br><span class="line">OBJDIR	:= obj</span><br><span class="line">BINDIR	:= bin</span><br><span class="line"></span><br><span class="line">ALLOBJS	:=</span><br><span class="line">ALLDEPS	:=</span><br><span class="line">TARGETS	:=</span><br><span class="line"></span><br><span class="line"><span class="keyword">include</span> tools/function.mk</span><br><span class="line"></span><br><span class="line">listf_cc = <span class="variable">$(<span class="built_in">call</span> listf,$(1)</span>,<span class="variable">$(CTYPE)</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># for cc</span></span><br><span class="line">add_files_cc = <span class="variable">$(<span class="built_in">call</span> add_files,$(1)</span>,<span class="variable">$(CC)</span>,<span class="variable">$(CFLAGS)</span> $(3),$(2),$(4))</span><br><span class="line">create_target_cc = <span class="variable">$(<span class="built_in">call</span> create_target,$(1)</span>,$(2),$(3),<span class="variable">$(CC)</span>,<span class="variable">$(CFLAGS)</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># for hostcc</span></span><br><span class="line">add_files_host = <span class="variable">$(<span class="built_in">call</span> add_files,$(1)</span>,<span class="variable">$(HOSTCC)</span>,<span class="variable">$(HOSTCFLAGS)</span>,$(2),$(3))</span><br><span class="line">create_target_host = <span class="variable">$(<span class="built_in">call</span> create_target,$(1)</span>,$(2),$(3),<span class="variable">$(HOSTCC)</span>,<span class="variable">$(HOSTCFLAGS)</span>)</span><br><span class="line"></span><br><span class="line">cgtype = <span class="variable">$(<span class="built_in">patsubst</span> %.$(2)</span>,%.$(3),$(1))</span><br><span class="line">objfile = <span class="variable">$(<span class="built_in">call</span> toobj,$(1)</span>)</span><br><span class="line">asmfile = <span class="variable">$(<span class="built_in">call</span> cgtype,$(<span class="built_in">call</span> toobj,$(1)</span>),o,asm)</span><br><span class="line">outfile = <span class="variable">$(<span class="built_in">call</span> cgtype,$(<span class="built_in">call</span> toobj,$(1)</span>),o,out)</span><br><span class="line">symfile = <span class="variable">$(<span class="built_in">call</span> cgtype,$(<span class="built_in">call</span> toobj,$(1)</span>),o,sym)</span><br><span class="line"></span><br><span class="line"><span class="comment"># for match pattern</span></span><br><span class="line">match = <span class="variable">$(<span class="built_in">shell</span> echo $(2)</span> | <span class="variable">$(AWK)</span> '&#123;for(i=1;i&lt;=NF;i++)&#123;if(match(<span class="string">"$(1)"</span>,<span class="string">"^"</span>$<span class="variable">$(i)</span><span class="string">"$$"</span>))&#123;exit 1;&#125;&#125;&#125;'; echo $<span class="variable">$?</span>)</span><br></pre></td></tr></table></figure>
+
+<h4 id="1-1-2-编译kernel"><a href="#1-1-2-编译kernel" class="headerlink" title="1.1.2 编译kernel"></a>1.1.2 编译kernel</h4><figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;</span></span><br><span class="line"><span class="comment"># include kernel/user</span></span><br><span class="line"></span><br><span class="line">INCLUDE	+= libs/</span><br><span class="line"></span><br><span class="line">CFLAGS	+= <span class="variable">$(<span class="built_in">addprefix</span> -I,<span class="variable">$(INCLUDE)</span>)</span></span><br><span class="line"></span><br><span class="line">LIBDIR	+= libs</span><br><span class="line"></span><br><span class="line"><span class="variable">$(<span class="built_in">call</span> add_files_cc,$(<span class="built_in">call</span> listf_cc,<span class="variable">$(LIBDIR)</span>)</span>,libs,)</span><br><span class="line"></span><br><span class="line"><span class="comment"># -------------------------------------------------------------------</span></span><br><span class="line"><span class="comment"># kernel</span></span><br><span class="line"></span><br><span class="line">KINCLUDE	+= kern/debug/ \</span><br><span class="line">			   kern/driver/ \</span><br><span class="line">			   kern/trap/ \</span><br><span class="line">			   kern/mm/</span><br><span class="line"></span><br><span class="line">KSRCDIR		+= kern/init \</span><br><span class="line">			   kern/libs \</span><br><span class="line">			   kern/debug \</span><br><span class="line">			   kern/driver \</span><br><span class="line">			   kern/trap \</span><br><span class="line">			   kern/mm</span><br><span class="line"></span><br><span class="line">KCFLAGS		+= <span class="variable">$(<span class="built_in">addprefix</span> -I,<span class="variable">$(KINCLUDE)</span>)</span></span><br><span class="line"></span><br><span class="line"><span class="variable">$(<span class="built_in">call</span> add_files_cc,$(<span class="built_in">call</span> listf_cc,<span class="variable">$(KSRCDIR)</span>)</span>,kernel,<span class="variable">$(KCFLAGS)</span>)</span><br><span class="line"></span><br><span class="line">KOBJS	= <span class="variable">$(<span class="built_in">call</span> read_packet,kernel libs)</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="1-1-3-创建kernel目标"><a href="#1-1-3-创建kernel目标" class="headerlink" title="1.1.3 创建kernel目标"></a>1.1.3 创建kernel目标</h4><figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># create kernel target</span></span><br><span class="line">kernel = <span class="variable">$(<span class="built_in">call</span> totarget,kernel)</span></span><br><span class="line"></span><br><span class="line"><span class="variable">$(kernel)</span>: tools/kernel.ld</span><br><span class="line"></span><br><span class="line"><span class="variable">$(kernel)</span>: <span class="variable">$(KOBJS)</span></span><br><span class="line">	@echo + ld <span class="variable">$@</span></span><br><span class="line">	<span class="variable">$(V)</span><span class="variable">$(LD)</span> <span class="variable">$(LDFLAGS)</span> -T tools/kernel.ld -o <span class="variable">$@</span> <span class="variable">$(KOBJS)</span></span><br><span class="line">	@<span class="variable">$(OBJDUMP)</span> -S <span class="variable">$@</span> &gt; <span class="variable">$(<span class="built_in">call</span> asmfile,kernel)</span></span><br><span class="line">	@<span class="variable">$(OBJDUMP)</span> -t <span class="variable">$@</span> | <span class="variable">$(SED)</span> '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' &gt; <span class="variable">$(<span class="built_in">call</span> symfile,kernel)</span></span><br><span class="line"></span><br><span class="line"><span class="variable">$(<span class="built_in">call</span> create_target,kernel)</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># -------------------------------------------------------------------</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="1-1-4-创建bootblock"><a href="#1-1-4-创建bootblock" class="headerlink" title="1.1.4 创建bootblock"></a>1.1.4 创建bootblock</h4><p>为了生成bootblock，首先需要生成bootasm.o、bootmain.o、sign</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># create bootblock</span></span><br><span class="line">bootfiles = <span class="variable">$(<span class="built_in">call</span> listf_cc,boot)</span></span><br><span class="line"><span class="variable">$(<span class="built_in">foreach</span> f,<span class="variable">$(bootfiles)</span>,$(<span class="built_in">call</span> cc_compile,<span class="variable">$(f)</span>,<span class="variable">$(CC)</span>,<span class="variable">$(CFLAGS)</span> -Os -nostdinc)</span>)</span><br><span class="line"></span><br><span class="line">bootblock = <span class="variable">$(<span class="built_in">call</span> totarget,bootblock)</span></span><br><span class="line"></span><br><span class="line"><span class="variable">$(bootblock)</span>: <span class="variable">$(<span class="built_in">call</span> toobj,<span class="variable">$(bootfiles)</span>)</span> | <span class="variable">$(<span class="built_in">call</span> totarget,sign)</span></span><br><span class="line">	@echo + ld <span class="variable">$@</span></span><br><span class="line">	<span class="variable">$(V)</span><span class="variable">$(LD)</span> <span class="variable">$(LDFLAGS)</span> -N -e start -Ttext 0x7C00 <span class="variable">$^</span> -o <span class="variable">$(<span class="built_in">call</span> toobj,bootblock)</span></span><br><span class="line">	@<span class="variable">$(OBJDUMP)</span> -S <span class="variable">$(<span class="built_in">call</span> objfile,bootblock)</span> &gt; <span class="variable">$(<span class="built_in">call</span> asmfile,bootblock)</span></span><br><span class="line">	@<span class="variable">$(OBJCOPY)</span> -S -O binary <span class="variable">$(<span class="built_in">call</span> objfile,bootblock)</span> <span class="variable">$(<span class="built_in">call</span> outfile,bootblock)</span></span><br><span class="line">	@<span class="variable">$(<span class="built_in">call</span> totarget,sign)</span> <span class="variable">$(<span class="built_in">call</span> outfile,bootblock)</span> <span class="variable">$(bootblock)</span></span><br><span class="line"></span><br><span class="line"><span class="variable">$(<span class="built_in">call</span> create_target,bootblock)</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># -------------------------------------------------------------------</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="1-1-5-创建sign工具"><a href="#1-1-5-创建sign工具" class="headerlink" title="1.1.5 创建sign工具"></a>1.1.5 创建sign工具</h4><figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># create 'sign' tools</span></span><br><span class="line"><span class="variable">$(<span class="built_in">call</span> add_files_host,tools/sign.c,sign,sign)</span></span><br><span class="line"><span class="variable">$(<span class="built_in">call</span> create_target_host,sign,sign)</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># -------------------------------------------------------------------</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="1-1-6-创建ucore-img"><a href="#1-1-6-创建ucore-img" class="headerlink" title="1.1.6 创建ucore.img"></a>1.1.6 创建ucore.img</h4><p>生成ucore.img首先需要生成：kernel和bootblock.</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># create ucore.img</span></span><br><span class="line">UCOREIMG	:= <span class="variable">$(<span class="built_in">call</span> totarget,ucore.img)</span></span><br><span class="line"></span><br><span class="line"><span class="variable">$(UCOREIMG)</span>: <span class="variable">$(kernel)</span> <span class="variable">$(bootblock)</span></span><br><span class="line">	<span class="variable">$(V)</span>dd if=/dev/zero of=<span class="variable">$@</span> count=10000</span><br><span class="line">	<span class="variable">$(V)</span>dd if=<span class="variable">$(bootblock)</span> of=<span class="variable">$@</span> conv=notrunc</span><br><span class="line">	<span class="variable">$(V)</span>dd if=<span class="variable">$(kernel)</span> of=<span class="variable">$@</span> seek=1 conv=notrunc</span><br><span class="line"></span><br><span class="line"><span class="variable">$(<span class="built_in">call</span> create_target,ucore.img)</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>第 1 行设置了 ucore.img 的目标名：<code>UCOREIMG := $(call totarget,ucore.img)</code>，前面已经知道 totarget 的作用是添加 bin / 前缀，因此 <code>UCOREIMG = bin/ucore.img</code></p>
+</li>
+<li><p>第 3 行指出 <code>bin/ucore.img</code> 依赖于 <code>bin/kernel</code> 和 <code>bin/bootblock</code>：<code>$(UCOREIMG): $(kernel) $(bootblock)</code></p>
+</li>
+<li><p>第 4 行：<code>$(V)dd if=/dev/zero of=$@ count=10000</code>。这里为 <code>bin/ucore.img</code> 分配 10000 个 block 的内存空间，并全部初始化为 0。由于没指定 block 的大小，因此为默认值 512 字节，则总大小为 5000M，约 5G。</p>
+</li>
+</ul>
+<blockquote>
+<p>备注：在类 UNIX 操作系统中，/dev/zero 是一个特殊的文件，当你读它的时候，它会提供无限的空字符 (NULL, ASCII NUL, 0x00)。其中的一个典型用法是用它提供的字符流来覆盖信息，另一个常见用法是产生一个特定大小的空白文件。BSD 就是通过 mmap 把 /dev/zero 映射到虚地址空间实现共享内存的。可以使用 mmap 将 /dev/zero 映射到一个虚拟的内存空间，这个操作的效果等同于使用一段匿名的内存（没有和任何文件相关）。</p>
+</blockquote>
+<ul>
+<li><p>第 5 行：<code>$(V)dd if=$(bootblock) of=$@ conv=notrunc</code>。这里将 <code>bin/bootblock</code> 复制到 <code>bin/ucore.img</code></p>
+</li>
+<li><p>第 6 行：<code>$(V)dd if=$(kernel) of=$@ seek=1 conv=notrunc</code>。继续将 bin/kernel 复制到 bin/ucore.img，这里使用了选项 seek=1，意思是：复制时跳过 <code>bin/ucore.img</code> 的第一个 block，从第 2 个 block 也就是第 512 个字节后面开始拷贝 bin/kernel 的内容。原因是显然的：ucore.img 的第 1 个 block 已经用来保存 bootblock 的内容了。</p>
+</li>
+</ul>
+<p>第 8 行：$(call create_target,ucore.img)，由于只有一个输入参数，因此这里会直接返回。</p>
+<h4 id="1-1-7-关键操作"><a href="#1-1-7-关键操作" class="headerlink" title="1.1.7 关键操作"></a>1.1.7 关键操作</h4><figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">gcc：</span><br><span class="line">	-ggdb  生成可供gdb使用的调试信息。这样才能用qemu+gdb来调试bootloader or ucore。</span><br><span class="line">	-m32  生成适用于32位环境的代码。我们用的模拟硬件是32bit的80386，所以ucore也要是32位的软件。</span><br><span class="line">	-gstabs  生成stabs格式的调试信息。这样要ucore的monitor可以显示出便于开发者阅读的函数调用栈信息</span><br><span class="line">	-nostdinc  不使用标准库。标准库是给应用程序用的，我们是编译ucore内核，OS内核是提供服务的，所以所有的服务要自给自足。</span><br><span class="line">	-fno-stack-protector  不生成用于检测缓冲区溢出的代码。这是for 应用程序的，我们是编译内核，ucore内核好像还用不到此功能。</span><br><span class="line">	-Os  为减小代码大小而进行优化。根据硬件spec，主引导扇区只有512字节，我们写的简单bootloader的最终大小不能大于510字节。</span><br><span class="line">	-I&lt;dir&gt;  添加搜索头文件的路径</span><br><span class="line">	-fno-builtin  除非用__builtin_前缀，否则不进行builtin函数的优化</span><br><span class="line"><span class="section">ld:</span></span><br><span class="line">	-m &lt;emulation&gt;  模拟为i386上的连接器</span><br><span class="line">	-nostdlib  不使用标准库</span><br><span class="line">	-N  设置代码段和数据段均可读写</span><br><span class="line">	-e &lt;entry&gt;  指定入口</span><br><span class="line">	-Ttext  制定代码段开始位置</span><br><span class="line">	-T &lt;scriptfile&gt;  让连接器使用指定的脚本</span><br><span class="line"><span class="section">objcopy:</span></span><br><span class="line">	-S  移除所有符号和重定位信息</span><br><span class="line">	-O &lt;bfdname&gt;  指定输出格式</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="问题2"><a href="#问题2" class="headerlink" title="问题2"></a>问题2</h3><blockquote>
+<p>一个被系统认为是符合规范的硬盘主引导扇区的特征是什么？</p>
+</blockquote>
+<p><img src="/2021/06/15/ucore_lab1_%E5%AE%9E%E9%AA%8C/image-20210527193636924.png" alt="image-20210527193636924"></p>
+<p>从sign.c的代码来看，一个磁盘主引导扇区只有512字节。且<br>第510个（倒数第二个）字节是0x55，<br>第511个（倒数第一个）字节是0xAA。</p>
+<h2 id="练习2"><a href="#练习2" class="headerlink" title="练习2"></a>练习2</h2><p>为了熟悉使用qemu和gdb进行的调试工作，我们进行如下的小练习：</p>
+<ol>
+<li>从CPU加电后执行的第一条指令开始，单步跟踪BIOS的执行。</li>
+<li>在初始化位置0x7c00设置实地址断点,测试断点正常。</li>
+<li>从0x7c00开始跟踪代码运行,将单步跟踪反汇编得到的代码与bootasm.S和 bootblock.asm进行比较。</li>
+<li>自己找一个bootloader或内核中的代码位置，设置断点并进行测试。</li>
+</ol>
+<h3 id="问题1-1"><a href="#问题1-1" class="headerlink" title="问题1"></a>问题1</h3><blockquote>
+<p>1.从CPU加电后执行的第一条指令开始，单步跟踪BIOS的执行。</p>
+</blockquote>
+<h4 id="第一种运行"><a href="#第一种运行" class="headerlink" title="第一种运行"></a>第一种运行</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make lab1-mon</span><br></pre></td></tr></table></figure>
+<p>先看一下这个命令的内容：<code>Makefile</code><br><img src="/2021/06/15/ucore_lab1_%E5%AE%9E%E9%AA%8C/image-20210601202128683.png" alt="image-20210601202128683"><br>将执行的指令记录下来放在q.log</p>
+<p>第二与gdb相结合,gdb命令在tools/lab1init<br><img src="/2021/06/15/ucore_lab1_%E5%AE%9E%E9%AA%8C/image-20210601202213185.png" alt="image-20210601202213185"></p>
+<blockquote>
+<p>-s等待 gdb 连接到端口 1234。<br><code>-S</code> 在启动时不启动 CPU， 需要在 monitor 中输入 ‘c’，才能让qemu继续模拟工作。</p>
+</blockquote>
+<p>执行命令之后弹出三个窗口：pwngdb调试窗口、切qemu调试窗口、加载的系统界面<br>运行指令停在了0x7c00,也就是启动代码的位置（bootloader）</p>
+<p><img src="/2021/06/15/ucore_lab1_%E5%AE%9E%E9%AA%8C/image-20210601200139211.png" alt="image-20210601200139211"></p>
+<p>查看当前的寄存器内容：当前eip的值为：0x7c00</p>
+<p><img src="/2021/06/15/ucore_lab1_%E5%AE%9E%E9%AA%8C/image-20210601202351841.png" alt="image-20210601202351841"></p>
+<p>单步运行：n</p>
+<p><img src="/2021/06/15/ucore_lab1_%E5%AE%9E%E9%AA%8C/image-20210601202626127.png" alt="image-20210601202626127"></p>
+<p>运行到下一条指令cld</p>
+<h4 id="第二种运行"><a href="#第二种运行" class="headerlink" title="第二种运行"></a>第二种运行</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">qemu-system-i386 -S -s bin/ucore.img</span><br></pre></td></tr></table></figure>
+<p>运行后会弹出一个系统界面，但是没有运行</p>
+<p><img src="/2021/06/15/ucore_lab1_%E5%AE%9E%E9%AA%8C/image-20210601203039161.png" alt="image-20210601203039161">另一个终端运行：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">gdb-peda$ <span class="built_in">set</span> architecture i8086</span><br><span class="line">gdb-peda$ target remote :<span class="number">1234</span></span><br></pre></td></tr></table></figure>
+<p>此时查看寄存器信息，会发现停在了第一条指令的位置：CS:IP=0f000:0xfff0</p>
+<p><img src="/2021/06/15/ucore_lab1_%E5%AE%9E%E9%AA%8C/image-20210601203134551.png" alt="image-20210601203134551"></p>
+<p><strong>跳入到bios的启动程序</strong></p>
+<p>在启动代码处下一个断点：b *0x7c00</p>
+<p><img src="/2021/06/15/ucore_lab1_%E5%AE%9E%E9%AA%8C/image-20210601203726173.png" alt="image-20210601203726173"></p>
+<h3 id="问题2-1"><a href="#问题2-1" class="headerlink" title="问题2"></a>问题2</h3><blockquote>
+<p>在初始化位置0x7c00设置实地址断点,测试断点正常。</p>
+</blockquote>
+<p>按照第二种方法，下断点后无异常</p>
+<h3 id="问题3"><a href="#问题3" class="headerlink" title="问题3"></a>问题3</h3><blockquote>
+<p>从0x7c00开始跟踪代码运行,将单步跟踪反汇编得到的代码与bootasm.S和 bootblock.asm进行比较。</p>
+</blockquote>
+<p>首先查看bootasm.S</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;asm.h&gt;</span><br><span class="line"></span><br><span class="line"># Start the CPU: switch to 32-bit protected mode, jump into C.</span><br><span class="line"># The BIOS loads this code from the first sector of the hard disk into</span><br><span class="line"># memory at physical address 0x7c00 and starts executing in real mode</span><br><span class="line"># with %cs&#x3D;0 %ip&#x3D;7c00.</span><br><span class="line"></span><br><span class="line">.set PROT_MODE_CSEG,        0x8                     # kernel code segment selector</span><br><span class="line">.set PROT_MODE_DSEG,        0x10                    # kernel data segment selector</span><br><span class="line">.set CR0_PE_ON,             0x1                     # protected mode enable flag</span><br><span class="line"></span><br><span class="line"># start address should be 0:7c00, in real mode, the beginning address of the running bootloader</span><br><span class="line">.globl start</span><br><span class="line">start:</span><br><span class="line">.code16                                             # Assemble for 16-bit mode</span><br><span class="line">    cli                                             # Disable interrupts</span><br><span class="line">    cld                                             # String operations increment</span><br><span class="line"></span><br><span class="line">    # Set up the important data segment registers (DS, ES, SS).</span><br><span class="line">    xorw %ax, %ax                                   # Segment number zero</span><br><span class="line">    movw %ax, %ds                                   # -&gt; Data Segment</span><br><span class="line">    movw %ax, %es                                   # -&gt; Extra Segment</span><br><span class="line">    movw %ax, %ss                                   # -&gt; Stack Segment</span><br><span class="line"></span><br><span class="line">    # Enable A20:</span><br><span class="line">    #  For backwards compatibility with the earliest PCs, physical</span><br><span class="line">    #  address line 20 is tied low, so that addresses higher than</span><br><span class="line">    #  1MB wrap around to zero by default. This code undoes this.</span><br><span class="line">seta20.1:</span><br><span class="line">    inb $0x64, %al                                  # Wait for not busy(8042 input buffer empty).</span><br><span class="line">    testb $0x2, %al</span><br><span class="line">    jnz seta20.1</span><br><span class="line"></span><br><span class="line">    movb $0xd1, %al                                 # 0xd1 -&gt; port 0x64</span><br><span class="line">    outb %al, $0x64                                 # 0xd1 means: write data to 8042&#39;s P2 port</span><br><span class="line"></span><br><span class="line">seta20.2:</span><br><span class="line">    inb $0x64, %al                                  # Wait for not busy(8042 input buffer empty).</span><br><span class="line">    testb $0x2, %al</span><br><span class="line">    jnz seta20.2</span><br><span class="line"></span><br><span class="line">    movb $0xdf, %al                                 # 0xdf -&gt; port 0x60</span><br><span class="line">    outb %al, $0x60                                 # 0xdf &#x3D; 11011111, means set P2&#39;s A20 bit(the 1 bit) to 1</span><br><span class="line"></span><br><span class="line">    # Switch from real to protected mode, using a bootstrap GDT</span><br><span class="line">    # and segment translation that makes virtual addresses</span><br><span class="line">    # identical to physical addresses, so that the</span><br><span class="line">    # effective memory map does not change during the switch.</span><br><span class="line">    lgdt gdtdesc</span><br><span class="line">    movl %cr0, %eax</span><br><span class="line">    orl $CR0_PE_ON, %eax</span><br><span class="line">    movl %eax, %cr0</span><br><span class="line"></span><br><span class="line">    # Jump to next instruction, but in 32-bit code segment.</span><br><span class="line">    # Switches processor into 32-bit mode.</span><br><span class="line">    ljmp $PROT_MODE_CSEG, $protcseg</span><br><span class="line"></span><br><span class="line">.code32                                             # Assemble for 32-bit mode</span><br><span class="line">protcseg:</span><br><span class="line">    # Set up the protected-mode data segment registers</span><br><span class="line">    movw $PROT_MODE_DSEG, %ax                       # Our data segment selector</span><br><span class="line">    movw %ax, %ds                                   # -&gt; DS: Data Segment</span><br><span class="line">    movw %ax, %es                                   # -&gt; ES: Extra Segment</span><br><span class="line">    movw %ax, %fs                                   # -&gt; FS</span><br><span class="line">    movw %ax, %gs                                   # -&gt; GS</span><br><span class="line">    movw %ax, %ss                                   # -&gt; SS: Stack Segment</span><br><span class="line"></span><br><span class="line">    # Set up the stack pointer and call into C. The stack region is from 0--start(0x7c00)</span><br><span class="line">    movl $0x0, %ebp</span><br><span class="line">    movl $start, %esp</span><br><span class="line">    call bootmain</span><br><span class="line"></span><br><span class="line">    # If bootmain returns (it shouldn&#39;t), loop.</span><br><span class="line">spin:</span><br><span class="line">    jmp spin</span><br><span class="line"></span><br><span class="line"># Bootstrap GDT</span><br><span class="line">.p2align 2                                          # force 4 byte alignment</span><br><span class="line">gdt:</span><br><span class="line">    SEG_NULLASM                                     # null seg</span><br><span class="line">    SEG_ASM(STA_X|STA_R, 0x0, 0xffffffff)           # code seg for bootloader and kernel</span><br><span class="line">    SEG_ASM(STA_W, 0x0, 0xffffffff)                 # data seg for bootloader and kernel</span><br><span class="line"></span><br><span class="line">gdtdesc:</span><br><span class="line">    .word 0x17                                      # sizeof(gdt) - 1</span><br><span class="line">    .long gdt                                       # address gdt</span><br></pre></td></tr></table></figure>
+
+<p>bootblock.asm的代码为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br><span class="line">254</span><br><span class="line">255</span><br><span class="line">256</span><br><span class="line">257</span><br><span class="line">258</span><br><span class="line">259</span><br><span class="line">260</span><br><span class="line">261</span><br><span class="line">262</span><br><span class="line">263</span><br><span class="line">264</span><br><span class="line">265</span><br><span class="line">266</span><br><span class="line">267</span><br><span class="line">268</span><br><span class="line">269</span><br><span class="line">270</span><br><span class="line">271</span><br><span class="line">272</span><br><span class="line">273</span><br><span class="line">274</span><br><span class="line">275</span><br><span class="line">276</span><br><span class="line">277</span><br><span class="line">278</span><br><span class="line">279</span><br><span class="line">280</span><br><span class="line">281</span><br><span class="line">282</span><br><span class="line">283</span><br><span class="line">284</span><br><span class="line">285</span><br><span class="line">286</span><br><span class="line">287</span><br><span class="line">288</span><br><span class="line">289</span><br><span class="line">290</span><br><span class="line">291</span><br><span class="line">292</span><br><span class="line">293</span><br><span class="line">294</span><br><span class="line">295</span><br><span class="line">296</span><br><span class="line">297</span><br><span class="line">298</span><br><span class="line">299</span><br><span class="line">300</span><br><span class="line">301</span><br><span class="line">302</span><br><span class="line">303</span><br><span class="line">304</span><br><span class="line">305</span><br><span class="line">306</span><br><span class="line">307</span><br><span class="line">308</span><br><span class="line">309</span><br><span class="line">310</span><br><span class="line">311</span><br><span class="line">312</span><br><span class="line">313</span><br><span class="line">314</span><br><span class="line">315</span><br><span class="line">316</span><br><span class="line">317</span><br><span class="line">318</span><br><span class="line">319</span><br><span class="line">320</span><br><span class="line">321</span><br><span class="line">322</span><br><span class="line">323</span><br><span class="line">324</span><br><span class="line">325</span><br><span class="line">326</span><br><span class="line">327</span><br><span class="line">328</span><br><span class="line">329</span><br><span class="line">330</span><br><span class="line">331</span><br><span class="line">332</span><br><span class="line">333</span><br><span class="line">334</span><br><span class="line">335</span><br><span class="line">336</span><br><span class="line">337</span><br><span class="line">338</span><br><span class="line">339</span><br><span class="line">340</span><br><span class="line">341</span><br><span class="line">342</span><br><span class="line">343</span><br><span class="line">344</span><br><span class="line">345</span><br><span class="line">346</span><br><span class="line">347</span><br><span class="line">348</span><br><span class="line">349</span><br><span class="line">350</span><br><span class="line">351</span><br><span class="line">352</span><br><span class="line">353</span><br><span class="line">354</span><br><span class="line">355</span><br><span class="line">356</span><br><span class="line">357</span><br><span class="line">358</span><br><span class="line">359</span><br><span class="line">360</span><br><span class="line">361</span><br><span class="line">362</span><br><span class="line">363</span><br><span class="line">364</span><br><span class="line">365</span><br><span class="line">366</span><br><span class="line">367</span><br><span class="line">368</span><br><span class="line">369</span><br><span class="line">370</span><br><span class="line">371</span><br><span class="line">372</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">obj&#x2F;bootblock.o:     file format elf32-i386</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">Disassembly of section .text:</span><br><span class="line"></span><br><span class="line">00007c00 &lt;start&gt;:</span><br><span class="line"></span><br><span class="line"># start address should be 0:7c00, in real mode, the beginning address of the running bootloader</span><br><span class="line">.globl start</span><br><span class="line">start:</span><br><span class="line">.code16                                             # Assemble for 16-bit mode</span><br><span class="line">    cli                                             # Disable interrupts</span><br><span class="line">    7c00:	fa                   	cli    </span><br><span class="line">    cld                                             # String operations increment</span><br><span class="line">    7c01:	fc                   	cld    </span><br><span class="line"></span><br><span class="line">    # Set up the important data segment registers (DS, ES, SS).</span><br><span class="line">    xorw %ax, %ax                                   # Segment number zero</span><br><span class="line">    7c02:	31 c0                	xor    %eax,%eax</span><br><span class="line">    movw %ax, %ds                                   # -&gt; Data Segment</span><br><span class="line">    7c04:	8e d8                	mov    %eax,%ds</span><br><span class="line">    movw %ax, %es                                   # -&gt; Extra Segment</span><br><span class="line">    7c06:	8e c0                	mov    %eax,%es</span><br><span class="line">    movw %ax, %ss                                   # -&gt; Stack Segment</span><br><span class="line">    7c08:	8e d0                	mov    %eax,%ss</span><br><span class="line"></span><br><span class="line">00007c0a &lt;seta20.1&gt;:</span><br><span class="line">    # Enable A20:</span><br><span class="line">    #  For backwards compatibility with the earliest PCs, physical</span><br><span class="line">    #  address line 20 is tied low, so that addresses higher than</span><br><span class="line">    #  1MB wrap around to zero by default. This code undoes this.</span><br><span class="line">seta20.1:</span><br><span class="line">    inb $0x64, %al                                  # Wait for not busy(8042 input buffer empty).</span><br><span class="line">    7c0a:	e4 64                	in     $0x64,%al</span><br><span class="line">    testb $0x2, %al</span><br><span class="line">    7c0c:	a8 02                	test   $0x2,%al</span><br><span class="line">    jnz seta20.1</span><br><span class="line">    7c0e:	75 fa                	jne    7c0a &lt;seta20.1&gt;</span><br><span class="line"></span><br><span class="line">    movb $0xd1, %al                                 # 0xd1 -&gt; port 0x64</span><br><span class="line">    7c10:	b0 d1                	mov    $0xd1,%al</span><br><span class="line">    outb %al, $0x64                                 # 0xd1 means: write data to 8042&#39;s P2 port</span><br><span class="line">    7c12:	e6 64                	out    %al,$0x64</span><br><span class="line"></span><br><span class="line">00007c14 &lt;seta20.2&gt;:</span><br><span class="line"></span><br><span class="line">seta20.2:</span><br><span class="line">    inb $0x64, %al                                  # Wait for not busy(8042 input buffer empty).</span><br><span class="line">    7c14:	e4 64                	in     $0x64,%al</span><br><span class="line">    testb $0x2, %al</span><br><span class="line">    7c16:	a8 02                	test   $0x2,%al</span><br><span class="line">    jnz seta20.2</span><br><span class="line">    7c18:	75 fa                	jne    7c14 &lt;seta20.2&gt;</span><br><span class="line"></span><br><span class="line">    movb $0xdf, %al                                 # 0xdf -&gt; port 0x60</span><br><span class="line">    7c1a:	b0 df                	mov    $0xdf,%al</span><br><span class="line">    outb %al, $0x60                                 # 0xdf &#x3D; 11011111, means set P2&#39;s A20 bit(the 1 bit) to 1</span><br><span class="line">    7c1c:	e6 60                	out    %al,$0x60</span><br><span class="line"></span><br><span class="line">    # Switch from real to protected mode, using a bootstrap GDT</span><br><span class="line">    # and segment translation that makes virtual addresses</span><br><span class="line">    # identical to physical addresses, so that the</span><br><span class="line">    # effective memory map does not change during the switch.</span><br><span class="line">    lgdt gdtdesc</span><br><span class="line">    7c1e:	0f 01 16             	lgdtl  (%esi)</span><br><span class="line">    7c21:	6c                   	insb   (%dx),%es:(%edi)</span><br><span class="line">    7c22:	7c 0f                	jl     7c33 &lt;protcseg+0x1&gt;</span><br><span class="line">    movl %cr0, %eax</span><br><span class="line">    7c24:	20 c0                	and    %al,%al</span><br><span class="line">    orl $CR0_PE_ON, %eax</span><br><span class="line">    7c26:	66 83 c8 01          	or     $0x1,%ax</span><br><span class="line">    movl %eax, %cr0</span><br><span class="line">    7c2a:	0f 22 c0             	mov    %eax,%cr0</span><br><span class="line"></span><br><span class="line">    # Jump to next instruction, but in 32-bit code segment.</span><br><span class="line">    # Switches processor into 32-bit mode.</span><br><span class="line">    ljmp $PROT_MODE_CSEG, $protcseg</span><br><span class="line">    7c2d:	ea                   	.byte 0xea</span><br><span class="line">    7c2e:	32 7c 08 00          	xor    0x0(%eax,%ecx,1),%bh</span><br><span class="line"></span><br><span class="line">00007c32 &lt;protcseg&gt;:</span><br><span class="line"></span><br><span class="line">.code32                                             # Assemble for 32-bit mode</span><br><span class="line">protcseg:</span><br><span class="line">    # Set up the protected-mode data segment registers</span><br><span class="line">    movw $PROT_MODE_DSEG, %ax                       # Our data segment selector</span><br><span class="line">    7c32:	66 b8 10 00          	mov    $0x10,%ax</span><br><span class="line">    movw %ax, %ds                                   # -&gt; DS: Data Segment</span><br><span class="line">    7c36:	8e d8                	mov    %eax,%ds</span><br><span class="line">    movw %ax, %es                                   # -&gt; ES: Extra Segment</span><br><span class="line">    7c38:	8e c0                	mov    %eax,%es</span><br><span class="line">    movw %ax, %fs                                   # -&gt; FS</span><br><span class="line">    7c3a:	8e e0                	mov    %eax,%fs</span><br><span class="line">    movw %ax, %gs                                   # -&gt; GS</span><br><span class="line">    7c3c:	8e e8                	mov    %eax,%gs</span><br><span class="line">    movw %ax, %ss                                   # -&gt; SS: Stack Segment</span><br><span class="line">    7c3e:	8e d0                	mov    %eax,%ss</span><br><span class="line"></span><br><span class="line">    # Set up the stack pointer and call into C. The stack region is from 0--start(0x7c00)</span><br><span class="line">    movl $0x0, %ebp</span><br><span class="line">    7c40:	bd 00 00 00 00       	mov    $0x0,%ebp</span><br><span class="line">    movl $start, %esp</span><br><span class="line">    7c45:	bc 00 7c 00 00       	mov    $0x7c00,%esp</span><br><span class="line">    call bootmain</span><br><span class="line">    7c4a:	e8 c0 00 00 00       	call   7d0f &lt;bootmain&gt;</span><br><span class="line"></span><br><span class="line">00007c4f &lt;spin&gt;:</span><br><span class="line"></span><br><span class="line">    # If bootmain returns (it shouldn&#39;t), loop.</span><br><span class="line">spin:</span><br><span class="line">    jmp spin</span><br><span class="line">    7c4f:	eb fe                	jmp    7c4f &lt;spin&gt;</span><br><span class="line">    7c51:	8d 76 00             	lea    0x0(%esi),%esi</span><br><span class="line"></span><br><span class="line">00007c54 &lt;gdt&gt;:</span><br><span class="line">	...</span><br><span class="line">    7c5c:	ff                   	(bad)  </span><br><span class="line">    7c5d:	ff 00                	incl   (%eax)</span><br><span class="line">    7c5f:	00 00                	add    %al,(%eax)</span><br><span class="line">    7c61:	9a cf 00 ff ff 00 00 	lcall  $0x0,$0xffff00cf</span><br><span class="line">    7c68:	00                   	.byte 0x0</span><br><span class="line">    7c69:	92                   	xchg   %eax,%edx</span><br><span class="line">    7c6a:	cf                   	iret   </span><br><span class="line">	...</span><br><span class="line"></span><br><span class="line">00007c6c &lt;gdtdesc&gt;:</span><br><span class="line">    7c6c:	17                   	pop    %ss</span><br><span class="line">    7c6d:	00 54 7c 00          	add    %dl,0x0(%esp,%edi,2)</span><br><span class="line">	...</span><br><span class="line"></span><br><span class="line">00007c72 &lt;readseg&gt;:</span><br><span class="line">&#x2F;* *</span><br><span class="line"> * readseg - read @count bytes at @offset from kernel into virtual address @va,</span><br><span class="line"> * might copy more than asked.</span><br><span class="line"> * *&#x2F;</span><br><span class="line">static void</span><br><span class="line">readseg(uintptr_t va, uint32_t count, uint32_t offset) &#123;</span><br><span class="line">    7c72:	55                   	push   %ebp</span><br><span class="line">    7c73:	89 e5                	mov    %esp,%ebp</span><br><span class="line">    7c75:	57                   	push   %edi</span><br><span class="line">    7c76:	56                   	push   %esi</span><br><span class="line">    7c77:	89 c6                	mov    %eax,%esi</span><br><span class="line">    7c79:	53                   	push   %ebx</span><br><span class="line">    uintptr_t end_va &#x3D; va + count;</span><br><span class="line">    7c7a:	01 d0                	add    %edx,%eax</span><br><span class="line">&#x2F;* *</span><br><span class="line"> * readseg - read @count bytes at @offset from kernel into virtual address @va,</span><br><span class="line"> * might copy more than asked.</span><br><span class="line"> * *&#x2F;</span><br><span class="line">static void</span><br><span class="line">readseg(uintptr_t va, uint32_t count, uint32_t offset) &#123;</span><br><span class="line">    7c7c:	53                   	push   %ebx</span><br><span class="line">    uintptr_t end_va &#x3D; va + count;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; round down to sector boundary</span><br><span class="line">    va -&#x3D; offset % SECTSIZE;</span><br><span class="line">    7c7d:	31 d2                	xor    %edx,%edx</span><br><span class="line"> * readseg - read @count bytes at @offset from kernel into virtual address @va,</span><br><span class="line"> * might copy more than asked.</span><br><span class="line"> * *&#x2F;</span><br><span class="line">static void</span><br><span class="line">readseg(uintptr_t va, uint32_t count, uint32_t offset) &#123;</span><br><span class="line">    uintptr_t end_va &#x3D; va + count;</span><br><span class="line">    7c7f:	89 45 f0             	mov    %eax,-0x10(%ebp)</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; round down to sector boundary</span><br><span class="line">    va -&#x3D; offset % SECTSIZE;</span><br><span class="line">    7c82:	89 c8                	mov    %ecx,%eax</span><br><span class="line">    7c84:	f7 35 f0 7d 00 00    	divl   0x7df0</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; translate from bytes to sectors; kernel starts at sector 1</span><br><span class="line">    uint32_t secno &#x3D; (offset &#x2F; SECTSIZE) + 1;</span><br><span class="line">    7c8a:	8d 58 01             	lea    0x1(%eax),%ebx</span><br><span class="line">static void</span><br><span class="line">readseg(uintptr_t va, uint32_t count, uint32_t offset) &#123;</span><br><span class="line">    uintptr_t end_va &#x3D; va + count;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; round down to sector boundary</span><br><span class="line">    va -&#x3D; offset % SECTSIZE;</span><br><span class="line">    7c8d:	29 d6                	sub    %edx,%esi</span><br><span class="line">    uint32_t secno &#x3D; (offset &#x2F; SECTSIZE) + 1;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; If this is too slow, we could read lots of sectors at a time.</span><br><span class="line">    &#x2F;&#x2F; We&#39;d write more to memory than asked, but it doesn&#39;t matter --</span><br><span class="line">    &#x2F;&#x2F; we load in increasing order.</span><br><span class="line">    for (; va &lt; end_va; va +&#x3D; SECTSIZE, secno ++) &#123;</span><br><span class="line">    7c8f:	3b 75 f0             	cmp    -0x10(%ebp),%esi</span><br><span class="line">    7c92:	73 75                	jae    7d09 &lt;readseg+0x97&gt;</span><br><span class="line">static inline void ltr(uint16_t sel) __attribute__((always_inline));</span><br><span class="line"></span><br><span class="line">static inline uint8_t</span><br><span class="line">inb(uint16_t port) &#123;</span><br><span class="line">    uint8_t data;</span><br><span class="line">    asm volatile (&quot;inb %1, %0&quot; : &quot;&#x3D;a&quot; (data) : &quot;d&quot; (port));</span><br><span class="line">    7c94:	ba f7 01 00 00       	mov    $0x1f7,%edx</span><br><span class="line">    7c99:	ec                   	in     (%dx),%al</span><br><span class="line">struct elfhdr * ELFHDR    &#x3D;      ((struct elfhdr *)0x10000) ;     &#x2F;&#x2F; scratch space</span><br><span class="line"></span><br><span class="line">&#x2F;* waitdisk - wait for disk ready *&#x2F;</span><br><span class="line">static void</span><br><span class="line">waitdisk(void) &#123;</span><br><span class="line">    while ((inb(0x1F7) &amp; 0xC0) !&#x3D; 0x40)</span><br><span class="line">    7c9a:	83 e0 c0             	and    $0xffffffc0,%eax</span><br><span class="line">    7c9d:	3c 40                	cmp    $0x40,%al</span><br><span class="line">    7c9f:	75 f3                	jne    7c94 &lt;readseg+0x22&gt;</span><br><span class="line">            : &quot;memory&quot;, &quot;cc&quot;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">static inline void</span><br><span class="line">outb(uint16_t port, uint8_t data) &#123;</span><br><span class="line">    asm volatile (&quot;outb %0, %1&quot; :: &quot;a&quot; (data), &quot;d&quot; (port));</span><br><span class="line">    7ca1:	ba f2 01 00 00       	mov    $0x1f2,%edx</span><br><span class="line">    7ca6:	b0 01                	mov    $0x1,%al</span><br><span class="line">    7ca8:	ee                   	out    %al,(%dx)</span><br><span class="line">    7ca9:	ba f3 01 00 00       	mov    $0x1f3,%edx</span><br><span class="line">    7cae:	88 d8                	mov    %bl,%al</span><br><span class="line">    7cb0:	ee                   	out    %al,(%dx)</span><br><span class="line">    7cb1:	89 d8                	mov    %ebx,%eax</span><br><span class="line">    7cb3:	ba f4 01 00 00       	mov    $0x1f4,%edx</span><br><span class="line">    7cb8:	c1 e8 08             	shr    $0x8,%eax</span><br><span class="line">    7cbb:	ee                   	out    %al,(%dx)</span><br><span class="line">    7cbc:	89 d8                	mov    %ebx,%eax</span><br><span class="line">    7cbe:	ba f5 01 00 00       	mov    $0x1f5,%edx</span><br><span class="line">    7cc3:	c1 e8 10             	shr    $0x10,%eax</span><br><span class="line">    7cc6:	ee                   	out    %al,(%dx)</span><br><span class="line">    7cc7:	89 d8                	mov    %ebx,%eax</span><br><span class="line">    7cc9:	ba f6 01 00 00       	mov    $0x1f6,%edx</span><br><span class="line">    7cce:	c1 e8 18             	shr    $0x18,%eax</span><br><span class="line">    7cd1:	83 e0 0f             	and    $0xf,%eax</span><br><span class="line">    7cd4:	83 c8 e0             	or     $0xffffffe0,%eax</span><br><span class="line">    7cd7:	ee                   	out    %al,(%dx)</span><br><span class="line">    7cd8:	b0 20                	mov    $0x20,%al</span><br><span class="line">    7cda:	ba f7 01 00 00       	mov    $0x1f7,%edx</span><br><span class="line">    7cdf:	ee                   	out    %al,(%dx)</span><br><span class="line">static inline void ltr(uint16_t sel) __attribute__((always_inline));</span><br><span class="line"></span><br><span class="line">static inline uint8_t</span><br><span class="line">inb(uint16_t port) &#123;</span><br><span class="line">    uint8_t data;</span><br><span class="line">    asm volatile (&quot;inb %1, %0&quot; : &quot;&#x3D;a&quot; (data) : &quot;d&quot; (port));</span><br><span class="line">    7ce0:	ba f7 01 00 00       	mov    $0x1f7,%edx</span><br><span class="line">    7ce5:	ec                   	in     (%dx),%al</span><br><span class="line">    7ce6:	83 e0 c0             	and    $0xffffffc0,%eax</span><br><span class="line">    7ce9:	3c 40                	cmp    $0x40,%al</span><br><span class="line">    7ceb:	75 f3                	jne    7ce0 &lt;readseg+0x6e&gt;</span><br><span class="line">    return data;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">static inline void</span><br><span class="line">insl(uint32_t port, void *addr, int cnt) &#123;</span><br><span class="line">    asm volatile (</span><br><span class="line">    7ced:	8b 0d f0 7d 00 00    	mov    0x7df0,%ecx</span><br><span class="line">    7cf3:	89 f7                	mov    %esi,%edi</span><br><span class="line">    7cf5:	ba f0 01 00 00       	mov    $0x1f0,%edx</span><br><span class="line">    7cfa:	c1 e9 02             	shr    $0x2,%ecx</span><br><span class="line">    7cfd:	fc                   	cld    </span><br><span class="line">    7cfe:	f2 6d                	repnz insl (%dx),%es:(%edi)</span><br><span class="line">    uint32_t secno &#x3D; (offset &#x2F; SECTSIZE) + 1;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; If this is too slow, we could read lots of sectors at a time.</span><br><span class="line">    &#x2F;&#x2F; We&#39;d write more to memory than asked, but it doesn&#39;t matter --</span><br><span class="line">    &#x2F;&#x2F; we load in increasing order.</span><br><span class="line">    for (; va &lt; end_va; va +&#x3D; SECTSIZE, secno ++) &#123;</span><br><span class="line">    7d00:	03 35 f0 7d 00 00    	add    0x7df0,%esi</span><br><span class="line">    7d06:	43                   	inc    %ebx</span><br><span class="line">    7d07:	eb 86                	jmp    7c8f &lt;readseg+0x1d&gt;</span><br><span class="line">        readsect((void *)va, secno);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">    7d09:	58                   	pop    %eax</span><br><span class="line">    7d0a:	5b                   	pop    %ebx</span><br><span class="line">    7d0b:	5e                   	pop    %esi</span><br><span class="line">    7d0c:	5f                   	pop    %edi</span><br><span class="line">    7d0d:	5d                   	pop    %ebp</span><br><span class="line">    7d0e:	c3                   	ret    </span><br><span class="line"></span><br><span class="line">00007d0f &lt;bootmain&gt;:</span><br><span class="line"></span><br><span class="line">&#x2F;* bootmain - the entry of bootloader *&#x2F;</span><br><span class="line">void</span><br><span class="line">bootmain(void) &#123;</span><br><span class="line">    &#x2F;&#x2F; read the 1st page off disk</span><br><span class="line">    readseg((uintptr_t)ELFHDR, SECTSIZE * 8, 0);</span><br><span class="line">    7d0f:	a1 f0 7d 00 00       	mov    0x7df0,%eax</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;* bootmain - the entry of bootloader *&#x2F;</span><br><span class="line">void</span><br><span class="line">bootmain(void) &#123;</span><br><span class="line">    7d14:	55                   	push   %ebp</span><br><span class="line">    &#x2F;&#x2F; read the 1st page off disk</span><br><span class="line">    readseg((uintptr_t)ELFHDR, SECTSIZE * 8, 0);</span><br><span class="line">    7d15:	31 c9                	xor    %ecx,%ecx</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;* bootmain - the entry of bootloader *&#x2F;</span><br><span class="line">void</span><br><span class="line">bootmain(void) &#123;</span><br><span class="line">    7d17:	89 e5                	mov    %esp,%ebp</span><br><span class="line">    7d19:	56                   	push   %esi</span><br><span class="line">    7d1a:	53                   	push   %ebx</span><br><span class="line">    &#x2F;&#x2F; read the 1st page off disk</span><br><span class="line">    readseg((uintptr_t)ELFHDR, SECTSIZE * 8, 0);</span><br><span class="line">    7d1b:	8d 14 c5 00 00 00 00 	lea    0x0(,%eax,8),%edx</span><br><span class="line">    7d22:	a1 ec 7d 00 00       	mov    0x7dec,%eax</span><br><span class="line">    7d27:	e8 46 ff ff ff       	call   7c72 &lt;readseg&gt;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; is this a valid ELF?</span><br><span class="line">    if (ELFHDR-&gt;e_magic !&#x3D; ELF_MAGIC) &#123;</span><br><span class="line">    7d2c:	a1 ec 7d 00 00       	mov    0x7dec,%eax</span><br><span class="line">    7d31:	81 38 7f 45 4c 46    	cmpl   $0x464c457f,(%eax)</span><br><span class="line">    7d37:	75 39                	jne    7d72 &lt;bootmain+0x63&gt;</span><br><span class="line"></span><br><span class="line">    struct proghdr *ph, *eph;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; load each program segment (ignores ph flags)</span><br><span class="line">    ph &#x3D; (struct proghdr *)((uintptr_t)ELFHDR + ELFHDR-&gt;e_phoff);</span><br><span class="line">    eph &#x3D; ph + ELFHDR-&gt;e_phnum;</span><br><span class="line">    7d39:	0f b7 70 2c          	movzwl 0x2c(%eax),%esi</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    struct proghdr *ph, *eph;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; load each program segment (ignores ph flags)</span><br><span class="line">    ph &#x3D; (struct proghdr *)((uintptr_t)ELFHDR + ELFHDR-&gt;e_phoff);</span><br><span class="line">    7d3d:	8b 58 1c             	mov    0x1c(%eax),%ebx</span><br><span class="line">    7d40:	01 c3                	add    %eax,%ebx</span><br><span class="line">    eph &#x3D; ph + ELFHDR-&gt;e_phnum;</span><br><span class="line">    7d42:	c1 e6 05             	shl    $0x5,%esi</span><br><span class="line">    7d45:	01 de                	add    %ebx,%esi</span><br><span class="line">    for (; ph &lt; eph; ph ++) &#123;</span><br><span class="line">    7d47:	39 f3                	cmp    %esi,%ebx</span><br><span class="line">    7d49:	73 18                	jae    7d63 &lt;bootmain+0x54&gt;</span><br><span class="line">        readseg(ph-&gt;p_va &amp; 0xFFFFFF, ph-&gt;p_memsz, ph-&gt;p_offset);</span><br><span class="line">    7d4b:	8b 43 08             	mov    0x8(%ebx),%eax</span><br><span class="line">    7d4e:	8b 4b 04             	mov    0x4(%ebx),%ecx</span><br><span class="line">    struct proghdr *ph, *eph;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; load each program segment (ignores ph flags)</span><br><span class="line">    ph &#x3D; (struct proghdr *)((uintptr_t)ELFHDR + ELFHDR-&gt;e_phoff);</span><br><span class="line">    eph &#x3D; ph + ELFHDR-&gt;e_phnum;</span><br><span class="line">    for (; ph &lt; eph; ph ++) &#123;</span><br><span class="line">    7d51:	83 c3 20             	add    $0x20,%ebx</span><br><span class="line">        readseg(ph-&gt;p_va &amp; 0xFFFFFF, ph-&gt;p_memsz, ph-&gt;p_offset);</span><br><span class="line">    7d54:	8b 53 f4             	mov    -0xc(%ebx),%edx</span><br><span class="line">    7d57:	25 ff ff ff 00       	and    $0xffffff,%eax</span><br><span class="line">    7d5c:	e8 11 ff ff ff       	call   7c72 &lt;readseg&gt;</span><br><span class="line">    7d61:	eb e4                	jmp    7d47 &lt;bootmain+0x38&gt;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F; call the entry point from the ELF header</span><br><span class="line">    &#x2F;&#x2F; note: does not return</span><br><span class="line">    ((void (*)(void))(ELFHDR-&gt;e_entry &amp; 0xFFFFFF))();</span><br><span class="line">    7d63:	a1 ec 7d 00 00       	mov    0x7dec,%eax</span><br><span class="line">    7d68:	8b 40 18             	mov    0x18(%eax),%eax</span><br><span class="line">    7d6b:	25 ff ff ff 00       	and    $0xffffff,%eax</span><br><span class="line">    7d70:	ff d0                	call   *%eax</span><br><span class="line">    asm volatile (&quot;outb %0, %1&quot; :: &quot;a&quot; (data), &quot;d&quot; (port));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">static inline void</span><br><span class="line">outw(uint16_t port, uint16_t data) &#123;</span><br><span class="line">    asm volatile (&quot;outw %0, %1&quot; :: &quot;a&quot; (data), &quot;d&quot; (port));</span><br><span class="line">    7d72:	ba 00 8a ff ff       	mov    $0xffff8a00,%edx</span><br><span class="line">    7d77:	89 d0                	mov    %edx,%eax</span><br><span class="line">    7d79:	66 ef                	out    %ax,(%dx)</span><br><span class="line">    7d7b:	b8 00 8e ff ff       	mov    $0xffff8e00,%eax</span><br><span class="line">    7d80:	66 ef                	out    %ax,(%dx)</span><br><span class="line">    7d82:	eb fe                	jmp    7d82 &lt;bootmain+0x73&gt;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>反汇编得到的代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line">gdb-peda$ x &#x2F;30i $eip</span><br><span class="line">&#x3D;&gt; 0x7c00:	cli    </span><br><span class="line">   0x7c01:	cld    </span><br><span class="line">   0x7c02:	xor    ax,ax</span><br><span class="line">   0x7c04:	mov    ds,ax</span><br><span class="line">   0x7c06:	mov    es,ax</span><br><span class="line">   0x7c08:	mov    ss,ax</span><br><span class="line">   0x7c0a:	in     al,0x64</span><br><span class="line">   0x7c0c:	test   al,0x2</span><br><span class="line">   0x7c0e:	jne    0x7c0a</span><br><span class="line">   0x7c10:	mov    al,0xd1</span><br><span class="line">   0x7c12:	out    0x64,al</span><br><span class="line">   0x7c14:	in     al,0x64</span><br><span class="line">   0x7c16:	test   al,0x2</span><br><span class="line">   0x7c18:	jne    0x7c14</span><br><span class="line">   0x7c1a:	mov    al,0xdf</span><br><span class="line">   0x7c1c:	out    0x60,al</span><br><span class="line">   0x7c1e:	lgdtw  ds:0x7c6c</span><br><span class="line">   0x7c23:	mov    eax,cr0</span><br><span class="line">   0x7c26:	or     eax,0x1</span><br><span class="line">   0x7c2a:	mov    cr0,eax</span><br><span class="line">   0x7c2d:	jmp    0x8:0x7c32</span><br><span class="line">   0x7c32:	mov    eax,0xd88e0010</span><br><span class="line">   0x7c38:	mov    es,ax</span><br><span class="line">   0x7c3a:	mov    fs,ax</span><br><span class="line">   0x7c3c:	mov    gs,ax</span><br><span class="line">   0x7c3e:	mov    ss,ax</span><br><span class="line">   0x7c40:	mov    bp,0x0</span><br><span class="line">   0x7c43:	add    BYTE PTR [bx+si],al</span><br><span class="line">   0x7c45:	mov    sp,0x7c00</span><br><span class="line">   0x7c48:	add    BYTE PTR [bx+si],al</span><br><span class="line">   0x7c4a:	call   0x7d0d			;在此处调用了bootmain函数，跳入了bootloader的入口</span><br><span class="line">   0x7c4d:	add    BYTE PTR [bx+si],al</span><br><span class="line">   0x7c4f:	jmp    0x7c4f</span><br><span class="line">   0x7c51:	lea    si,[bp+0x0]</span><br><span class="line">   0x7c54:	add    BYTE PTR [bx+si],al</span><br><span class="line">   0x7c56:	add    BYTE PTR [bx+si],al</span><br><span class="line">   0x7c58:	add    BYTE PTR [bx+si],al</span><br><span class="line">   0x7c5a:	add    BYTE PTR [bx+si],al</span><br><span class="line">   0x7c5c:	(bad)  </span><br><span class="line">   0x7c5d:	inc    WORD PTR [bx+si]</span><br></pre></td></tr></table></figure>
+
+<p>其与bootasm.S和bootblock.asm中的代码相同。</p>
+<h3 id="问题4"><a href="#问题4" class="headerlink" title="问题4"></a>问题4</h3><blockquote>
+<p>自己找一个bootloader或内核中的代码位置，设置断点并进行测试。</p>
+</blockquote>
+<p>在问题三中，我们已经知道， 0x7c4a:    call   0x7d0d            ;在此处调用了bootmain函数，跳入了bootloader的入口</p>
+<p>在此处，下一个断点跟踪执行流，单步运行后：跳入了0x7d0f, 即是bootmain的首地址</p>
+<p><img src="/2021/06/15/ucore_lab1_%E5%AE%9E%E9%AA%8C/image-20210602143528648.png" alt="image-20210602143528648"></p>
+<h2 id="练习3"><a href="#练习3" class="headerlink" title="练习3"></a>练习3</h2><blockquote>
+<h4 id="分析bootloader进入保护模式的过程。"><a href="#分析bootloader进入保护模式的过程。" class="headerlink" title="分析bootloader进入保护模式的过程。"></a>分析bootloader进入保护模式的过程。</h4></blockquote>
+<p>进入到bootloader的位置时：<code>cs = 0, pc = 0x7c00</code></p>
+<h4 id="第一步：清理寄存器"><a href="#第一步：清理寄存器" class="headerlink" title="第一步：清理寄存器"></a>第一步：清理寄存器</h4><p>清理环境主要将flag寄存器，和段寄存器置零。（以下为AT汇编）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">start:</span><br><span class="line">.code16                                             # Assemble for 16-bit mode</span><br><span class="line">    cli                                             # Disable interrupts   关闭中断</span><br><span class="line">    cld                                             # String operations increment：将寄存器Flag的方向标志位DF清零</span><br><span class="line">    # Set up the important data segment registers (DS, ES, SS).</span><br><span class="line">	xorw %ax, %ax                                   # Segment number zero：清零ax</span><br><span class="line">	movw %ax, %ds                                   # -&gt; Data Segment:清零ds</span><br><span class="line">	movw %ax, %es                                   # -&gt; Extra Segment:清零es</span><br><span class="line">	movw %ax, %ss                                   # -&gt; Stack Segment:清零ss</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="第二步：打开A20"><a href="#第二步：打开A20" class="headerlink" title="第二步：打开A20"></a>第二步：打开A20</h4><p>打开A20：通过将键盘控制器上的A20线置于高电位，全部32条地址线可用，可以访问4G的内存空间</p>
+<p>等待8042键盘不盲，则向8042键盘发送写指令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"># Enable A20:</span><br><span class="line">#  For backwards compatibility with the earliest PCs, physical</span><br><span class="line">#  address line 20 is tied low, so that addresses higher than</span><br><span class="line">#  1MB wrap around to zero by default. This code undoes this.</span><br><span class="line">seta20.1:</span><br><span class="line">    inb $0x64, %al                                  # Wait for not busy(8042 input buffer empty).</span><br><span class="line">    testb $0x2, %al									#</span><br><span class="line">    jnz seta20.1									#zf不为0(不相等)，跳转</span><br><span class="line">    movb $0xd1, %al                                 # 0xd1 -&gt; port 0x64</span><br><span class="line">	outb %al, $0x64                                 # 0xd1 means: write data to 8042&#39;s P2 port</span><br></pre></td></tr></table></figure>
+<p>等待8042键盘不忙，则打开A20</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">seta20.2:</span><br><span class="line">    inb $0x64, %al                                  # Wait for not busy(8042 input buffer empty).</span><br><span class="line">    testb $0x2, %al</span><br><span class="line">    jnz seta20.2</span><br><span class="line">    movb $0xdf, %al                                 # 0xdf -&gt; port 0x60</span><br><span class="line">	outb %al, $0x60                                 # 0xdf &#x3D; 11011111, means set P2&#39;s A20 bit(the 1 bit) to 1</span><br></pre></td></tr></table></figure>
+
+<h4 id="第三步：设置GDT"><a href="#第三步：设置GDT" class="headerlink" title="第三步：设置GDT"></a>第三步：设置GDT</h4><p>初始化GDT表：一个简单的GDT表和其描述符已经静态储存在引导区中，载入即可</p>
+<pre><code># Switch from real to protected mode, using a bootstrap GDT
+# and segment translation that makes virtual addresses
+# identical to physical addresses, so that the
+# effective memory map does not change during the switch.
+lgdt gdtdesc                                        #载入gdt</code></pre><h4 id="第四步：设置CR0寄存器PE位"><a href="#第四步：设置CR0寄存器PE位" class="headerlink" title="第四步：设置CR0寄存器PE位"></a>第四步：设置CR0寄存器PE位</h4><p>进入保护模式：通过将cr0寄存器PE位置1便开启了保护模式</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">movl %cr0, %eax										#打开CR0寄存器的PE位</span><br><span class="line">orl $CR0_PE_ON, %eax			</span><br><span class="line">movl %eax, %cr0</span><br></pre></td></tr></table></figure>
+
+<h4 id="第五步：设置段寄存器进入保护模式"><a href="#第五步：设置段寄存器进入保护模式" class="headerlink" title="第五步：设置段寄存器进入保护模式"></a>第五步：设置段寄存器进入保护模式</h4><p>通过长跳转更新cs的基地址，设置段寄存器</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"># Jump to next instruction, but in 32-bit code segment.</span><br><span class="line"># Switches processor into 32-bit mode.</span><br><span class="line">ljmp $PROT_MODE_CSEG, $protcseg</span><br><span class="line">.code32                                             # Assemble for 32-bit mode</span><br><span class="line">protcseg:</span><br><span class="line">    # Set up the protected-mode data segment registers</span><br><span class="line">​    movw $PROT_MODE_DSEG, %ax                       # Our data segment selector</span><br><span class="line">​    movw %ax, %ds                                   # -&gt; DS: Data Segment</span><br><span class="line">​    movw %ax, %es                                   # -&gt; ES: Extra Segment</span><br><span class="line">​    movw %ax, %fs                                   # -&gt; FS</span><br><span class="line">​    movw %ax, %gs                                   # -&gt; GS</span><br><span class="line">​    movw %ax, %ss                                   # -&gt; SS: Stack Segment</span><br></pre></td></tr></table></figure>
+<h4 id="第六步：设置栈"><a href="#第六步：设置栈" class="headerlink" title="第六步：设置栈"></a>第六步：设置栈</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># Set up the stack pointer and call into C. The stack region is from 0--start(0x7c00)</span><br><span class="line">movl $0x0, %ebp</span><br><span class="line">movl $start, %esp</span><br></pre></td></tr></table></figure>
+
+<p>到此为止，从16位的实地址模式，进入到32位的保护模式。</p>
+<h4 id="第七步：完成，进入bootmain"><a href="#第七步：完成，进入bootmain" class="headerlink" title="第七步：完成，进入bootmain"></a>第七步：完成，进入bootmain</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">call bootmain</span><br></pre></td></tr></table></figure>
+
+<h2 id="练习4"><a href="#练习4" class="headerlink" title="练习4"></a>练习4</h2><p>bootmain完成bootloader剩余的工作，就是把内核从硬盘加载到内存中来，并把控制权交给内核。</p>
+<blockquote>
+<p>分析bootloader加载ELF格式的OS的过程。</p>
+<p>通过阅读/boot/bootmain.c，了解bootloader如何加载ELF文件。通过分析源代码和通过qemu来运行并调试bootloader&amp;OS，</p>
+<ul>
+<li>bootloader如何读取硬盘扇区的？</li>
+<li>bootloader是如何加载ELF格式的OS？</li>
+</ul>
+</blockquote>
+<p>这里先学习一下关于端口访问的方式：</p>
+<blockquote>
+<p>#include &lt;asm/io.h&gt;</p>
+<p>void outb ( unsigned char data , unsigned short port);    I/O 上写入 8 位数据 ( 1 字节 )；<br>void outw ( unsigned short data , unsigned short port);    I/O 上写入 8 位数据 ( 2 字节 )；<br>void outl ( unsigned long data , unsigned short port);         I/O 上写入 8 位数据 ( 4 字节 )；</p>
+<p>当读入数据时使用in（x），类似inb、inw、inl,参数与out（x）函数一致。</p>
+<p><a href="https://blog.csdn.net/haozhao_blog/article/details/24004021" target="_blank" rel="noopener">https://blog.csdn.net/haozhao_blog/article/details/24004021</a></p>
+</blockquote>
+<h4 id="问题1-2"><a href="#问题1-2" class="headerlink" title="问题1"></a>问题1</h4><p>bootloader如何读取硬盘扇区的？</p>
+<p>读取硬盘上的kernel（ELF file）到dst中，为SECTSIZE个字节</p>
+<p><code>readsect</code>从设备的第secno扇区读取数据到dst位置</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* readsect - read a single sector at @secno into @dst */</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">void</span></span><br><span class="line">readsect(<span class="keyword">void</span> *dst, <span class="keyword">uint32_t</span> secno) &#123;</span><br><span class="line">    <span class="comment">// wait for disk to be ready</span></span><br><span class="line">    waitdisk();</span><br><span class="line">	<span class="comment">//为读做准备，写入到端口寄存器中</span></span><br><span class="line">    outb(<span class="number">0x1F2</span>, <span class="number">1</span>);                         <span class="comment">// count = 1</span></span><br><span class="line">    outb(<span class="number">0x1F3</span>, secno &amp; <span class="number">0xFF</span>);				</span><br><span class="line">    outb(<span class="number">0x1F4</span>, (secno &gt;&gt; <span class="number">8</span>) &amp; <span class="number">0xFF</span>);</span><br><span class="line">    outb(<span class="number">0x1F5</span>, (secno &gt;&gt; <span class="number">16</span>) &amp; <span class="number">0xFF</span>);</span><br><span class="line">    outb(<span class="number">0x1F6</span>, ((secno &gt;&gt; <span class="number">24</span>) &amp; <span class="number">0xF</span>) | <span class="number">0xE0</span>);</span><br><span class="line">    outb(<span class="number">0x1F7</span>, <span class="number">0x20</span>);                      <span class="comment">// cmd 0x20 - read sectors</span></span><br><span class="line">     <span class="comment">// 上面四条指令联合制定了扇区号</span></span><br><span class="line">	        <span class="comment">// 在这4个字节线联合构成的32位参数中</span></span><br><span class="line">	        <span class="comment">//   29-31位强制设为1</span></span><br><span class="line">	        <span class="comment">//   28位(=0)表示访问"Disk 0"</span></span><br><span class="line">	        <span class="comment">//   0-27位是28位的偏移量</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// wait for disk to be ready</span></span><br><span class="line">    waitdisk();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// read a sector</span></span><br><span class="line">    insl(<span class="number">0x1F0</span>, dst, SECTSIZE / <span class="number">4</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>相关的IO地址的功能如下：</p>
+<table>
+<thead>
+<tr>
+<th>IO地址</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0x1f0</td>
+<td>读数据，当0x1f7不为忙状态时，可以读。</td>
+</tr>
+<tr>
+<td>0x1f2</td>
+<td>要读写的扇区数，每次读写前，你需要表明你要读写几个扇区。最小是1个扇区</td>
+</tr>
+<tr>
+<td>0x1f3</td>
+<td>如果是LBA模式，就是LBA参数的0-7位</td>
+</tr>
+<tr>
+<td>0x1f4</td>
+<td>如果是LBA模式，就是LBA参数的8-15位</td>
+</tr>
+<tr>
+<td>0x1f5</td>
+<td>如果是LBA模式，就是LBA参数的16-23位</td>
+</tr>
+<tr>
+<td>0x1f6</td>
+<td>第0~3位：如果是LBA模式就是24-27位 第4位：为0主盘；为1从盘</td>
+</tr>
+<tr>
+<td>0x1f7</td>
+<td>状态和命令寄存器。操作时先给命令，再读取，如果不是忙状态就从0x1f0端口读数据</td>
+</tr>
+</tbody></table>
+<ol>
+<li>等待硬盘空闲。waitdisk的函数实现只有一行：<code>while ((inb(0x1F7) &amp; 0xC0) != 0x40)</code>，意思是不断查询读0x1F7寄存器的最高两位，直到最高位为0、次高位为1（这个状态应该意味着磁盘空闲）才返回。</li>
+<li>硬盘空闲后，发出读取扇区的命令。对应的命令字为0x20，放在0x1F7寄存器中；读取的扇区数为1，放在0x1F2寄存器中；读取的扇区起始编号共28位，分成4部分依次放在0x1F3~0x1F6寄存器中。</li>
+<li>发出命令后，再次等待硬盘空闲。</li>
+<li>硬盘再次空闲后，开始从0x1F0寄存器中读数据。注意insl的作用是”That function will read cnt dwords from the input port specified by port  into the supplied output array addr.”，是以dword即4字节为单位的，因此这里SECTIZE需要除以4.</li>
+</ol>
+<p>readseg简单包装了readsect，可以从设备读取任意长度的内容。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">void</span></span><br><span class="line">readseg(<span class="keyword">uintptr_t</span> va, <span class="keyword">uint32_t</span> count, <span class="keyword">uint32_t</span> offset) &#123;</span><br><span class="line">    <span class="keyword">uintptr_t</span> end_va = va + count;</span><br><span class="line"></span><br><span class="line">    va -= offset % SECTSIZE;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">uint32_t</span> secno = (offset / SECTSIZE) + <span class="number">1</span>; </span><br><span class="line">    <span class="comment">// 加1因为0扇区被引导占用</span></span><br><span class="line">    <span class="comment">// ELF文件从1扇区开始</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (; va &lt; end_va; va += SECTSIZE, secno ++) &#123;</span><br><span class="line">        readsect((<span class="keyword">void</span> *)va, secno);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="问题2-2"><a href="#问题2-2" class="headerlink" title="问题2"></a>问题2</h4><blockquote>
+<p>bootloader是如何加载ELF格式的OS？</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* bootmain - the entry of bootloader */</span></span><br><span class="line"><span class="keyword">void</span></span><br><span class="line">bootmain(<span class="keyword">void</span>) &#123;</span><br><span class="line">    <span class="comment">// read the 1st page off disk   首先读取ELF的头部，转换成ELFHDR</span></span><br><span class="line">    readseg((<span class="keyword">uintptr_t</span>)ELFHDR, SECTSIZE * <span class="number">8</span>, <span class="number">0</span>);</span><br><span class="line">	</span><br><span class="line">    <span class="comment">// is this a valid ELF?          根据魔数来判断是否是ELF文件，否则就跳走，结束</span></span><br><span class="line">    <span class="keyword">if</span> (ELFHDR-&gt;e_magic != ELF_MAGIC) &#123;</span><br><span class="line">        <span class="keyword">goto</span> bad;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">proghdr</span> *<span class="title">ph</span>, *<span class="title">eph</span>;</span></span><br><span class="line">	</span><br><span class="line">    <span class="comment">// load each program segment (ignores ph flags)      将描述表加载出来</span></span><br><span class="line">    ph = (struct proghdr *)((<span class="keyword">uintptr_t</span>)ELFHDR + ELFHDR-&gt;e_phoff);</span><br><span class="line">    eph = ph + ELFHDR-&gt;e_phnum;</span><br><span class="line">    <span class="comment">//按照描述表，将ELF文件后面的数据载入内存中</span></span><br><span class="line">    <span class="keyword">for</span> (; ph &lt; eph; ph ++) &#123;</span><br><span class="line">        readseg(ph-&gt;p_va &amp; <span class="number">0xFFFFFF</span>, ph-&gt;p_memsz, ph-&gt;p_offset);</span><br><span class="line">    &#125;</span><br><span class="line">	<span class="comment">// ELF文件0x1000位置后面的0xd1ec比特被载入内存0x00100000</span></span><br><span class="line">	<span class="comment">// ELF文件0xf000位置后面的0x1d20比特被载入内存0x0010e000</span></span><br><span class="line">    <span class="comment">// call the entry point from the ELF header   根据头部信息找到入口地址</span></span><br><span class="line">    <span class="comment">// note: does not return</span></span><br><span class="line">    ((<span class="keyword">void</span> (*)(<span class="keyword">void</span>))(ELFHDR-&gt;e_entry &amp; <span class="number">0xFFFFFF</span>))();</span><br><span class="line"></span><br><span class="line">bad:</span><br><span class="line">    outw(<span class="number">0x8A00</span>, <span class="number">0x8A00</span>);</span><br><span class="line">    outw(<span class="number">0x8A00</span>, <span class="number">0x8E00</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* do nothing */</span></span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="练习5"><a href="#练习5" class="headerlink" title="练习5"></a>练习5</h2><blockquote>
+<p>实现函数调用堆栈跟踪函数</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span></span><br><span class="line">print_stackframe(<span class="keyword">void</span>) &#123;</span><br><span class="line">     <span class="comment">/* LAB1 YOUR CODE : STEP 1 */</span></span><br><span class="line">     <span class="comment">/* (1) call read_ebp() to get the value of ebp. the type is (uint32_t);</span></span><br><span class="line"><span class="comment">      * (2) call read_eip() to get the value of eip. the type is (uint32_t);</span></span><br><span class="line"><span class="comment">      * (3) from 0 .. STACKFRAME_DEPTH</span></span><br><span class="line"><span class="comment">      *    (3.1) printf value of ebp, eip</span></span><br><span class="line"><span class="comment">      *    (3.2) (uint32_t)calling arguments [0..4] = the contents in address (uint32_t)ebp +2 [0..4]</span></span><br><span class="line"><span class="comment">      *    (3.3) cprintf("\n");</span></span><br><span class="line"><span class="comment">      *    (3.4) call print_debuginfo(eip-1) to print the C calling function name and line number, etc.</span></span><br><span class="line"><span class="comment">      *    (3.5) popup a calling stackframe</span></span><br><span class="line"><span class="comment">      *           NOTICE: the calling funciton's return addr eip  = ss:[ebp+4]</span></span><br><span class="line"><span class="comment">      *                   the calling funciton's ebp = ss:[ebp]</span></span><br><span class="line"><span class="comment">      */</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">uint32_t</span> eip = read_eip();</span><br><span class="line">	<span class="keyword">uint32_t</span> ebp = read_ebp();</span><br><span class="line">	<span class="keyword">uint32_t</span> arg0;</span><br><span class="line">	<span class="keyword">uint32_t</span> arg1;</span><br><span class="line">	<span class="keyword">uint32_t</span> arg2;</span><br><span class="line">	<span class="keyword">uint32_t</span> arg3;</span><br><span class="line">	<span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>;i &lt; STACKFRAME_DEPTH; i++)&#123;</span><br><span class="line">		cprintf(<span class="string">"ebp:%08x eip:%08x "</span>,ebp,eip);</span><br><span class="line">		arg0 = *((<span class="keyword">uint32_t</span> *)ebp + <span class="number">2</span>);</span><br><span class="line">		arg1 = *((<span class="keyword">uint32_t</span> *)ebp + <span class="number">3</span>);</span><br><span class="line">		arg2 = *((<span class="keyword">uint32_t</span> *)ebp + <span class="number">4</span>);</span><br><span class="line">		arg3 = *((<span class="keyword">uint32_t</span> *)ebp + <span class="number">5</span>);</span><br><span class="line">		cprintf(<span class="string">"args:%08x %08x %08x %08x"</span>,arg0,arg1,arg2,arg3);</span><br><span class="line">		cprintf(<span class="string">"\n"</span>);</span><br><span class="line">		print_debuginfo(eip);</span><br><span class="line">		eip = *((<span class="keyword">uint32_t</span> *)ebp + <span class="number">1</span>);</span><br><span class="line">		ebp = *((<span class="keyword">uint32_t</span> *)ebp);</span><br><span class="line">		</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>打印结果如下：</p>
+<p><img src="/2021/06/15/ucore_lab1_%E5%AE%9E%E9%AA%8C/image-20210602163604720.png" alt="image-20210602163604720"></p>
+<p><img src="/2021/06/15/ucore_lab1_%E5%AE%9E%E9%AA%8C/image-20210604192458588.png" alt="image-20210604192458588"></p>
+<p>ss:ebp指向的堆栈位置储存着caller的ebp，以此为线索可以得到所有使用堆栈的函数ebp。<br>ss:ebp+4指向caller调用时的eip，ss:ebp+8等是（可能的）参数。</p>
+<p>输出中，堆栈最深一层为</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ebp:0x00007bf8 eip:0x00007d68 \</span><br><span class="line">	args:0x00000000 0x00000000 0x00000000 0x00007c4f</span><br><span class="line">    &lt;unknow&gt;: -- 0x00007d67 --</span><br></pre></td></tr></table></figure>
+
+<p>其对应的是第一个使用堆栈的函数，bootmain.c中的bootmain。<br>bootloader设置的堆栈从0x7c00开始，使用”call bootmain”转入bootmain函数。<br>call指令压栈，所以bootmain中ebp为0x7bf8。</p>
+<h2 id="练习6：完善中断初始化和处理"><a href="#练习6：完善中断初始化和处理" class="headerlink" title="练习6：完善中断初始化和处理"></a>练习6：完善中断初始化和处理</h2><blockquote>
+<ol>
+<li>中断描述符表（也可简称为保护模式下的中断向量表）中一个表项占多少字节？其中哪几位代表中断处理代码的入口？</li>
+<li>请编程完善kern/trap/trap.c中对中断向量表进行初始化的函数idt_init。在idt_init函数中，依次对所有中断入口进行初始化。使用mmu.h中的SETGATE宏，填充idt数组内容。每个中断的入口由tools/vectors.c生成，使用trap.c中声明的vectors数组即可。</li>
+<li>请编程完善trap.c中的中断处理函数trap，在对时钟中断进行处理的部分填写trap函数中处理时钟中断的部分，使操作系统每遇到100次时钟中断后，调用print_ticks子程序，向屏幕上打印一行文字”100 ticks”。</li>
+</ol>
+</blockquote>
+<h3 id="问题1-3"><a href="#问题1-3" class="headerlink" title="问题1"></a>问题1</h3><blockquote>
+<p>中断描述符表（也可简称为保护模式下的中断向量表）中一个表项占多少字节？其中哪几位代表中断处理代码的入口？</p>
+</blockquote>
+<p>中断向量表一个表项占用8字节，其中2-3字节是段选择子，0-1字节和6-7字节拼成位移，两者联合便是中断处理程序的入口地址。</p>
+<h3 id="问题2-3"><a href="#问题2-3" class="headerlink" title="问题2"></a>问题2</h3><blockquote>
+<p>请编程完善kern/trap/trap.c中对中断向量表进行初始化的函数idt_init。在idt_init函数中，依次对所有中断入口进行初始化。使用mmu.h中的SETGATE宏，填充idt数组内容。每个中断的入口由tools/vectors.c生成，使用trap.c中声明的vectors数组即可。</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">gatedesc</span> <span class="title">idt</span>[256] = &#123;</span>&#123;<span class="number">0</span>&#125;&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">pseudodesc</span> <span class="title">idt_pd</span> = &#123;</span></span><br><span class="line">    <span class="keyword">sizeof</span>(idt) - <span class="number">1</span>, (<span class="keyword">uintptr_t</span>)idt</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* idt_init - initialize IDT to each of the entry points in kern/trap/vectors.S */</span></span><br><span class="line"><span class="keyword">void</span></span><br><span class="line">idt_init(<span class="keyword">void</span>) &#123;</span><br><span class="line">     <span class="comment">/* LAB1 YOUR CODE : STEP 2 */</span></span><br><span class="line">     <span class="comment">/* (1) Where are the entry addrs of each Interrupt Service Routine (ISR)?</span></span><br><span class="line"><span class="comment">      *     All ISR's entry addrs are stored in __vectors. where is uintptr_t __vectors[] ?</span></span><br><span class="line"><span class="comment">      *     __vectors[] is in kern/trap/vector.S which is produced by tools/vector.c</span></span><br><span class="line"><span class="comment">      *     (try "make" command in lab1, then you will find vector.S in kern/trap DIR)</span></span><br><span class="line"><span class="comment">      *     You can use  "extern uintptr_t __vectors[];" to define this extern variable which will be used later.</span></span><br><span class="line"><span class="comment">      * (2) Now you should setup the entries of ISR in Interrupt Description Table (IDT).</span></span><br><span class="line"><span class="comment">      *     Can you see idt[256] in this file? Yes, it's IDT! you can use SETGATE macro to setup each item of IDT</span></span><br><span class="line"><span class="comment">      * (3) After setup the contents of IDT, you will let CPU know where is the IDT by using 'lidt' instruction.</span></span><br><span class="line"><span class="comment">      *     You don't know the meaning of this instruction? just google it! and check the libs/x86.h to know more.</span></span><br><span class="line"><span class="comment">      *     Notice: the argument of lidt is idt_pd. try to find it!</span></span><br><span class="line"><span class="comment">      */</span></span><br><span class="line">	<span class="keyword">extern</span> <span class="keyword">uintptr_t</span> __vectors[];</span><br><span class="line">    <span class="keyword">int</span> i;</span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; <span class="keyword">sizeof</span>(idt) / <span class="keyword">sizeof</span>(struct gatedesc); i ++) &#123;</span><br><span class="line">        SETGATE(idt[i], <span class="number">0</span>, GD_KTEXT, __vectors[i], DPL_KERNEL);</span><br><span class="line">    &#125;</span><br><span class="line">	<span class="comment">// set for switch from user to kernel</span></span><br><span class="line">    SETGATE(idt[T_SWITCH_TOK], <span class="number">0</span>, GD_KTEXT, __vectors[T_SWITCH_TOK], DPL_USER);</span><br><span class="line">	<span class="comment">// load the IDT</span></span><br><span class="line">    lidt(&amp;idt_pd);</span><br><span class="line">	</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="问题3-1"><a href="#问题3-1" class="headerlink" title="问题3"></a>问题3</h3><blockquote>
+<p>请编程完善trap.c中的中断处理函数trap，在对时钟中断进行处理的部分填写trap函数中处理时钟中断的部分，使操作系统每遇到100次时钟中断后，调用print_ticks子程序，向屏幕上打印一行文字”100 ticks”。</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">void</span></span><br><span class="line">trap_dispatch(struct trapframe *tf) &#123;</span><br><span class="line">    <span class="keyword">char</span> c;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">switch</span> (tf-&gt;tf_trapno) &#123;</span><br><span class="line">    <span class="keyword">case</span> IRQ_OFFSET + IRQ_TIMER:</span><br><span class="line">        <span class="comment">/* LAB1 YOUR CODE : STEP 3 */</span></span><br><span class="line">        <span class="comment">/* handle the timer interrupt */</span></span><br><span class="line">        <span class="comment">/* (1) After a timer interrupt, you should record this event using a global variable (increase it), such as ticks in kern/driver/clock.c</span></span><br><span class="line"><span class="comment">         * (2) Every TICK_NUM cycle, you can print some info using a funciton, such as print_ticks().</span></span><br><span class="line"><span class="comment">         * (3) Too Simple? Yes, I think so!</span></span><br><span class="line"><span class="comment">         */</span></span><br><span class="line">	ticks++;</span><br><span class="line">	<span class="keyword">if</span>(ticks%<span class="number">100</span>==<span class="number">0</span>)&#123;</span><br><span class="line">		ticks = <span class="number">0</span>;</span><br><span class="line">		print_ticks();</span><br><span class="line">	&#125;</span><br><span class="line">        <span class="keyword">break</span>;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/06/15/ucore_lab1_%E5%AE%9E%E9%AA%8C/image-20210604193424321.png" alt="image-20210604193424321"></p>
+<h2 id="练习7"><a href="#练习7" class="headerlink" title="练习7"></a>练习7</h2><h3 id="问题1-4"><a href="#问题1-4" class="headerlink" title="问题1"></a>问题1</h3><p>扩展proj4,增加syscall功能，即增加一用户态函数（可执行一特定系统调用：获得时钟计数值），当内核初始完毕后，可从内核态返回到用户态的函数，而用户态的函数又通过系统调用得到内核态的服务（通过网络查询所需信息，可找老师咨询。如果完成，且有兴趣做代替考试的实验，可找老师商量）。需写出详细的设计和分析报告。完成出色的可获得适当加分。</p>
+<p>提示： 规范一下 challenge 的流程。</p>
+<p>kern_init 调用 switch_test，该函数如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">static void</span><br><span class="line">switch_test(void) &#123;</span><br><span class="line">    print_cur_status();          &#x2F;&#x2F; print 当前 cs&#x2F;ss&#x2F;ds 等寄存器状态</span><br><span class="line">    cprintf(&quot;+++ switch to  user  mode +++\n&quot;);</span><br><span class="line">    switch_to_user();            &#x2F;&#x2F; switch to user mode</span><br><span class="line">    print_cur_status();</span><br><span class="line">    cprintf(&quot;+++ switch to kernel mode +++\n&quot;);</span><br><span class="line">    switch_to_kernel();         &#x2F;&#x2F; switch to kernel mode</span><br><span class="line">    print_cur_status();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>switch<em>to** 函数建议通过 中断处理的方式实现。主要要完成的代码是在 trap 里面处理 T_SWITCH_TO</em> 中断，并设置好返回的状态。</p>
+<p>在 lab1 里面完成代码以后，执行 make grade 应该能够评测结果是否正确。</p>
+<p>首先编辑idt_init</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* idt_init - initialize IDT to each of the entry points in kern/trap/vectors.S */</span></span><br><span class="line"><span class="keyword">void</span></span><br><span class="line">idt_init(<span class="keyword">void</span>) &#123;</span><br><span class="line">     <span class="comment">/* LAB1 YOUR CODE : STEP 2 */</span></span><br><span class="line">     <span class="comment">/* (1) Where are the entry addrs of each Interrupt Service Routine (ISR)?</span></span><br><span class="line"><span class="comment">      *     All ISR's entry addrs are stored in __vectors. where is uintptr_t __vectors[] ?</span></span><br><span class="line"><span class="comment">      *     __vectors[] is in kern/trap/vector.S which is produced by tools/vector.c</span></span><br><span class="line"><span class="comment">      *     (try "make" command in lab1, then you will find vector.S in kern/trap DIR)</span></span><br><span class="line"><span class="comment">      *     You can use  "extern uintptr_t __vectors[];" to define this extern variable which will be used later.</span></span><br><span class="line"><span class="comment">      * (2) Now you should setup the entries of ISR in Interrupt Description Table (IDT).</span></span><br><span class="line"><span class="comment">      *     Can you see idt[256] in this file? Yes, it's IDT! you can use SETGATE macro to setup each item of IDT</span></span><br><span class="line"><span class="comment">      * (3) After setup the contents of IDT, you will let CPU know where is the IDT by using 'lidt' instruction.</span></span><br><span class="line"><span class="comment">      *     You don't know the meaning of this instruction? just google it! and check the libs/x86.h to know more.</span></span><br><span class="line"><span class="comment">      *     Notice: the argument of lidt is idt_pd. try to find it!</span></span><br><span class="line"><span class="comment">      */</span></span><br><span class="line">	<span class="keyword">extern</span> <span class="keyword">uintptr_t</span> __vectors[];</span><br><span class="line">    <span class="keyword">int</span> i;</span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; <span class="keyword">sizeof</span>(idt) / <span class="keyword">sizeof</span>(struct gatedesc); i ++) &#123;</span><br><span class="line">        SETGATE(idt[i], <span class="number">0</span>, GD_KTEXT, __vectors[i], DPL_KERNEL);</span><br><span class="line">    &#125;</span><br><span class="line">	<span class="comment">// set for switch from user to kernel</span></span><br><span class="line">    SETGATE(idt[T_SWITCH_TOK], <span class="number">1</span>, GD_KTEXT, __vectors[T_SWITCH_TOK], DPL_USER);</span><br><span class="line">	<span class="comment">// load the IDT</span></span><br><span class="line">    lidt(&amp;idt_pd);</span><br><span class="line">	</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在trap_dispatch中，将iret时会从堆栈弹出的段寄存器进行修改</p>
+<p>设置选项：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">   <span class="comment">//LAB1 CHALLENGE 1 : YOUR CODE you should modify below codes.</span></span><br><span class="line">   <span class="keyword">case</span> T_SWITCH_TOU:</span><br><span class="line">tf-&gt;tf_cs = USER_CS;</span><br><span class="line">tf-&gt;tf_ds = USER_DS;</span><br><span class="line">    tf-&gt;tf_es = USER_DS;</span><br><span class="line">    tf-&gt;tf_ss = USER_DS;</span><br><span class="line">	tf-&gt;tf_eflags |= <span class="number">0x3000</span>;</span><br><span class="line">panic(<span class="string">"T_Switch_user!!"</span>)</span><br><span class="line"><span class="keyword">break</span>;</span><br><span class="line">   <span class="keyword">case</span> T_SWITCH_TOK:</span><br><span class="line">tf-&gt;tf_cs = KERNEL_CS;</span><br><span class="line">    tf-&gt;tf_ds = KERNEL_DS;</span><br><span class="line">    tf-&gt;tf_es = KERNEL_DS;</span><br><span class="line">	tf-&gt;tf_eflags &amp;= ~FL_IOPL_MASK;	</span><br><span class="line">       panic(<span class="string">"T_SWITCH_kernel!!\n"</span>);</span><br><span class="line">       <span class="keyword">break</span>;</span><br></pre></td></tr></table></figure>
+
+<p>在kernl/init/init.c</p>
+<p>在lab1_switch_to_user中，调用T_SWITCH_TOU中断。<br>注意从中断返回时，会多pop两位，并用这两位的值更新ss,sp，损坏堆栈。<br>所以要先把栈压两位，并在从中断返回后修复esp。</p>
+<p>在lab1_switch_to_kernel中，调用T_SWITCH_TOK中断。<br>注意从中断返回时，esp仍在TSS指示的堆栈中。所以要在从中断返回后修复esp。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">void</span></span><br><span class="line">lab1_switch_to_user(<span class="keyword">void</span>) &#123;</span><br><span class="line">    <span class="comment">//LAB1 CHALLENGE 1 : TODO</span></span><br><span class="line">	<span class="function"><span class="keyword">asm</span> <span class="title">volatile</span> <span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">	    <span class="string">"sub $0x8, %%esp \n"</span></span></span></span><br><span class="line"><span class="function"><span class="params">	    <span class="string">"int %0 \n"</span></span></span></span><br><span class="line"><span class="function"><span class="params">	    <span class="string">"movl %%ebp, %%esp"</span></span></span></span><br><span class="line"><span class="function"><span class="params">	    : </span></span></span><br><span class="line"><span class="function"><span class="params">	    : <span class="string">"i"</span>(T_SWITCH_TOU)</span></span></span><br><span class="line"><span class="function"><span class="params">	)</span></span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">void</span></span><br><span class="line">lab1_switch_to_kernel(<span class="keyword">void</span>) &#123;</span><br><span class="line">    <span class="comment">//LAB1 CHALLENGE 1 :  TODO</span></span><br><span class="line">	<span class="function"><span class="keyword">asm</span> <span class="title">volatile</span> <span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">	    <span class="string">"int %0 \n"</span></span></span></span><br><span class="line"><span class="function"><span class="params">	    <span class="string">"movl %%ebp, %%esp \n"</span></span></span></span><br><span class="line"><span class="function"><span class="params">	    : </span></span></span><br><span class="line"><span class="function"><span class="params">	    : <span class="string">"i"</span>(T_SWITCH_TOK)</span></span></span><br><span class="line"><span class="function"><span class="params">	)</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="问题2-4"><a href="#问题2-4" class="headerlink" title="问题2"></a>问题2</h3><p>用键盘实现用户模式内核模式切换。具体目标是：“键盘输入3时切换到用户模式，键盘输入0时切换到内核模式”。 基本思路是借鉴软中断(syscall功能)的代码，并且把trap.c中软中断处理的设置语句拿过来。</p>
+<p>注意：</p>
+<p>　1.关于调试工具，不建议用lab1_print_cur_status()来显示，要注意到寄存器的值要在中断完成后tranentry.S里面iret结束的时候才写回，所以再trap.c里面不好观察，建议用print_trapframe(tf)</p>
+<p>　2.关于内联汇编，最开始调试的时候，参数容易出现错误，可能的错误代码如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">asm volatile ( &quot;sub $0x8, %%esp \n&quot;</span><br><span class="line">  &quot;int %0 \n&quot;</span><br><span class="line">  &quot;movl %%ebp, %%esp&quot;</span><br><span class="line">  : )</span><br></pre></td></tr></table></figure>
+
+<p>要去掉参数int %0 \n这一行</p>
+<p>3.软中断是利用了临时栈来处理的，所以有压栈和出栈的汇编语句。硬件中断本身就在内核态了，直接处理就可以了。</p>
+<p>根据题干给的提示说基本思路是借鉴软中断 (syscall 功能) 的代码，并且把 trap.c 中软中断处理的设置语句拿过来。</p>
+<p>所以这里就直接修改 trap.c 中 case IRQ_OFFSET + IRQ_KBD 的代码就可以了，也就是在 trap.c 中定义两个函数，分别是 init.c 中对应的 lab1_switch_to_kernel 和 lab1_switch_to_user，然后加两个 if 判断，如果是按 3 或者按 0 就去执行对应的软中断即可，代码如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">case</span> IRQ_OFFSET + IRQ_KBD:</span><br><span class="line">c = cons_getc();</span><br><span class="line"><span class="keyword">if</span> (c == <span class="string">'3'</span>) &#123;</span><br><span class="line">    switch_to_user();</span><br><span class="line">    print_trapframe(tf);</span><br><span class="line">&#125; <span class="keyword">else</span> <span class="keyword">if</span> (c == <span class="string">'0'</span>) &#123;</span><br><span class="line">    switch_to_kernel();</span><br><span class="line">    print_trapframe(tf);</span><br><span class="line">&#125;</span><br><span class="line">cprintf(<span class="string">"kbd [%03d] %c\n"</span>, c, c);</span><br><span class="line"><span class="keyword">break</span>;</span><br></pre></td></tr></table></figure>
+
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong s>
+              本博客所有文章除特别声明外，均采用 <a href="https://www.apache.org/licenses/LICENSE-2.0.html" rel="external nofollow"
+                target="_blank">Apache License 2.0</a> 许可协议。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://drag0nf1y.github.io/2021/06/15/ucore_lab1_%E5%AE%9E%E9%AA%8C/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux-%E5%86%85%E6%A0%B8/" rel="tag">linux 内核</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ucore/" rel="tag">ucore</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+      <a href="/2021/06/17/ucore_lab2_%E7%90%86%E8%AE%BA/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            ucore_lab2_理论
+          
+        </div>
+      </a>
+    
+    
+      <a href="/2021/05/24/%E4%BD%9C%E4%B8%9A/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">CVE-2015-5165  &amp; 整数溢出</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: '',
+        app_key: '',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'mp',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2021
+        Drag0nf1y
+      </li>
+      <li>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+    <div class="to_top">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+      </div>
+    </main>
+      <aside class="sidebar">
+        <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.svg" alt="Drag0nf1y"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives/">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/">标签</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E7%A0%94%E7%A9%B6/">研究</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about/">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="Search">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+      </aside>
+      <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>请我喝杯咖啡吧~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+      
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script src="/js/share.js"></script>
+
+
+
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+
+
+
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer:'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto',
+    onClick: (e) => {
+      $('.toc-link').removeClass('is-active-link');
+      $(`a[href=${e.target.hash}]`).addClass('is-active-link');
+      $(e.target.hash).scrollIntoView();
+      return false;
+    }
+  });
+</script>
+
+
+<script>
+  var ayerConfig = {
+    mathjax: false
+  }
+</script>
+
+
+<script src="/js/ayer.js"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+  </div>
+</body>
+
+</html>

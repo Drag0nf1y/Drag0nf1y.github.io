@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="description" content="Drag0nf1y" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    ucore_lab2_实验 |  Drag0nf1y
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="/favicon.ico" />
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+<script src="/js/pace.min.js"></script>
+
+
+  
+
+  
+
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content">
+      <section class="outer">
+  <article id="post-ucore_lab2_实验" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  ucore_lab2_实验
+</h1>
+  
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2021/06/21/ucore_lab2_%E5%AE%9E%E9%AA%8C/" class="article-date">
+  <time datetime="2021-06-21T08:03:24.286Z" itemprop="datePublished">2021-06-21</time>
+</a>
+      
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a> / <a class="article-category-link" href="/categories/linux/ucore/">ucore</a>
+  </div>
+
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">4.9k字</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">22分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+      <h1 id="ucore-lab2-实验"><a href="#ucore-lab2-实验" class="headerlink" title="ucore_lab2_实验"></a>ucore_lab2_实验</h1><h2 id="练习1："><a href="#练习1：" class="headerlink" title="练习1："></a><strong>练习1：</strong></h2><p>实现 first-fit 连续物理内存分配算法（需要编程)</p>
+<p>在实现first fit 内存分配算法的回收函数时，要考虑地址连续的空闲块之间的合并操作。提示:在建立空闲页块链表时，需要按照空闲页块起始地址来排序，形成一个有序的链表。可能会修改default_pmm.c中的default_init，default_init_memmap，default_alloc_pages， default_free_pages等相关函数。请仔细查看和理解default_pmm.c中的注释。</p>
+<p>请在实验报告中简要说明你的设计实现过程。请回答如下问题：</p>
+<ul>
+<li>你的first fit算法是否有进一步的改进空间</li>
+</ul>
+<p>​    首次适应算法（First Fit）：该算法从空闲分区链首开始查找，直至找到一个能满足其大小要求的空闲分区为止。然后再按照作业的大小，从该分区中划出一块内存分配给请求者，余下的空闲分区仍留在空闲分区链    中。<br>​     特点： 该算法倾向于使用内存中低地址部分的空闲区，在高地址部分的空闲区很少被利用，从而保留了高地址部分的大空闲区。显然为以后到达的大作业分配大的内存空间创造了条件。<br>​     缺点：低地址部分不断被划分，留下许多难以利用、很小的空闲区，而每次查找又都从低地址部分开始，会增加查找的开销。</p>
+<h3 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">* (<span class="number">1</span>) Preparation:</span><br><span class="line"> *  In order to implement the First-Fit Memory Allocation (FFMA), we should</span><br><span class="line"> * manage the <span class="built_in">free</span> memory blocks <span class="keyword">using</span> a <span class="built_in">list</span>. The <span class="class"><span class="keyword">struct</span> `<span class="title">free_area_t</span>` <span class="title">is</span> <span class="title">used</span></span></span><br><span class="line"><span class="class"> * <span class="title">for</span> <span class="title">the</span> <span class="title">management</span> <span class="title">of</span> <span class="title">free</span> <span class="title">memory</span> <span class="title">blocks</span>.</span></span><br><span class="line"><span class="class"> *  <span class="title">First</span>, <span class="title">you</span> <span class="title">should</span> <span class="title">get</span> <span class="title">familiar</span> <span class="title">with</span> <span class="title">the</span> <span class="title">struct</span> `<span class="title">list</span>` <span class="title">in</span> <span class="title">list</span>.<span class="title">h</span>. <span class="title">Struct</span></span></span><br><span class="line"><span class="class"> * `<span class="title">list</span>` <span class="title">is</span> <span class="title">a</span> <span class="title">simple</span> <span class="title">doubly</span> <span class="title">linked</span> <span class="title">list</span> <span class="title">implementation</span>. <span class="title">You</span> <span class="title">should</span> <span class="title">know</span> <span class="title">how</span> <span class="title">to</span></span></span><br><span class="line"><span class="class"> * <span class="title">USE</span> `<span class="title">list_init</span>`, `<span class="title">list_add</span>`(`<span class="title">list_add_after</span>`), `<span class="title">list_add_before</span>`, `<span class="title">list_del</span>`,</span></span><br><span class="line"><span class="class"> * `<span class="title">list_next</span>`, `<span class="title">list_prev</span>`.</span></span><br><span class="line"><span class="class"> *  <span class="title">There</span>'<span class="title">s</span> <span class="title">a</span> <span class="title">tricky</span> <span class="title">method</span> <span class="title">that</span> <span class="title">is</span> <span class="title">to</span> <span class="title">transform</span> <span class="title">a</span> <span class="title">general</span> `<span class="title">list</span>` <span class="title">struct</span> <span class="title">to</span> <span class="title">a</span></span></span><br><span class="line"><span class="class"> * <span class="title">special</span> <span class="title">struct</span> (<span class="title">such</span> <span class="title">as</span> <span class="title">struct</span> `<span class="title">page</span>`), <span class="title">using</span> <span class="title">the</span> <span class="title">following</span> <span class="title">MACROs</span>:</span> `le2page`</span><br><span class="line"> * (in memlayout.h), (<span class="keyword">and</span> in <span class="built_in">future</span> <span class="built_in">labs</span>: `le2vma` (in vmm.h), `le2proc` (in</span><br><span class="line"> * proc.h), etc).</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// /kern/mm/memlayout.h</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Page</span> &#123;</span></span><br><span class="line">    <span class="keyword">int</span> ref;                        <span class="comment">// page frame's reference counter</span></span><br><span class="line">    <span class="keyword">uint32_t</span> flags;                 <span class="comment">// array of flags that describe the status of the page frame</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> property;          <span class="comment">// the num of free block, used in first fit pm manager</span></span><br><span class="line">    <span class="keyword">list_entry_t</span> page_link;         <span class="comment">// free list link</span></span><br><span class="line">&#125;;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> PG_reserved                 0       <span class="comment">// if this bit=1: the Page is reserved for kernel, cannot be used in alloc/free_pages; otherwise, this bit=0 </span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> PG_property                 1       <span class="comment">// if this bit=1: the Page is the head page of a free memory block(contains some continuous_addrress pages), and can be used in alloc_pages; if this bit=0: if the Page is the the head page of a free memory block, then this Page and the memory block is alloced. Or this Page isn't the head page.</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// convert list entry to page</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> le2page(le, member)                 \</span></span><br><span class="line">    to_struct((le), struct Page, member)</span><br><span class="line"></span><br><span class="line"><span class="comment">/* free_area_t - maintains a doubly linked list to record free (unused) pages */</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">    <span class="keyword">list_entry_t</span> free_list;         <span class="comment">// the list header</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> nr_free;           <span class="comment">// # of free pages in this free list</span></span><br><span class="line">&#125; <span class="keyword">free_area_t</span>;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="default-init"><a href="#default-init" class="headerlink" title="default_init"></a>default_init</h3><p>default_init 的主要功能：初始化空链表</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* (2) `default_init`:</span></span><br><span class="line"><span class="comment"> *  You can reuse the demo `default_init` function to initialize the `free_list`</span></span><br><span class="line"><span class="comment"> * and set `nr_free` to 0. `free_list` is used to record the free memory blocks.</span></span><br><span class="line"><span class="comment"> * `nr_free` is the total number of the free memory blocks.*/</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> free_list (free_area.free_list)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> nr_free (free_area.nr_free)</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">void</span></span><br><span class="line">default_init(<span class="keyword">void</span>) &#123;</span><br><span class="line">    list_init(&amp;free_list);</span><br><span class="line">    nr_free = <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>使得链表头的头指针和尾指针都指向自己，并且将空闲页数量置为0.</p>
+<h3 id="default-init-memmap"><a href="#default-init-memmap" class="headerlink" title="default_init_memmap"></a>default_init_memmap</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* (3) `default_init_memmap`:</span></span><br><span class="line"><span class="comment"> *  CALL GRAPH: `kern_init` --&gt; `pmm_init` --&gt; `page_init` --&gt; `init_memmap` --&gt;</span></span><br><span class="line"><span class="comment"> * `pmm_manager` --&gt; `init_memmap`.</span></span><br><span class="line"><span class="comment"> *  This function is used to initialize a free block (with parameter `addr_base`,</span></span><br><span class="line"><span class="comment"> * `page_number`). In order to initialize a free block, firstly, you should</span></span><br><span class="line"><span class="comment"> * initialize each page (defined in memlayout.h) in this free block. This</span></span><br><span class="line"><span class="comment"> * procedure includes:</span></span><br><span class="line"><span class="comment"> *  - Setting the bit `PG_property` of `p-&gt;flags`, which means this page is</span></span><br><span class="line"><span class="comment"> * valid. P.S. In function `pmm_init` (in pmm.c), the bit `PG_reserved` of</span></span><br><span class="line"><span class="comment"> * `p-&gt;flags` is already set.</span></span><br><span class="line"><span class="comment"> *  - If this page is free and is not the first page of a free block,</span></span><br><span class="line"><span class="comment"> * `p-&gt;property` should be set to 0.</span></span><br><span class="line"><span class="comment"> *  - If this page is free and is the first page of a free block, `p-&gt;property`</span></span><br><span class="line"><span class="comment"> * should be set to be the total number of pages in the block.</span></span><br><span class="line"><span class="comment"> *  - `p-&gt;ref` should be 0, because now `p` is free and has no reference.</span></span><br><span class="line"><span class="comment"> *  After that, We can use `p-&gt;page_link` to link this page into `free_list`.</span></span><br><span class="line"><span class="comment"> * (e.g.: `list_add_before(&amp;free_list, &amp;(p-&gt;page_link));` )</span></span><br><span class="line"><span class="comment"> *  Finally, we should update the sum of the free memory blocks: `nr_free += n`.*/</span></span><br></pre></td></tr></table></figure>
+
+<p>default_init_memmap的主要功能：初始化空闲块（其中的每一个页），内容包括：设置每个空闲页的 flags，property，ref 这些值，设置好值之后就是把这些空闲页链表连接起来，最后还需要修改链表头的 nr_free 的值</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">void</span></span><br><span class="line">default_init_memmap(struct Page *base, <span class="keyword">size_t</span> n) &#123;</span><br><span class="line">    assert(n &gt; <span class="number">0</span>);</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">Page</span> *<span class="title">p</span> = <span class="title">base</span>;</span></span><br><span class="line">    <span class="keyword">for</span> (; p != base + n; p ++) &#123;<span class="comment">//此处+1递增的大小为sizeof(Page),由此可以通过+1遍历每一个page</span></span><br><span class="line">        assert(PageReserved(p));</span><br><span class="line">        p-&gt;flags = p-&gt;property = <span class="number">0</span>;</span><br><span class="line">        set_page_ref(p, <span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    base-&gt;property = n;</span><br><span class="line">    SetPageProperty(base);</span><br><span class="line">    nr_free += n;</span><br><span class="line">    list_add(&amp;free_list, &amp;(base-&gt;page_link));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>此处递增的简单验证程序如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt; </span></span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Page</span> &#123;</span></span><br><span class="line">    <span class="keyword">int</span> ref ;                        <span class="comment">// page frame's reference counter</span></span><br><span class="line">    <span class="keyword">int</span>  flags ;                 <span class="comment">// array of flags that describe the status of the page frame</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> property ;          </span><br><span class="line">&#125;;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"hello\n"</span>);</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Page</span> <span class="title">p</span>;</span></span><br><span class="line">p.flags = <span class="number">0</span>;</span><br><span class="line">p.ref = <span class="number">1</span>;</span><br><span class="line">p.property = <span class="number">0</span>;</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"%d \n"</span>,&amp;p);</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"%d \n"</span>,p.ref);</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"%d \n"</span>,p.flags);</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"%d \n"</span>,p.property);</span><br><span class="line"></span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"\n"</span>);</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Page</span> *<span class="title">a</span> = &amp;<span class="title">p</span>;</span> </span><br><span class="line">a++;</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"%d \n"</span>,a);</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"%d \n"</span>,a-&gt;ref);</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"%d \n"</span>,a-&gt;flags);</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"%d \n"</span>,a-&gt;property);</span><br><span class="line"></span><br><span class="line"><span class="built_in">printf</span>(<span class="string">"%d "</span>,<span class="keyword">sizeof</span>(p));</span><br><span class="line"><span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</blockquote>
+<p>这里的循环中 的主要内容就是，对于这个空闲块的每一个页的内容做检查和重置：先要检查一下 PG_reserved 是不是为 0 如果为 0 则证明这个页是被内核保留的则不能使用并且设置为已分配的状态，都需要设置 PG_reserved 位和 PG_property 位为 0，即不是保留的页。然后设置 ref 为 0，也就是引用次数为 0，然后循环结束。</p>
+<p>循环结束后，起始的页需要设置 property 即有多少个空闲页，然后设置起始结点的 PG_property 位为 1，也就是空闲块，然后更新 free_list 的 nr_free，即空闲页的个数，然后把这个链表，也是整个空闲块，插入到 free_list 之后。</p>
+<p>Page连接了空闲块,链表对象</p>
+<p>free_area连接了每一个空闲块，双向链表</p>
+<h3 id="default-alloc-page"><a href="#default-alloc-page" class="headerlink" title="default_alloc_page"></a>default_alloc_page</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* (4) `default_alloc_pages`:</span></span><br><span class="line"><span class="comment"> *  Search for the first free block (block size &gt;= n) in the free list and reszie</span></span><br><span class="line"><span class="comment"> * the block found, returning the address of this block as the address required by</span></span><br><span class="line"><span class="comment"> * `malloc`.</span></span><br><span class="line"><span class="comment"> *  (4.1)</span></span><br><span class="line"><span class="comment"> *      So you should search the free list like this:</span></span><br><span class="line"><span class="comment"> *          list_entry_t le = &amp;free_list;</span></span><br><span class="line"><span class="comment"> *          while((le=list_next(le)) != &amp;free_list) &#123;</span></span><br><span class="line"><span class="comment"> *          ...</span></span><br><span class="line"><span class="comment"> *      (4.1.1)</span></span><br><span class="line"><span class="comment"> *          In the while loop, get the struct `page` and check if `p-&gt;property`</span></span><br><span class="line"><span class="comment"> *      (recording the num of free pages in this block) &gt;= n.</span></span><br><span class="line"><span class="comment"> *              struct Page *p = le2page(le, page_link);</span></span><br><span class="line"><span class="comment"> *              if(p-&gt;property &gt;= n)&#123; ...</span></span><br><span class="line"><span class="comment"> *      (4.1.2)</span></span><br><span class="line"><span class="comment"> *          If we find this `p`, it means we've found a free block with its size</span></span><br><span class="line"><span class="comment"> *      &gt;= n, whose first `n` pages can be malloced. Some flag bits of this page</span></span><br><span class="line"><span class="comment"> *      should be set as the following: `PG_reserved = 1`, `PG_property = 0`.</span></span><br><span class="line"><span class="comment"> *      Then, unlink the pages from `free_list`.</span></span><br><span class="line"><span class="comment"> *          (4.1.2.1)</span></span><br><span class="line"><span class="comment"> *              If `p-&gt;property &gt; n`, we should re-calculate number of the rest</span></span><br><span class="line"><span class="comment"> *          pages of this free block. (e.g.: `le2page(le,page_link))-&gt;property</span></span><br><span class="line"><span class="comment"> *          = p-&gt;property - n;`)</span></span><br><span class="line"><span class="comment"> *          (4.1.3)</span></span><br><span class="line"><span class="comment"> *              Re-caluclate `nr_free` (number of the the rest of all free block).</span></span><br><span class="line"><span class="comment"> *          (4.1.4)</span></span><br><span class="line"><span class="comment"> *              return `p`.</span></span><br><span class="line"><span class="comment"> *      (4.2)</span></span><br><span class="line"><span class="comment"> *          If we can not find a free block with its size &gt;=n, then return NULL.*/</span></span><br></pre></td></tr></table></figure>
+
+<p>default_alloc_page的主要任务是，分配合适的空闲页：在空闲链表中搜索合适size的空闲块，在空闲块中分配页。其中，参数n的意思是需要分配到页的数量。空闲块中，必须包含大于等于这么多个数量的页，才能实现分配。基于First fit分配算法，总是从低地址开始遍历，故找到相适合的大小的空闲块，即可分配。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">default_alloc_pages(<span class="keyword">size_t</span> n) &#123;</span><br><span class="line">    assert(n &gt; <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span> (n &gt; nr_free) &#123;<span class="comment">//需要的页数量大于所有空闲块中的页数量，即直接返回null</span></span><br><span class="line">        <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">Page</span> *<span class="title">page</span> = <span class="title">NULL</span>;</span></span><br><span class="line">    <span class="keyword">list_entry_t</span> *le = &amp;free_list;</span><br><span class="line">    <span class="keyword">while</span> ((le = list_next(le)) != &amp;free_list) &#123;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">Page</span> *<span class="title">p</span> = <span class="title">le2page</span>(<span class="title">le</span>, <span class="title">page_link</span>);</span><span class="comment">//返回free_area中空闲块节点的地址,格式化为page</span></span><br><span class="line">        <span class="keyword">if</span> (p-&gt;property &gt;= n) &#123;<span class="comment">//判断该空闲块的空闲页的数量是否满足需求，如满足就退出循环</span></span><br><span class="line">            page = p;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (page != <span class="literal">NULL</span>) &#123;<span class="comment">//找到适合的空闲块时</span></span><br><span class="line">        list_del(&amp;(page-&gt;page_link));<span class="comment">//将该空闲块，从free_area中删除</span></span><br><span class="line">        <span class="keyword">if</span> (page-&gt;property &gt; n) &#123;<span class="comment">//如果容量大于所需要的容量，则将剩下的部分回收到free_area</span></span><br><span class="line">            <span class="class"><span class="keyword">struct</span> <span class="title">Page</span> *<span class="title">p</span> = <span class="title">page</span> + <span class="title">n</span>;</span> <span class="comment">//指向第n个page</span></span><br><span class="line">            p-&gt;property = page-&gt;property - n;<span class="comment">//剔除n个page</span></span><br><span class="line">            list_add(&amp;free_list, &amp;(p-&gt;page_link));<span class="comment">//把剩下的部分，回收</span></span><br><span class="line">    	&#125;</span><br><span class="line">        nr_free -= n;<span class="comment">//总的空闲页数量减去分配出来的数量</span></span><br><span class="line">        ClearPageProperty(page);<span class="comment">//page 的 PageProperty 位为 0，表示已分配</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> page;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="default-free-pages"><a href="#default-free-pages" class="headerlink" title="default_free_pages"></a>default_free_pages</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">* (<span class="number">5</span>) `default_free_pages`:</span><br><span class="line">*  re-link the pages into the <span class="built_in">free</span> <span class="built_in">list</span>, <span class="keyword">and</span> may merge small <span class="built_in">free</span> blocks into</span><br><span class="line">* the big ones.</span><br><span class="line">*  (<span class="number">5.1</span>)</span><br><span class="line">*      According to the base address of the withdrawed blocks, search the <span class="built_in">free</span></span><br><span class="line">*  list for its correct position (with address from low to high), and insert</span><br><span class="line">*  the pages. (May use `list_next`, `le2page`, `list_add_before`)</span><br><span class="line">*  (<span class="number">5.2</span>)</span><br><span class="line">*      Reset the fields of the pages, such as `p-&gt;ref` <span class="keyword">and</span> `p-&gt;flags` (PageProperty)</span><br><span class="line">*  (<span class="number">5.3</span>)</span><br><span class="line">*      Try to merge blocks at lower <span class="keyword">or</span> higher addresses. Notice: This should</span><br><span class="line">*  change some pages<span class="number">'</span> `p-&gt;property` correctly.</span><br></pre></td></tr></table></figure>
+
+<p>default_free_pages的主要任务是，释放已经分配的页：将分配的页重新加入free_area中，并且设置相关属性为未分配，同时注意合并小的内存块变成一个大的内存块。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">void</span></span><br><span class="line">default_free_pages(struct Page *base, <span class="keyword">size_t</span> n) &#123;</span><br><span class="line">    assert(n &gt; <span class="number">0</span>);</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">Page</span> *<span class="title">p</span> = <span class="title">base</span>;</span></span><br><span class="line">    <span class="keyword">for</span> (; p != base + n; p ++) &#123;</span><br><span class="line">        assert(!PageReserved(p) &amp;&amp; !PageProperty(p));</span><br><span class="line">        p-&gt;flags = <span class="number">0</span>;</span><br><span class="line">        set_page_ref(p, <span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    base-&gt;property = n;</span><br><span class="line">    SetPageProperty(base);</span><br><span class="line">    <span class="keyword">list_entry_t</span> *le = list_next(&amp;free_list);</span><br><span class="line">    <span class="keyword">while</span> (le != &amp;free_list) &#123;</span><br><span class="line">        p = le2page(le, page_link);</span><br><span class="line">        le = list_next(le);</span><br><span class="line">        <span class="keyword">if</span> (base + base-&gt;property == p) &#123;</span><br><span class="line">            base-&gt;property += p-&gt;property;</span><br><span class="line">            ClearPageProperty(p);</span><br><span class="line">            list_del(&amp;(p-&gt;page_link));</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> (p + p-&gt;property == base) &#123;</span><br><span class="line">            p-&gt;property += base-&gt;property;</span><br><span class="line">            ClearPageProperty(base);</span><br><span class="line">            base = p;</span><br><span class="line">            list_del(&amp;(p-&gt;page_link));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    nr_free += n;</span><br><span class="line">    list_add(&amp;free_list, &amp;(base-&gt;page_link));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>由于每次都切割大块，当大块切割之后只剩很小的一部分，这部分就很难被利用到，就会造成内部碎片，多了的话就会浪费很大一部分内存<br>free 算法，只有两种情况前向和后向和不合并，但是如果前后都是空闲即可以前后合并，算法中没有实现，想要实现也就是把 else if 修改成 if 即可</p>
+<h2 id="写在前面"><a href="#写在前面" class="headerlink" title="写在前面"></a>写在前面</h2><h3 id="虚拟地址，线性地址与物理地址"><a href="#虚拟地址，线性地址与物理地址" class="headerlink" title="虚拟地址，线性地址与物理地址"></a>虚拟地址，线性地址与物理地址</h3><p>虚拟地址（Virtual Address）是由两部分组成：<code>段选择子(segment selector)和段内偏移(segment offset)</code><br>线性地址（Linear Address）指的是<code>通过段地址转换机制把虚拟地址进行转换之后得到的地址</code><br>物理地址（Physical Addresses）是<code>分页地址转换机制把线性地址进行转换之后得到的真实的内存地址</code><br>逻辑地址：<code>虚拟地址中的段内偏移</code></p>
+<p>整个流程是虚拟地址先经过翻译转化成简单的地址，然后再通过分页机制转化为物理地址。<br><a href="https://murfyexp.github.io/images/JOS/地址转换.png" target="_blank" rel="noopener"><img src="/2021/06/21/ucore_lab2_%E5%AE%9E%E9%AA%8C/%E5%9C%B0%E5%9D%80%E8%BD%AC%E6%8D%A2.png" alt="img"></a></p>
+<p>翻了<code>进入保护模式</code>，我们就不能直接使用线性地址或者物理地址了。<code>所有代码中的地址引用都是虚拟地址的形式，然后被MMU系统所转换，所以C语言中的指针其实都是虚拟地址</code></p>
+<h3 id="练习2"><a href="#练习2" class="headerlink" title="练习2"></a>练习2</h3><p>实现寻找虚拟地址对应的页表项（需要编程</p>
+<p>通过设置页表和对应的页表项，可建立虚拟内存地址和物理内存地址的对应关系。其中的get_pte函数是设置页表项环节中的一个重要步骤。此函数找到一个虚地址对应的二级页表项的内核虚地址，如果此二级页表项不存在，则分配一个包含此项的二级页表。本练习需要补全get_pte函数 in kern/mm/pmm.c，实现其功能。请仔细查看和理解get_pte函数中的注释。get_pte函数的调用关系图如下所示：</p>
+<p><img src="https://objectkuan.gitbooks.io/ucore-docs/content/lab2_figs/image001.png" alt="img"> 图1 get_pte函数的调用关系图</p>
+<p>请在实验报告中简要说明你的设计实现过程。请回答如下问题：</p>
+<ul>
+<li>请描述页目录项（Pag Director Entry）和页表（Page Table Entry）中每个组成部分的含义和以及对ucore而言的潜在用处。</li>
+<li>如果ucore执行过程中访问内存，出现了页访问异常，请问硬件要做哪些事情？</li>
+</ul>
+<p>首先介绍四个名词：</p>
+<p>PDT：页目录表</p>
+<p>PDE：页目录项，页目录表中的项</p>
+<p>PT：页表</p>
+<p>PTE：页表入口，实际上就是页表项。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//get_pte - get pte and return the kernel virtual address of this pte for la</span></span><br><span class="line"><span class="comment">//        - if the PT contians this pte didn't exist, alloc a page for PT</span></span><br><span class="line"><span class="comment">// parameter:</span></span><br><span class="line"><span class="comment">//  pgdir:  the kernel virtual base address of PDT（页目录表）</span></span><br><span class="line"><span class="comment">//  la:     the linear address need to map</span></span><br><span class="line"><span class="comment">//  create: a logical value to decide if alloc a page for PT</span></span><br><span class="line"><span class="comment">// return vaule: the kernel virtual address of this pte</span></span><br><span class="line"><span class="keyword">pte_t</span> *</span><br><span class="line">get_pte(<span class="keyword">pde_t</span> *pgdir, <span class="keyword">uintptr_t</span> la, <span class="keyword">bool</span> create) &#123;</span><br><span class="line">    <span class="comment">/* LAB2 EXERCISE 2: YOUR CODE</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * If you need to visit a physical address, please use KADDR()</span></span><br><span class="line"><span class="comment">     * please read pmm.h for useful macros</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * Maybe you want help comment, BELOW comments can help you finish the code</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * Some Useful MACROs and DEFINEs, you can use them in below implementation.</span></span><br><span class="line"><span class="comment">     * MACROs or Functions:</span></span><br><span class="line"><span class="comment">     *   PDX(la) = the index of page directory entry of VIRTUAL ADDRESS la.</span></span><br><span class="line"><span class="comment">     *   KADDR(pa) : takes a physical address and returns the corresponding kernel virtual address.</span></span><br><span class="line"><span class="comment">     *   set_page_ref(page,1) : means the page be referenced by one time</span></span><br><span class="line"><span class="comment">     *   page2pa(page): get the physical address of memory which this (struct Page *) page  manages</span></span><br><span class="line"><span class="comment">     *   struct Page * alloc_page() : allocation a page</span></span><br><span class="line"><span class="comment">     *   memset(void *s, char c, size_t n) : sets the first n bytes of the memory area pointed by s</span></span><br><span class="line"><span class="comment">     *                                       to the specified value c.</span></span><br><span class="line"><span class="comment">     * DEFINEs:</span></span><br><span class="line"><span class="comment">     *   PTE_P           0x001                   // page table/directory entry flags bit : Present</span></span><br><span class="line"><span class="comment">     *   PTE_W           0x002                   // page table/directory entry flags bit : Writeable</span></span><br><span class="line"><span class="comment">     *   PTE_U           0x004                   // page table/directory entry flags bit : User can access</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> 0</span></span><br><span class="line">    <span class="keyword">pde_t</span> *pdep = <span class="literal">NULL</span>;   <span class="comment">// (1) find page directory entry</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="number">0</span>) &#123;              <span class="comment">// (2) check if entry is not present</span></span><br><span class="line">                          <span class="comment">// (3) check if creating is needed, then alloc page for page table</span></span><br><span class="line">                          <span class="comment">// CAUTION: this page is used for page table, not for common data page</span></span><br><span class="line">                          <span class="comment">// (4) set page reference</span></span><br><span class="line">        <span class="keyword">uintptr_t</span> pa = <span class="number">0</span>; <span class="comment">// (5) get linear address of page</span></span><br><span class="line">                          <span class="comment">// (6) clear page content using memset</span></span><br><span class="line">                          <span class="comment">// (7) set page directory entry's permission</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;          <span class="comment">// (8) return page table entry</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">    <span class="keyword">pde_t</span> *pdep = &amp;pgdir[PDX(la)];<span class="comment">//PDX(la)获得la的页目录项index,根据index获得页目录项</span></span><br><span class="line">    <span class="keyword">if</span> (!(*pdep &amp; PTE_P)) &#123;<span class="comment">//检查页表入口是存在的</span></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">Page</span> *<span class="title">page</span>;</span>	</span><br><span class="line">        <span class="keyword">if</span> (!create || (page = alloc_page()) == <span class="literal">NULL</span>) &#123; <span class="comment">//检查create是否为0，不0则创建新的页</span></span><br><span class="line">            <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        set_page_ref(page, <span class="number">1</span>);	<span class="comment">//设置页引用次数</span></span><br><span class="line">        <span class="keyword">uintptr_t</span> pa = page2pa(page);<span class="comment">// 获得页的线性地址</span></span><br><span class="line">        <span class="built_in">memset</span>(KADDR(pa), <span class="number">0</span>, PGSIZE);<span class="comment">//初始化页</span></span><br><span class="line">        *pdep = pa | PTE_U | PTE_W | PTE_P;<span class="comment">//设置页目录项的权限位</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> &amp;((<span class="keyword">pte_t</span> *)KADDR(PDE_ADDR(*pdep)))[PTX(la)];<span class="comment">//返回页表项：返回页目录项中的虚拟地址+PTX()得到线性地址的页表表表项index。</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>PDE结构</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">PDE:</span><br><span class="line">|&lt;------ <span class="number">31</span>~<span class="number">12</span>------&gt;|&lt;------ <span class="number">11</span>~<span class="number">0</span> ---------&gt;| 比特</span><br><span class="line">                     |b a <span class="number">9</span> <span class="number">8</span> <span class="number">7</span> <span class="number">6</span> <span class="number">5</span> <span class="number">4</span> <span class="number">3</span> <span class="number">2</span> <span class="number">1</span> <span class="number">0</span>| </span><br><span class="line">|--------------------|-|-|-|-|-|-|-|-|-|-|-|-| 占位</span><br><span class="line">|&lt;-------index------&gt;| AVL |G|P|<span class="number">0</span>|A|P|P|U|R|P| 属性</span><br><span class="line">                             |S|   |C|W|/|/|</span><br><span class="line">                                   |D|T|S|W|</span><br><span class="line">    </span><br><span class="line">PTE:</span><br><span class="line">|&lt;------ <span class="number">31</span>~<span class="number">12</span>------&gt;|&lt;------ <span class="number">11</span>~<span class="number">0</span> ---------&gt;| 比特</span><br><span class="line">                     |b a <span class="number">9</span> <span class="number">8</span> <span class="number">7</span> <span class="number">6</span> <span class="number">5</span> <span class="number">4</span> <span class="number">3</span> <span class="number">2</span> <span class="number">1</span> <span class="number">0</span>|</span><br><span class="line">|--------------------|-|-|-|-|-|-|-|-|-|-|-|-| 占位</span><br><span class="line">|&lt;-------index------&gt;| AVL |G|P|D|A|P|P|U|R|P| 属性</span><br><span class="line">                             |A|   |C|W|/|/|</span><br><span class="line">                             |T|   |D|T|S|W|</span><br></pre></td></tr></table></figure>
+
+<p>属性的含义</p>
+<ul>
+<li>P：有效位。0 表示当前表项无效。</li>
+<li>R/W: 0 表示只读。1 表示可读写。</li>
+<li>U/S: 0 是高特权级（只能由 0，1，2 层访问） 1 是用户级（0，1，2，3 层访问）</li>
+<li>A: 0 表示该页未被访问，1 表示已被访问。</li>
+<li>D: 脏位。0 表示该页未写过，1 表示该页被写过。</li>
+<li>PS: 只存在于页目录表。0 表示这是 4KB 页，指向一个页表。1 表示这是 4MB 大页，直接指向物理页。</li>
+</ul>
+<p><strong>线性地址</strong>：</p>
+<p><img src="/2021/06/21/ucore_lab2_%E5%AE%9E%E9%AA%8C/image-20210621121139938.png" alt="image-20210621121139938"></p>
+<p>发生也访问异常后做的操作：</p>
+<ul>
+<li>进行换页操作 首先 CPU 将产生页访问异常的线性地址 放到 cr2 寄存器中</li>
+<li>然后就是和普通的中断一样 保护现场 将寄存器的值压入栈中</li>
+<li>然后压入 error_code 中断服务例程将外存的数据换到内存中来</li>
+<li>最后 退出中断 回到进入中断前的状态</li>
+</ul>
+<p>代码中部分宏和函数：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">PGNUM(la)：物理地址的页号</span><br><span class="line">PDX(la)：线性地址的页目录表项</span><br><span class="line">PTX(la)：线性地址的页表表项</span><br><span class="line">PGOFF(la)：线性地址的页内偏移</span><br><span class="line">PTE_ADDR(pte)：页表表项/页目录表项的物理地址</span><br><span class="line">    </span><br><span class="line">PADDR(kva)：虚拟地址对应的物理地址</span><br><span class="line">KADDR(pa)：物理地址对应的虚拟地址</span><br><span class="line">page2pa(pp)：页结构pp所对应的物理页地址</span><br><span class="line">page2kva(pp)：获取页结构pp对应的虚拟地址</span><br><span class="line">pa2page(pa)：物理地址所在的物理页的页结构pp</span><br></pre></td></tr></table></figure>
+
+<h3 id="练习3"><a href="#练习3" class="headerlink" title="练习3"></a>练习3</h3><p><strong>释放某虚地址所在的页并取消对应二级页表项的映射（需要编程）</strong></p>
+<p>当释放一个包含某虚地址的物理内存页时，需要让对应此物理内存页的管理数据结构Page做相关的清除处理，使得此物理内存页成为空闲；另外还需把表示虚地址与物理地址对应关系的二级页表项清除。请仔细查看和理解page_remove_pte函数中的注释。为此，需要补全在 kern/mm/pmm.c中的page_remove_pte函数。page_remove_pte函数的调用关系图如下所示：</p>
+<p><img src="https://objectkuan.gitbooks.io/ucore-docs/content/lab2_figs/image002.png" alt="img"></p>
+<p>图2 page_remove_pte函数的调用关系图</p>
+<p>请在实验报告中简要说明你的设计实现过程。请回答如下问题：</p>
+<ul>
+<li><p>数据结构Page的全局变量（其实是一个数组）的每一项与页表中的页目录项和页表项有无对应关系？如果有，其对应关系是啥？</p>
+<ul>
+<li>比如 PG_reserved 这个表示的这个页是否被内核保留 与 页表项的 PTE_U 这个参数有关系</li>
+</ul>
+</li>
+<li><p>如果希望虚拟地址与物理地址相等，则需要如何修改lab2，完成此事？ <strong>鼓励通过编程来具体完成这个问题</strong></p>
+<ul>
+<li>修改虚拟地址基址 减去一个 0xC0000000 就等于物理地址了，也就是修改 memlayout.h 中的<code>#define KERNBASE 0xC0000000</code> 为<code>#define KERNBASE 0x0</code></li>
+</ul>
+</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//page_remove_pte - free an Page sturct which is related linear address la</span></span><br><span class="line"><span class="comment">//                - and clean(invalidate) pte which is related linear address la</span></span><br><span class="line"><span class="comment">//note: PT is changed, so the TLB need to be invalidate </span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span></span><br><span class="line">page_remove_pte(<span class="keyword">pde_t</span> *pgdir, <span class="keyword">uintptr_t</span> la, <span class="keyword">pte_t</span> *ptep) &#123;</span><br><span class="line">    <span class="comment">/* LAB2 EXERCISE 3: YOUR CODE</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * Please check if ptep is valid, and tlb must be manually updated if mapping is updated</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * Maybe you want help comment, BELOW comments can help you finish the code</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * Some Useful MACROs and DEFINEs, you can use them in below implementation.</span></span><br><span class="line"><span class="comment">     * MACROs or Functions:</span></span><br><span class="line"><span class="comment">     *   struct Page *page pte2page(*ptep): get the according page from the value of a ptep</span></span><br><span class="line"><span class="comment">     *   free_page : free a page</span></span><br><span class="line"><span class="comment">     *   page_ref_dec(page) : decrease page-&gt;ref. NOTICE: ff page-&gt;ref == 0 , then this page should be free.</span></span><br><span class="line"><span class="comment">     *   tlb_invalidate(pde_t *pgdir, uintptr_t la) : Invalidate a TLB entry, but only if the page tables being</span></span><br><span class="line"><span class="comment">     *                        edited are the ones currently in use by the processor.</span></span><br><span class="line"><span class="comment">     * DEFINEs:</span></span><br><span class="line"><span class="comment">     *   PTE_P           0x001                   // page table/directory entry flags bit : Present</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> 0</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="number">0</span>) &#123;                      <span class="comment">//(1) check if page directory is present</span></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">Page</span> *<span class="title">page</span> = <span class="title">NULL</span>;</span> <span class="comment">//(2) find corresponding page to pte</span></span><br><span class="line">                                  <span class="comment">//(3) decrease page reference</span></span><br><span class="line">                                  <span class="comment">//(4) and free this page when page reference reachs 0</span></span><br><span class="line">                                  <span class="comment">//(5) clear second page table entry</span></span><br><span class="line">                                  <span class="comment">//(6) flush tlb</span></span><br><span class="line">    &#125;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">    <span class="keyword">if</span> (*ptep &amp; PTE_P) &#123;<span class="comment">//检查页目录项是否存在</span></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">Page</span> *<span class="title">page</span> = <span class="title">pte2page</span>(*<span class="title">ptep</span>);</span><span class="comment">//存在找到对应的页</span></span><br><span class="line">        <span class="keyword">if</span> (page_ref_dec(page) == <span class="number">0</span>) &#123;<span class="comment">//减少页的ref=0</span></span><br><span class="line">            free_page(page);<span class="comment">//释放对应页</span></span><br><span class="line">        &#125;</span><br><span class="line">        *ptep = <span class="number">0</span>;<span class="comment">//同时将页目录项置为0，覆盖掉原有的值</span></span><br><span class="line">        tlb_invalidate(pgdir, la);<span class="comment">//使 TLB 条目无效，但是仅在要编辑的页表是处理器当前正在使用的页表中</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><strong>扩展练习Challenge：buddy system（伙伴系统）分配算法（需要编程）</strong></p>
+<p>Buddy System算法把系统中的可用存储空间划分为存储块(Block)来进行管理, 每个存储块的大小必须是2的n次幂(Pow(2, n)), 即1, 2, 4, 8, 16, 32, 64, 128…</p>
+<ul>
+<li>参考<a href="http://coolshell.cn/articles/10427.html" target="_blank" rel="noopener">伙伴分配器的一个极简实现</a>， 在ucore中实现buddy system分配算法，要求有比较充分的测试用例说明实现的正确性，需要有设计文档。</li>
+</ul>
+<p><strong>扩展练习Challenge：任意大小的内存单元slub分配算法（需要编程）</strong></p>
+<p>slub算法，实现两层架构的高效内存单元分配，第一层是基于页大小的内存分配，第二层是在第一层基础上实现基于任意大小的内存分配。可简化实现，能够体现其主体思想即可。</p>
+<ul>
+<li>参考<a href="http://www.ibm.com/developerworks/cn/linux/l-cn-slub/" target="_blank" rel="noopener">linux的slub分配算法/</a>，在ucore中实现slub分配算法。要求有比较充分的测试用例说明实现的正确性，需要有设计文档。</li>
+</ul>
+<blockquote>
+<p>Challenges是选做，做一个就很好了。完成Challenge的同学可单独提交Challenge。完成得好的同学可获得最终考试成绩的加分。</p>
+</blockquote>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong s>
+              本博客所有文章除特别声明外，均采用 <a href="https://www.apache.org/licenses/LICENSE-2.0.html" rel="external nofollow"
+                target="_blank">Apache License 2.0</a> 许可协议。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://drag0nf1y.github.io/2021/06/21/ucore_lab2_%E5%AE%9E%E9%AA%8C/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux-%E5%86%85%E6%A0%B8/" rel="tag">linux 内核</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ucore/" rel="tag">ucore</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+      <a href="/2021/06/23/arch-x86-kvm-vmx-c-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%88%87%E6%8D%A2%E5%88%87%E5%87%BA/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            arch-x86-kvm-vmx-c-虚拟机切换切出
+          
+        </div>
+      </a>
+    
+    
+      <a href="/2021/06/17/ucore_lab2_%E7%90%86%E8%AE%BA/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">ucore_lab2_理论</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: '',
+        app_key: '',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'mp',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2021
+        Drag0nf1y
+      </li>
+      <li>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+    <div class="to_top">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+      </div>
+    </main>
+      <aside class="sidebar">
+        <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.svg" alt="Drag0nf1y"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives/">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/">标签</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E7%A0%94%E7%A9%B6/">研究</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about/">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="Search">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+      </aside>
+      <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>请我喝杯咖啡吧~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+      
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script src="/js/share.js"></script>
+
+
+
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+
+
+
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer:'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto',
+    onClick: (e) => {
+      $('.toc-link').removeClass('is-active-link');
+      $(`a[href=${e.target.hash}]`).addClass('is-active-link');
+      $(e.target.hash).scrollIntoView();
+      return false;
+    }
+  });
+</script>
+
+
+<script>
+  var ayerConfig = {
+    mathjax: false
+  }
+</script>
+
+
+<script src="/js/ayer.js"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+  </div>
+</body>
+
+</html>

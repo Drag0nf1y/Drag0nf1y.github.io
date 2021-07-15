@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="description" content="Drag0nf1y" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    HA-VMSI A Lightweight Virtual Machine Isolation Approach with Commodity Hardware for ARM |  Drag0nf1y
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="/favicon.ico" />
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+<script src="/js/pace.min.js"></script>
+
+
+  
+
+  
+
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content">
+      <section class="outer">
+  <article id="post-HA-VMSI A Lightweight Virtual Machine Isolation Approach with Commodity Hardware for ARM" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  HA-VMSI A Lightweight Virtual Machine Isolation Approach with Commodity Hardware for ARM
+</h1>
+  
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2021/07/15/HA-VMSI%20A%20Lightweight%20Virtual%20Machine%20Isolation%20Approach%20with%20Commodity%20Hardware%20for%20ARM/" class="article-date">
+  <time datetime="2021-07-15T07:05:15.012Z" itemprop="datePublished">2021-07-15</time>
+</a>
+      
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E7%A0%94%E7%A9%B6/">研究</a> / <a class="article-category-link" href="/categories/%E7%A0%94%E7%A9%B6/%E8%99%9A%E6%8B%9F%E5%8C%96/">虚拟化</a>
+  </div>
+
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">11.8k字</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">43分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+      <h1 id="HA-VMSI-A-Lightweight-Virtual-Machine-Isolation-Approach-with-Commodity-Hardware-for-ARM-论文阅读"><a href="#HA-VMSI-A-Lightweight-Virtual-Machine-Isolation-Approach-with-Commodity-Hardware-for-ARM-论文阅读" class="headerlink" title="HA-VMSI: A Lightweight Virtual Machine Isolation Approach with Commodity Hardware for ARM 论文阅读"></a>HA-VMSI: A Lightweight Virtual Machine Isolation Approach with Commodity Hardware for ARM 论文阅读</h1><h2 id="1-研究动机"><a href="#1-研究动机" class="headerlink" title="1 研究动机"></a>1 研究动机</h2><h3 id="1-1-背景"><a href="#1-1-背景" class="headerlink" title="1.1 背景"></a>1.1 背景</h3><p>随着云计算的发展，云计算相关的基础技术——虚拟化逐步地变得越来越重要。在云计算中，来自不同客户的多个VM共享同一台物理服务器。 这些VM可能是恶意的。 在这样的环境中，关键的安全挑战是如何隔离共同驻留的VM，以保护客户的敏感数据。</p>
+<h3 id="1-2-问题"><a href="#1-2-问题" class="headerlink" title="1.2 问题"></a>1.2 问题</h3><p>保护云上VM的困难：</p>
+<ul>
+<li>hypervisor的代码量和复杂性：攻击面大</li>
+<li>虚拟机逃逸：危害严重</li>
+<li>云运营商的不可信</li>
+</ul>
+<p>已有的解决方案：</p>
+<ul>
+<li><p>NOVA和HyperLock 提供了基于微管理程序的框架，以减少管理程序和VM之间的直接交互并限制攻击的影响</p>
+</li>
+<li><p>固定的内核和内存预先分配给VM。 这些系统将通过最小化或重建管理程序来减少漏洞利用，同时还剥夺了某些虚拟化功能</p>
+</li>
+<li><p>以前的其他解决方案都集中在强化管理程序上，例如保护管理程序的代码或控制流完整性</p>
+<p>此类工作旨在保护虚拟机管理程序免受恶意来宾VM的攻击，但不考虑虚拟机管理程序对虚拟机的攻击，软件的方式不足以保护VM。</p>
+<p>此外，一些基于硬件的建议解决方案确实可以保护不受信任的虚拟机管理程序中的虚拟机，但是关注点大多在x86架构上，对于ARM架构有所缺乏。</p>
+</li>
+</ul>
+<h3 id="1-3-本文工作"><a href="#1-3-本文工作" class="headerlink" title="1.3 本文工作"></a>1.3 本文工作</h3><p>本文实现了针对于ARM架构的VM安全隔离技术，依赖于ARM TrustZone的硬件设施。关键在于设计了一个精简的安全监视器HA-VMSI，位于ARM TrustZone 的安全隔离执行环境EL3（fireware/secure moniter）中。</p>
+<p> 图2显示了HA-VMSI系统与传统虚拟化系统的比较。在每种情况下，虚线框代表用于VM隔离的Trusted Computing Base（TCB）。</p>
+<p><img src="/2021/07/15/HA-VMSI%20A%20Lightweight%20Virtual%20Machine%20Isolation%20Approach%20with%20Commodity%20Hardware%20for%20ARM/Image.png" alt="Image"></p>
+<p>概括来说，本文的主要贡献是：   </p>
+<ul>
+<li>我们提出了<strong>HA-VMSI，这是一个完整且可行的安全性体系结构，该体系结构将VM隔离与虚拟机管理程序的资源管理隔离开来，并将TCB缩减为数千行代码</strong>。 </li>
+<li>我们提出了一套技术，<strong>可为虚拟机的内存提供不可旁路的内存保护，以防止接管了主机OS或虚拟机管理程序的攻击者。</strong>  </li>
+<li>我们提出了一个<strong>基于VM隔离的安全框架，用于基于内容的页面合并和页面交换，以在数据安全性和内存利用率之间进行权衡。</strong>  </li>
+<li>我们在ARMv8-A开发平台和模拟器中使用TrustZone构建HA-VMSI的原型，并评估其有效性和性能影响。</li>
+</ul>
+<h2 id="2-研究思路"><a href="#2-研究思路" class="headerlink" title="2 研究思路"></a>2 研究思路</h2><h3 id="2-1-技术背景"><a href="#2-1-技术背景" class="headerlink" title="2.1 技术背景"></a>2.1 技术背景</h3><h4 id="2-1-1-ARMv8-A架构"><a href="#2-1-1-ARMv8-A架构" class="headerlink" title="2.1.1 ARMv8-A架构"></a>2.1.1 ARMv8-A架构</h4><p>从ARMv7开始，ARM公司面向三个市场:应用、实时、控制，分别推出A、R、M系列处理器。ARM公司目前正在往服务器、企业设备方向进军。因此对于内存、虚拟化、安全需求迫切。在此背景下，ARMv8推出。</p>
+<p>我们从5个方面描述：</p>
+<p>​        1.<strong>AArch64,</strong>A64指令集,这里有一个误解是，64bit的指令集是指通用寄存器是64位宽的，而不是指32位的指令集编码变成64位的。ARMv7的LPAE技术可以解决4G的物理地址寻址限制。它主要解决虚拟地址寻址。</p>
+<ol start="2">
+<li><p>作为一家IP公司，ARM的设计必须保证向上兼容，因此定义了两套运行环境（ES:<strong>Execution state</strong>）。</p>
+<p>3.AArch64摒弃了之前的处理器模式、优先级级别等传统概念。提出了EL（<strong>Exception level</strong>）。</p>
+<p>4.在ARMv7 security extension的基础上，新增<strong>security model</strong>，支持安全相关的应用需求。</p>
+<p>5.在ARMv7 virtualization extension的基础上，提供完整的<strong>virtualization</strong>框架，从硬件上支持虚拟化。</p>
+</li>
+</ol>
+<p>ARMv7-A体系结构使用从PL0到PL2的特权级别。  在ARMv8-A中，异常级别已经取代了权限级别，但本节将介绍如何对PL1继续进行特殊使用。  下表显示了包含虚拟化扩展和安全扩展的ARMv7-A处理器的全套处理器模式。  它还显示了ARMv7-A分配给每个模式的特权级别，这些模式定义了其执行权限。 执行权限是在每个安全状态中独立定义的。</p>
+<p><img src="/2021/07/15/HA-VMSI%20A%20Lightweight%20Virtual%20Machine%20Isolation%20Approach%20with%20Commodity%20Hardware%20for%20ARM/image-20210518121723663.png" alt="image-20210518121723663"></p>
+<p><strong>security model</strong></p>
+<p><strong>ARMv8-a,放弃处理器模式概念。形成Exception level，简称EL0-EL3。</strong>放弃privilege level的概念。形成Exception level，可以将EL0归属于non-privilege level，EL1/2/3属于privilege level。</p>
+<p><img src="/2021/07/15/HA-VMSI%20A%20Lightweight%20Virtual%20Machine%20Isolation%20Approach%20with%20Commodity%20Hardware%20for%20ARM/image-20210518120500696.png" alt="image-20210518120500696"></p>
+<p>ARMv8-a Exception level有关的说明如下：</p>
+<p>1）AArch64中，已经没有User、SVC、ABT等处理器模式的概念，为了兼容，在AArch32中，就把这些处理器模式映射到了4个Exception level。</p>
+<p>2）Application位于特权等级最低的EL0，Guest OS（Linux kernel、window等）位于EL1，提供虚拟化支持的Hypervisor位于EL2（可以不实现），提供Security支持的Secure Monitor位于EL3（可以不实现）。</p>
+<p>3）只有在异常发生时（或者异常处理返回时），才能切换Exception level（这也是Exception level的命名原因，为了处理异常）。当异常发生时，有两种选择，停留在当前的EL，或者跳转到更高的EL，EL不能降级。同样，异常处理返回时，也有两种选择，停留在当前EL，或者调到更低的EL。</p>
+<p>ARMv8-a的security模型基本沿用了ARMv7 security extension的思路，主要目的保护一些安全应用的数据。它不同于privilege level等软件逻辑上的保护，而是一种物理上的区隔，即不同security状态下，可以访问的物理内存是不同的。</p>
+<p>ARMv8-a架构有两个security state，Security和non-Security。主要的功效是物理地址的区隔，以及一些system control寄存器的访问控制：</p>
+<p>在Security状态下，为security world，处理器可以访问所有的Secure physical address space以及Non-secure physical address space；</p>
+<p>在Non-security状态下，为normal world，只能访问Non-secure physical address space，且不能访问Secure system control resources。</p>
+<h4 id="2-1-2-TrustZone"><a href="#2-1-2-TrustZone" class="headerlink" title="2.1.2 TrustZone"></a>2.1.2 TrustZone</h4><p>TrustZone是Arm A配置文件体系结构中安全体系结构的名称。TrustZone在Armv6K中首次引入，在Armv7-A和Armv8-A中也受支持。TrustZone提供了两个执行环境，它们之间具有系统范围内的硬件强制隔离，如下图所示：</p>
+<p><img src="/2021/07/15/HA-VMSI%20A%20Lightweight%20Virtual%20Machine%20Isolation%20Approach%20with%20Commodity%20Hardware%20for%20ARM/image-20210518121947144.png" alt="image-20210518121947144"></p>
+<p>异常模型Exception Model将ARM分为：安全和非安全部分。</p>
+<p>非安全部分包括：NS.EL0、NS.EL1、NS.EL2；安全部分包括：EL3、S.EL2(ARMv8.4新增)、S.EL1、S.EL0。</p>
+<p><strong>注意：</strong>对安全EL2的支持最初是在Armv8.4-A中引入的，并且支持在Armv8-A中仍然是可选的。</p>
+<p><img src="/2021/07/15/HA-VMSI%20A%20Lightweight%20Virtual%20Machine%20Isolation%20Approach%20with%20Commodity%20Hardware%20for%20ARM/1083701-20201225100953786-2069544319.png" alt="img"></p>
+<p>下图显示了在安全状态之间移动所涉及的步骤的示例顺序。一次采取以下步骤：</p>
+<ol>
+<li>输入更高的“异常”级别需要一个异常。通常，此异常将是<code>FIQ</code>或<code>SMC</code>（安全监视器调用）异常。稍后我们<code>SMC</code>将更详细地讨论中断处理。</li>
+<li>在适当的异常向量处输入EL3。在EL3中运行的软件会切换该<code>SCR_EL3.NS</code>位。</li>
+<li>然后，异常返回将处理器从EL3带到S.EL1。</li>
+</ol>
+<p>更改安全性状态不只是在异常级别和更改<code>SCR_EL3.NS</code>位之间移动。我们还必须考虑处理器状态。这个NS位实际上就是NOT SECURITY的缩写NS。通过这个位来切换特权级处理。</p>
+<p><img src="/2021/07/15/HA-VMSI%20A%20Lightweight%20Virtual%20Machine%20Isolation%20Approach%20with%20Commodity%20Hardware%20for%20ARM/602167b6873dd96c4deaf4ab" alt="安全状态图。"></p>
+<h4 id="2-1-3-ARM-KVM-虚拟化"><a href="#2-1-3-ARM-KVM-虚拟化" class="headerlink" title="2.1.3 ARM/KVM 虚拟化"></a>2.1.3 ARM/KVM 虚拟化</h4><p>ARMv8中Hypervisor的架构，因为涉及到不同的Exception Level的切换：</p>
+<p><img src="/2021/07/15/HA-VMSI%20A%20Lightweight%20Virtual%20Machine%20Isolation%20Approach%20with%20Commodity%20Hardware%20for%20ARM/image-20210518123709701.png" alt="image-20210518123709701"></p>
+<ol>
+<li>Linux ARM架构的Hypervisor在引入时，采用的是图中的系统架构，以便能充分利用Linux现有的机制，比如scheduler等；</li>
+<li>KVM/ARM的实现采用了<code>split</code>模式，分成<code>Highvisor</code>和<code>Lowvisor</code>，这样可以充分利用ARM处理器不同模式的好处，比如，<code>Highvisor</code>可以利用Linux Kernel的现有机制，而<code>Lowvisor</code>又可以利用<code>Hyp Mode</code>的特权。此外，带来的好处还包含了不需要大量修改Linux内核的代码，这个在刚引入的时候是更容易被社区所接受的；</li>
+<li><code>Lowvisor</code>有三个关键功能：1）对不同的执行Context进行隔离与保护，比如VM之间不会相互影响；2）提供Guest和Host的相互切换，也就是所谓的<code>world switch</code>；3）提供一个虚拟化<code>trap handler</code>，用于处理trap到Hypervisor的中断和异常；</li>
+</ol>
+<p>另外，陷入后返回过程：</p>
+<ol>
+<li>Host如果运行在EL1时，可以通过<code>HVC（Hypervisor Call）</code>指令，主动trap到EL2中，从而由<code>Hypervisor-Lowvisor</code>来接管；</li>
+<li>Guest OS可以配置成当有中断或异常时trap到EL2中，在中断或异常产生时，trap到EL2中，从而由<code>Hypervisor-Lowvisor</code>来接管；</li>
+<li>EL2可以通过<code>eret</code>指令，退回到EL1；</li>
+</ol>
+<h4 id="2-1-4-ARMv8-地址转换"><a href="#2-1-4-ARMv8-地址转换" class="headerlink" title="2.1.4 ARMv8 地址转换"></a>2.1.4 ARMv8 地址转换</h4><table>
+<thead>
+<tr>
+<th>TTW（Translation table walk）包含1个或者多个Translation table的查找</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>目的:提供一种机制去实现 虚拟地址VA =&gt; 物理地址PA</td>
+</tr>
+<tr>
+<td>Non-secure &amp; EL0/1，包含Stage 1、Stage 2 (一阶、二阶) 地址转换</td>
+</tr>
+<tr>
+<td>TTBR0_ELx提供user space的初级查找基地址，TTBR1_ELx提供kernel space的初级查找基地址</td>
+</tr>
+<tr>
+<td>每一级的translation table lookup返回一个descriptor，如果是最后一级查找，那么返回包含OA和相关内存访问权限属性；如果不是最后一级查找，则包含了下一 level 转换表的基地址.</td>
+</tr>
+</tbody></table>
+<p>下图为VMSAv8-64流程图：</p>
+<p><img src="/2021/07/15/HA-VMSI%20A%20Lightweight%20Virtual%20Machine%20Isolation%20Approach%20with%20Commodity%20Hardware%20for%20ARM/1004410-20160808125529606-1688842706.png" alt></p>
+<p>armv8-a core内部使用virtual memory，内部通过mmu转换为physical address。</p>
+<p><strong>mmu的好处：</strong></p>
+<p>　　1)允许system同时运行多个task，各个task之间完全是地址透明的。</p>
+<p>　　2)同一个task，<strong>code在编写的时候，也完全不需要了解processor内部的地址分配。</strong></p>
+<p>　　3)mmu还可以实现<strong>memory access permission的控制，memory attribute的控制，cache policy的控制</strong>。</p>
+<p>这样app的编写，编译，链接都是在virtual memory space中进行的。</p>
+<p>一般情况下<strong>EL0是执行在unprivilege mode下的，其他三种都是执行在privilege mode</strong>下的。需要配置自己的TCR寄存器</p>
+<p><strong>EL0和EL1都可以执行在non-secure或secure mode下，但是EL2只能执行在non-secure mode下，EL3只能执行在secure mode下</strong>。</p>
+<p>EL0和EL1的translation table base address是指定在寄存器中，<strong>Translation Table Base Registers(TTBR0_EL1)和(TTBR1_EL1)</strong></p>
+<p>　　EL0和EL1的区分是通过VA的高位地址来区分的，OS的地址都在高位，高位都为1；</p>
+<p>　　　　　　　　　　　　　　　　　　　　　　　　APP的地址都在低位，高位都为0；</p>
+<p>　　一般是16bit的高位，这样和32bit级联起来，刚好48bits</p>
+<p>EL2和EL3都只有TTBR0，寄存器分别为<strong>TTBR0_EL2和(TTBR0_EL3)</strong></p>
+<p>地址类型：</p>
+<table>
+<thead>
+<tr>
+<th>VA(虚拟地址)</th>
+<th>保存在PC,LR,SP中的看得到地址都是虚拟地址VA。VA最大支持32bit宽，地址空间最大到4GB。地址范围：0x00000000~0xFFFFFFFF</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>IPA（中间物理地址）</td>
+<td>如果不支持Stage 2转换，那么IPA == PA。如果支持Stage2，那么IPA：。 Stage 1 的OA (Output address)。 Stage 2 的IA (Input address)。 AArch32的IPA最大支持40bit宽(使用16MB转换颗粒)</td>
+</tr>
+<tr>
+<td>PA（物理地址）</td>
+<td>物理内存单元映射中的地址，可以看做是PE到内存系统的输出地址(OA)，PA最大支持32bit宽</td>
+</tr>
+</tbody></table>
+<p> 地址转换规则：</p>
+<table>
+<thead>
+<tr>
+<th>Secure状态下只支持Stage 1地址转换</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Non-secure EL1/EL0既支持Stage 1 也支持Stage 2地址转换.</td>
+</tr>
+<tr>
+<td>只有EL2存在才支持Stage 2，所以Stage 2只为EL2服务的</td>
+</tr>
+</tbody></table>
+<p><img src="/2021/07/15/HA-VMSI%20A%20Lightweight%20Virtual%20Machine%20Isolation%20Approach%20with%20Commodity%20Hardware%20for%20ARM/1004410-20160808125434715-1522273164.png" alt="img"></p>
+<p>地址转换图：</p>
+<p>图1描述了两级地址转换。</p>
+<p><img src="/2021/07/15/HA-VMSI%20A%20Lightweight%20Virtual%20Machine%20Isolation%20Approach%20with%20Commodity%20Hardware%20for%20ARM/602a712462b3ab66934ed429" alt="VA到IPA到PA地址转换"></p>
+<p> 来宾VM中的VA通过来宾OS管理的Stage-1页表转换为IPA，就像非虚拟化系统一样。 IPA通过虚拟机监控程序维护的每个VM Stage-2页面表进一步转换为PA。 每个内核都有两个寄存器ttbr1 el1和vttbr el2，分别指向用于运行VM的Stage-1和Stage-2页面表。 当系统管理程序使用单个转换，VA会直接转换为PA。</p>
+<p><img src="/2021/07/15/HA-VMSI%20A%20Lightweight%20Virtual%20Machine%20Isolation%20Approach%20with%20Commodity%20Hardware%20for%20ARM/Image-1621325842080.png" alt="Image"></p>
+<p><img src="/2021/07/15/HA-VMSI%20A%20Lightweight%20Virtual%20Machine%20Isolation%20Approach%20with%20Commodity%20Hardware%20for%20ARM/737711-20180202175702968-534470858.png" alt="img"></p>
+<p>总而言之，stage1是直接地址转换，stage2是EL2虚拟化层支持的地址转换。stage2相比于stage1增加了一层中间地址。</p>
+<h3 id="2-2-研究思路"><a href="#2-2-研究思路" class="headerlink" title="2.2 研究思路"></a>2.2 研究思路</h3><p>从技术背景我们已经获得的信息有关于ARMv8的体系结构和分层机制，以及在虚拟化环境下，相关的地址转换机制。</p>
+<p>本文的思路即是在虚拟化环境下，将stage2内存地址分配和转换再一次提上一个新的层次到EL3，由EL3来实现内存地址分配相关的操作，由于EL3位于EL2-hypervisor之上，因此即是EL2被攻击者获得，在假设EL3是可信的安全先验知识之上，我们依然可以保证攻击者不会获得其他VM的敏感信息。</p>
+<h2 id="3-研究方案"><a href="#3-研究方案" class="headerlink" title="3 研究方案"></a>3 研究方案</h2><h3 id="3-1-模型假设"><a href="#3-1-模型假设" class="headerlink" title="3.1 模型假设"></a>3.1 模型假设</h3><ul>
+<li>HA-VMSI的TCB仅限于安全监控器和硬件，包括处理器，物理内存和系统总线等。</li>
+<li><strong>cpu加密指令来防止密钥泄露</strong></li>
+<li><strong>不考虑拒绝服务</strong></li>
+<li>不考虑侧信道攻击</li>
+<li>不考虑硬件攻击</li>
+<li>guest OS 和app是不是可信的由客户自己控制，也就是说guest OS 可以是不可信的</li>
+<li><strong>使用受信任的协议来加载系统-&gt;安全启动</strong></li>
+<li><strong>VM知道所有的I/O数据并对其进行加密</strong></li>
+<li>通过页面重新映射或双重映射访问任何内存页面，恶意管理程序访问，恶意DMA（直接内存访问）访问和内存升级攻击等。保证虚拟机之间，不会互相影响。虚拟机不会被云供应商影响。</li>
+</ul>
+<h3 id="3-2-设计"><a href="#3-2-设计" class="headerlink" title="3.2 设计"></a>3.2 设计</h3><p> <strong>HA-VMSI将管理传统虚拟机管理程序中的Stage2页表的最小功能移到了security moniter。</strong></p>
+<p>两个重要目标：</p>
+<ul>
+<li>防止未经授权的修改在VM上下文中注册</li>
+<li>防止攻陷VMM的攻击者进一步获得其他VM的内存等敏感数据</li>
+</ul>
+<h4 id="3-1-2-系统架构"><a href="#3-1-2-系统架构" class="headerlink" title="3.1.2 系统架构"></a>3.1.2 系统架构</h4><p><img src="/2021/07/15/HA-VMSI%20A%20Lightweight%20Virtual%20Machine%20Isolation%20Approach%20with%20Commodity%20Hardware%20for%20ARM/image-20210524113100052.png" alt="image-20210524113100052"></p>
+<p>整个系统主要包括一下几个部分：</p>
+<ul>
+<li><p>一个隔离且受到严格保护的安全监视器：HA-VMSI</p>
+<p>以受硬件保护的<strong>最高特权级别</strong>运行。 它的主要职责是<strong>分配内存区域</strong>，在上下文切换期间设置寄存器以及更新启动的VM的Stage-2页表。 VM的第2阶段页表存储在受保护的内存区域中，该区域只能由安全监视器写入，但可由虚拟化软件读取。</p>
+<p>通过以下的操作来为每个VM创建隔离的执行环境：</p>
+<ul>
+<li>a)验证新创建的VM映像的完整性</li>
+<li>b)在虚拟机管理程序和VM之间切换上下文</li>
+<li>c)更新VM的阶段2页表</li>
+<li>d)合并具有相同内容的页</li>
+<li>e)在执行交换操作时验证页</li>
+</ul>
+</li>
+<li><p>一个插桩的虚拟机管理程序（主机OS上)：hypervisor</p>
+</li>
+<li><p>若干个guest-VM</p>
+</li>
+<li><p>一个独立的交换代理</p>
+<p>使HA-VMSI可以透明地控制虚拟机管理程序和VM之间的交换上下文。 当交换代理程序启动结束后，HA-VMSI启用trap事件并拦截虚拟机监控程序执行某些特权的指令，这些指令允许虚拟机监控程序控制关键系统状态，例如定义其页面的位置表和异常处理程序。 因此，无法从HA-VMSI绕过VM出口。 这些特定的敏感指令由交换代理拦截后，交给HA-VMSI处理，从而剥夺了hypervisor的处理权限。</p>
+<p>为了防止潜在的攻击者承诺使用交换代理，<strong>HA-VMSI首先在交换代理加载后立即锁定其页面，然后阻止其页面再次进行映射。</strong></p>
+</li>
+</ul>
+<h3 id="3-2-关键技术"><a href="#3-2-关键技术" class="headerlink" title="3.2 关键技术"></a>3.2 关键技术</h3><h4 id="3-2-1-内存布局"><a href="#3-2-1-内存布局" class="headerlink" title="3.2.1 内存布局"></a>3.2.1 内存布局</h4><p>HA-VMSI维护多种数据结构：<br>|表明|含义|备注|<br>| ——————- | ————————- | —- |<br>| VM tables           | 包含每个VM的状态信息      |      |<br>| VCPU context of VMs | vcpu 上下文信息类似于VMCB |      |<br>| stage2-page tables  | stage2地址映射信息        |      |<br>| PUT tables          | 页面使用跟踪表，跟踪每个物理页面的使用情况，条数和物理页数量一致；每条记录了该物理页的所有者类型，所有权，共享信息 |      |</p>
+<p>HA-VMSI将内存分为三种类型：</p>
+<ul>
+<li><p>安全内存：能够被HA-VMSI访问的内存。包含了HA-VMSI的代码和维护的数据结构，除了stage2tables</p>
+</li>
+<li><p>正常内存：能够被normal world 访问的内存。</p>
+</li>
+<li><p>受保护的内存：能被HA-VMSI写，但是normal world 只读。包含了stage2tables以及交换页的hash，stage1页表</p>
+</li>
+</ul>
+<p><img src="/2021/07/15/HA-VMSI%20A%20Lightweight%20Virtual%20Machine%20Isolation%20Approach%20with%20Commodity%20Hardware%20for%20ARM/image-20210524143822781.png" alt></p>
+<p><strong>HA-VMSI通过在TrustZone控制器（TZC）中配置它们的访问权限和区域属性来实现这些区域</strong>。 虽然这些权限和属性将在访问内存位置时由TZC筛选器检查。 即使受保护的内存区域由于缓存中毒而被恶意地映射到虚拟机管理程序，也可以阻止访问。</p>
+<p>当从受保护的区域分配内存时，应该刷新TLB。</p>
+<p>在这里是简单地在系统启动时就将受保护的区域划分出来固定且不能修改。但是可以通过禁用TZC，直接扩展区域再恢复TZC来实现扩展受保护的内存区域。</p>
+<p>在页表设置期间，HA-VMSI设置代码段只读，数据段不可执行，用户空间特权不能提升。</p>
+<p>在HA-VMSI启动后，配置控制寄存器来设置trap从而捕捉一些特权指令，来限制hypervsior的一些权限，比如一些hypercalls 和 页表操作等。从此之后，可以验证hypervisor的执行。</p>
+<h4 id="3-2-2-内存隔离"><a href="#3-2-2-内存隔离" class="headerlink" title="3.2.2 内存隔离"></a>3.2.2 内存隔离</h4><h5 id="image-安全"><a href="#image-安全" class="headerlink" title="image 安全"></a>image 安全</h5><ol>
+<li><p>HA-VMSI————————————-nonce -challenge—————————&gt;customer</p>
+</li>
+<li><p>HA-VMSI&lt;————————————E(hash1|nonce,ha-vmsi-pk)—————-customer</p>
+</li>
+<li><p>HA-VMSI ：equal(hash1 ,hash_local)?———–VMID——–&gt;hypervisor.start:DENY</p>
+</li>
+</ol>
+<blockquote>
+<p> nonce验证可以防止重放攻击</p>
+</blockquote>
+<p>每个VM都被分配一个VMID,而hypervisor的VMID是0。同时，HA-VMSI还用其私钥对映像散列、VMID和nonce进行签名，并将其发回给客户。</p>
+<p>在image 创建启动时，HA-VMSI会为该VM初始化一张VM table：存储VM的相关信息，VCPU表：来存储vcpu状态信息，新的stage2页表，一对密钥：于页交换时使用</p>
+<p><img src="/2021/07/15/HA-VMSI%20A%20Lightweight%20Virtual%20Machine%20Isolation%20Approach%20with%20Commodity%20Hardware%20for%20ARM/image-20210524153946149.png" alt="image-20210524153946149"></p>
+<blockquote>
+<p>此处其实带来了一个拒绝服务的问题：攻击者控制hypervisor之后，可以修改其他customer的image这样以来，其他的customer就无法通过HA-VMSI的验证，从而达到了一个拒绝服务的效果。</p>
+</blockquote>
+<h5 id="运行时内存隔离"><a href="#运行时内存隔离" class="headerlink" title="运行时内存隔离"></a>运行时内存隔离</h5><p>问题：hypervisor来维护stage2页表，因此攻击者如果攻陷hypervisor，就可以控制hypervisor来危害VM的数据</p>
+<p>剥夺hypervisor的stage2页表管理权限，HA-VMSI解耦了这些函数，并且hook了他们。因此stage2页表的更新只能通过HA-VMSI来模拟更新。</p>
+<p>解决：</p>
+<ul>
+<li><p>Q:第二阶段页表只能由HA-VMSI写入。</p>
+<p><strong>A:stage2页表，stage1的页表在受保护的内存区域中，该区域只能由HA-VMSI写入</strong></p>
+</li>
+<li><p>Q:第二阶段页面表指针的寄存器只能由HA-VMSI设置，因此第二阶段页面表不能被伪造。</p>
+<p><strong>A:安全控制转换</strong></p>
+</li>
+<li><p>Q:第三，一个实体页面一次只能属于一个所有者。</p>
+<p><strong>A: 页面跟踪</strong></p>
+</li>
+</ul>
+<p>满足所有这三个条件，HA-VMSI可以在虚拟机管理程序和VM之间提供严格的内存隔离。 如预期的那样，系统管理程序的页表仅包含其自身地址空间的映射。 此外，虚拟机拥有的所有页面都不在虚拟机管理程序或其他虚拟机的地址空间中。 由于所有页表均由HA-VMSI管理，因此内存分配中的任何更改对于虚拟机，hypervisor向HA-VMSI发出请求，以更新虚拟机的第二阶段页面表。</p>
+<h4 id="3-2-3-页面跟踪"><a href="#3-2-3-页面跟踪" class="headerlink" title="3.2.3 页面跟踪"></a>3.2.3 页面跟踪</h4><p>隔离hypervisor和VMs的内存，跟踪每个页的分配，关键问题在于动态内存分配，HA-VMSI维护PUT表（页面使用表）来跟踪每个物理页的使用情况。</p>
+<p> <img src="/2021/07/15/HA-VMSI%20A%20Lightweight%20Virtual%20Machine%20Isolation%20Approach%20with%20Commodity%20Hardware%20for%20ARM/image-20210524163901011.png" alt="image-20210524163901011"></p>
+<p> 拦截具有不可绕过的页面表更新的技术基于两个要求：1）<strong>管理程序在没有HA-VMSI知识的情况下无法修改Stage-2页面表，2）管理程序无法隐藏Stage-2页面表 来自HA-VMSI。 由于所有页表都位于受保护的内存区域中，因此满足第一个要求。 只要安全地保护了切换代理，</strong>则第二个要求将得到满足。 这是因为管理程序无法在不更新vttbr el2寄存器的情况下直接将Stage-2页表指定给VM。 但是，即使实现依赖于虚拟机监控程序显式请求HA-VMSI更新第二阶段的页面表，拦截页面表更新也不需要信任虚拟机监控程序。</p>
+<p>我们使用相同的机制来跟踪Qemu的地址空间并将其隔离。 为了明确起见，<strong>我们使用O_type来区分所有者。 当O_type为0时，O_ID由VMID标记。 相反，如果O_ID为1，则表示所有者为HA-VMSI。其他情况为交换代理。</strong> 在我们当前的设计中，Qemu进程使用其相应VM的VMID对其页面进行签名。 在这种情况下，还应监视<code>ttbr0_el1</code>。 如果管理程序修改了此寄存器，则执行将被捕获到交换代理中，然后路由到HA-VMSI。 这样，<strong>HA-VMSI可以跟踪所有内存分配和释放</strong>。 因此，即使hypervisor完全受损，其他用户也无法访问Qemu和VM的内存。 使用PUT表，HA-VMSI能够根据上述安全原则来验证每个页表更新。</p>
+<h4 id="3-2-4-安全控制转换"><a href="#3-2-4-安全控制转换" class="headerlink" title="3.2.4 安全控制转换"></a>3.2.4 安全控制转换</h4><p>陷入后会根据VMCB的状态来查找VM-exit()的原因，从而做出响应，因此vcpu的状态会对一些敏感操作有直接的影响。因此，当VM发生VM-exit的时候，必须进行拦截，防止hypervisor对VMCB的状态伪造和更改。</p>
+<p> HA-VMSI必须从两个目的拦截这些交互：1）在VM退出时保护处理器状态； 2）设置第2阶段页表的基地址，以在运行时在VM之间实施内存隔离。 因此，管理程序既不会伪造在其上运行的VM的执行环境，也不会转储或篡改VM的处理器寄存器。</p>
+<p>HA-VMSI通过禁用<strong>hypervisor来调度VM，从而实现了这种不可旁路的安全过渡。</strong></p>
+<p>方法：</p>
+<ul>
+<li>系统管理程序被禁止调用HVC指令，因此除了调用HA-VMSI提供的接口外别无选择。<ul>
+<li>通过将系统控制寄存器配置为在系统引导期间禁用某些指定的指令</li>
+</ul>
+</li>
+<li><strong>HA-VMSI能够操作虚拟机管理程序和VM的上下文</strong>。 因此，可以安全地管理处理器状态。<ul>
+<li>由于HA-VMSI在EL3中运行</li>
+</ul>
+</li>
+<li>HA-VMSI具有虚拟机管理程序不可访问的内存区域，用于存储VM的处理器状态。<ul>
+<li>内存分区</li>
+</ul>
+</li>
+</ul>
+<p><img src="/2021/07/15/HA-VMSI%20A%20Lightweight%20Virtual%20Machine%20Isolation%20Approach%20with%20Commodity%20Hardware%20for%20ARM/image-20210524195151742.png" alt="image-20210524195151742"></p>
+<p>图左边是一般ARM/KVM 虚拟化陷入处理的过程。当将VM从EL1捕获到EL2时（3），lowvisor将拦截此事件，并处理处理器上下文。 之后，该事件将转发给highvisor（4）。 处理事件后，hypervisor通还原的处理器上下文来调用HVC(hypercall)和ERET(异常返回)指令以恢复VM的执行（1、2）。 实际上，上下文转换完全由lowvisor控制。</p>
+<p>图右边是HA-VMSI的陷入处理过程。</p>
+<p>HA-VMSI现在在EL3中运行。 由于VM只能捕获到EL2，因此HA-VMSI无法直接截获过渡转换。 为了拦截VM退出的事件，在HA-VMSI设计中，我们用交换代理程序替换了lowvisor。 </p>
+<p>每个VM-exit事件首先由交换代理处理（3），并立即传输到HA-VMSI（4）。 因此，HA-VMSI拦截每个VM-exit，将处理器上下文（尤其是vttbr_el2）保存为在VM创建期间创建的ps_state。 然后，HA-VMSI还原虚拟机管理程序上下文，并启动第二阶段转换。 之后，HA-VMSI将VM出口转发到管理程序（5）。 在ARM中，大多数异常状态由虚拟化辅助寄存器（例如hsr_el2，far_el2）提供。 为了正确处理该事件，HA VMSI需要将这些寄存器复制并交付给hypervisor。 处理完VM-exit事件后，hypervisor必须使用VMID向HA-VMSI发出VM调度请求（1）。 然后，HA-VMSI从ps_state恢复处理器上下文，并恢复VM的执行（2）。 这里我们应该注意的是，HA-VMSI应该在第4步中重写一些关键寄存器，以确保VM可以正确返回EL1，例如elr_el3和spsr_el3。</p>
+<h4 id="3-2-5-交换代理锁定"><a href="#3-2-5-交换代理锁定" class="headerlink" title="3.2.5 交换代理锁定"></a>3.2.5 交换代理锁定</h4><p>为了阻止潜在的攻击者破坏交换机代理(例如修改或绕过逻辑)，HA-VMSI在<strong>启动后立即锁定其内存页</strong>。这是通过为开关代理采用不可绕过的内存锁定技术来实现的。虽然它不是新的，但我们首先将其应用于HA-VMSI，并使用它对交换机代理提供全面保护。</p>
+<p>在普通的ARM架构中，MMU为内存访问提供写保护和非执行属性。因此，当系统启动时，HA-VMSI准备了交换机代理的页面映射，并将其代码设置为<strong>只读内存范围</strong>，而其<strong>堆栈</strong>内存被<strong>映射为可写但不可执行</strong>。由于交换机代理只负责将捕获的事件路由到HA-VMSI，因此在其生命周期内，其<strong>页表在启动后不再需要更新</strong>。这样我们就能把开关代理和其他代理完全隔离开来。具体来说，HA-VMSI直接从管理程序中删除保存交换机代理的页表的物理页，并将页表的基址设置为ttbr0_el2寄存器。此外，在switch代理代码中没有操作其页表或修改ttbr0_el2寄存器的指令.</p>
+<p>在ARM架构中，只有EL3(安全监视器)和EL2(开关代理)中的软件有权限修改ttbr0_EL2寄存器。因此，HA-VMSI显然可以防止对交换机代理的所有恶意操作。也就是说，在锁定交换机代理的内存页后，交换机代理能够安全独立地运行。交换机代理的内存布局如图5所示。</p>
+<p><img src="/2021/07/15/HA-VMSI%20A%20Lightweight%20Virtual%20Machine%20Isolation%20Approach%20with%20Commodity%20Hardware%20for%20ARM/image-20210524201750809.png" alt="image-20210524201750809"></p>
+<h4 id="3-2-6-共享页面和页面置换"><a href="#3-2-6-共享页面和页面置换" class="headerlink" title="3.2.6 共享页面和页面置换"></a>3.2.6 共享页面和页面置换</h4><h5 id="页面共享"><a href="#页面共享" class="headerlink" title="页面共享"></a>页面共享</h5><p>虚拟化中广泛支持基于内容的页面共享，以提高内存利用率。</p>
+<p>在传统的虚拟化系统中，管理程序使用两棵红黑树从不同的VM主动搜索具有相同内容的页面。</p>
+<p>将内容验证移至HA-VMSI。 此外，我们使用基于组的合并机制来减轻隐蔽通道的粘性，这在我们先前的研究中已有讨论[17]。 自从虚拟机管理程序看不到VM的内存，因此HA-VMSI必须协助虚拟机管理程序查找具有相同内容的页面。 在当前设计中，要支持这种基于内容的共享，需要执行5个步骤，如图6所示。</p>
+<ol>
+<li><p>系统管理程序请求HA-VMSI获取VM内存页的哈希值。 </p>
+</li>
+<li><p>HA-VMSI收集一定数量的VM内存散列值，并将其发送到管理程序。 </p>
+</li>
+<li><p>系统管理程序通过提供的哈希值构造两棵红黑树，并找到具有相同内容的页面。</p>
+</li>
+<li><p>系统管理程序再次请求HA-VMSI更新第二阶段页表的日期。 </p>
+</li>
+<li><p>HA-VMSI验证两个页面是否实际上具有相同的内容。 如果验证通过<strong>，则HA-VMSI将Stage-2页表的条目更新为只读，并使用共享更新相应的PUT表条目，并增加参考计数器。 同时，将清理释放的页面，并将其所有者重置为虚拟机监控程序</strong>。 当VM尝试更新合并的页面时，除了COW（写时复制）之外，处理过程类似于映射页面。</p>
+</li>
+</ol>
+<p><img src="/2021/07/15/HA-VMSI%20A%20Lightweight%20Virtual%20Machine%20Isolation%20Approach%20with%20Commodity%20Hardware%20for%20ARM/image-20210524202728831.png" alt="image-20210524202728831"></p>
+<h5 id="页面交换"><a href="#页面交换" class="headerlink" title="页面交换"></a>页面交换</h5><p><strong>页面被换出，HA-VMSI首先作为页面跟踪来拦截交换请求，然后在管理程序拥有它之前使用sp key对页面内容进行加密和散列</strong>。 哈希值应存储在受保护的区域中，以防篡改。 在页面中进行交换时，该过程将反向进行，并将哈希值与存储的哈希值进行比较。 </p>
+<p><strong>将换出的页面的哈希存储在其页表项</strong>中。 我们应该这样做是完全必要和适当的。 首先，将Stage-2页表放置在受保护的内存区域中，以确保对哈希值的防篡改。 其次，由于在交换操作期间，我们可以有效地检索哈希交换操作，HA-VMSI需要更新相关的页表。 因此，该方法没有更多的内存开销，但是具有更高的检索效率。 对于页面换出请求，系统管理程序仅需要将页面帧号提供给HA-VMSI。 从页面表中取消映射页面后，HA-VMSI将计算该哈希并将其存储到页面条目中。 对于交换，管理程序必须向HA-VMSI提供新的页面地址。 HA-VMSI首先解密该页面，然后计算其哈希值以与存储的页面进行对比。</p>
+<h2 id="4-实现"><a href="#4-实现" class="headerlink" title="4 实现"></a>4 实现</h2><p>Juno板和FVP平台，配备了适用于ARMv8 big.LITTLE和8GB内存的四核Cortex A53和双核A57 MPCoreTM。 host and guest：Linux</p>
+<h3 id="4-1-系统规范"><a href="#4-1-系统规范" class="headerlink" title="4.1 系统规范"></a>4.1 系统规范</h3><p>为了简化实现，我们使用自定义SMC指令扩展了ARM-TF以执行HA-VMSI操作。 首先，我们重新设计了ARM-TF的内存映射，它允许HA-VMSI访问所有物理内存。 然后，我们定义了标准呼叫服务的新“子服务”，<strong>以通过为管理程序提供不可旁路的SMC接口来监视和验证管理程序的行为</strong>。 代码库只有3.5K SLOC左右，这既小又简单，足以验证。</p>
+<p>要使用HA-VMSI，<strong>系统管理程序需要进行一些小的修改</strong>。 管理程序的主要变化是将某些功能从管理程序转移到了HA-VMSI。  具体来说，我们<strong>直接修改KVM虚拟机管理程序源代码，以使用HA-VMSI的界面替换负责管理页表或调用上下文切换等功能</strong>。 这些接口陷入HA-VMSI通过执行SMC指令。 此外，我们用交换代理程序（具有150个SLOC）替换了KVM Lowvisor，用于将捕获的事件路由到HA-VMSI。 少于500个SLOC时，对管理程序的更改极少。 为了区分由HA-VMSI引起的SMC指令与其他服务，我们使用特殊的接口ID，该ID在SMC调用时放置在通用寄存器中。 一旦执行跳转到EL3，HA-VMSI首先检查该接口ID以确定调用类型，然后检查功能ID以将请求传递到相关服务。</p>
+<h3 id="4-2-HA-VMSI初始化"><a href="#4-2-HA-VMSI初始化" class="headerlink" title="4.2  HA-VMSI初始化"></a>4.2  HA-VMSI初始化</h3><p><strong>系统初始化期间的一项基本要求是仅允许将已知的hypervisor和HA-VMSI加载到平台中。 **为了实现此属性，HA-VMSI采用动态信任根，例如ARM-TF信任板引导。 安装系统时，云提供商将计算HA-VMSI和hypervisor二进制文件的SHA-256哈希值，并将其硬链接到平台ROM中</strong>。 **信任链从引导加载程序开始，该引导加载程序验证二进制文件的证书和签名。 结果，HA-VMSI和hypervisor安全启动。</p>
+<p>根据HA-VMSI的要求，安全内存区域只有在软件在安全环境中运行时才可访问，而受保护的内存区域应该对hypervisor进行写保护，但对于正常运行的系统是可读的。在系统初始化期间，HA-VMSI查询TZC以确定这些内存区域的起始地址，大小和权限，然后在执行系统管理程序之前发出命令以清理内存区域。 <strong>在当前的原型中，HA-VMSI将前的32M用作安全存储器区域，用于运行HA-VMSI并存储PUT表，VM表和每个VCPU状态。 随后的64MB被配置为Stage-2页表的受保护内存区域。 初始化HA-VMSI组件后，常规引导顺序将继续。</strong>  </p>
+<p>当系统管理程序启动时，系统管理程序必须捕获到HA-VMSI才能初始化其MMU和系统控制寄存器，因为HA-VMSI配置了hcr_el2寄存器来捕获某些指定寄存器的修改。 <strong>HA-VMSI首先设置hypervisor的页面映射，然后将交换代理映射到一个独立的地址空间中</strong>。 页表的所有页都是从受保护的内存区域中分配的，因此normal world都无法对其进行修改。 HA-VMSI还检查管理程序页面表的每个条目，以确认切换代理的页面在管理程序的地址空间中不存在。 最后，HA-VMSI更新PUT表以反映当前的内存状态，<strong>除了交换代理程序的页面之外，正常世界的所有页面均由hypervisor拥有。</strong></p>
+<h3 id="4-2-HA-VMSI的SMC接口"><a href="#4-2-HA-VMSI的SMC接口" class="headerlink" title="4.2 HA-VMSI的SMC接口"></a>4.2 HA-VMSI的SMC接口</h3><p>系统初始化后，将启用所有HA-VMSI的安全性属性。 由于HA-VMSI依赖于ARM TF来提供HA-VMSI支持，因此我们的原型使用功能ID（范围从0xC4001000到0xC400F00）来提供HA-VMSI的相互依赖的接口，以进行内存管理和数据加密。 </p>
+<p> <strong>VM启动:</strong>1.HA-VMSI首先在VM表中创建一个条目。 2.生成每个VCPU的Stage-2页面表的根页面和上下文结构。 3.HA-VMSI还创建了一对密钥，用于交换页面加密和哈希。 4.将新生成的结构的所有基地址放置在VM表条目中，以备后用。 5.HA-VMSI会为VM分配VMID，系统管理程序将在调用HA-VMSI的接口时使用该VMID来指定VM。6. 如果初始化期间没有错误，则HA-VMSI会将新创建的VM供其客户使用。  </p>
+<p><strong>VM销毁:</strong>HA-VMSI取消分配VM地址空间的VCPU结构和内存页。 通过遍历Stage-2页表，HA-VMSI释放并清零了VM的所有内存页，从而避免了数据泄漏。 同时，通过更新PUT表将这些页面的所有者重新存储到管理程序中。</p>
+<p><strong>页面映射：</strong>要将一个物理页(在KVM中先分配2MB的大页)分配给一个VM,  HA-VMSI在接收到来自虚拟机管理程序的带有VMID、PA和IPA的请求时，将更新阶段2页表的相关条目。此外，还提供了一个包含<strong>5个空闲受保护页面的页面缓冲区，以实现高效的页面分配</strong>。更新之前检查映射页的使用状态。通过检查PUT表，HA-VMSI可以避免该页面被多个所有者拥有。如果检查通过，HA-VMSI将设置PUT表并更新相应的Stage-2页表项。同时，从管理程序的地址空间中释放该页面。否则，该请求将被中止。通过这种方式，HA-VMSI可以防止被破坏的KVM创建到其他所有者已经使用的页面的任何非法的双重映射。注意，在页映射期间，页表中的中间项或页项可能不存在。当发生这种情况时，HA-VMSI使用页缓冲区中的页来构造阶段2页表，并将它们的所有者更新为HA-VMSI。</p>
+<p><strong>页面取消映射:</strong>为了从VM取消分配物理页面，HA-VMSI清除了相应的Stage-2页面表条目以使该映射无效。 此外，如果未共享此页面，则HA-VMSI将在重置PUT表条目之前清除此页面的内容。 同时，此页面被重新映射到管理程序，并且为给定的IPA刷新了TLB。 通过这种方法，可以<strong>防止页面重用攻击和重新映射攻击</strong>。</p>
+<p><strong>上下文切换：</strong>当hypervisor需要将VM调度到内核时，由于hypervisor无法调用HVC指令，因此管理程序会与VMID和VCPUID一起向HA-VMSI发出切换请求。hypervisor 不能够设置处理器状态和第二阶段页表的指针。 HA-VMSI通过读取ps_state来设置寄存器状态。 因此，hypervisor无法通过受损的Stage-2页表来运行虚拟机。 当VM退出时，在switch-agent的帮助下，HA-VMSI存储VM的处理器状态并恢复管理程序的运行。 此操作类似于传统的VM交换机，不同之处在于VCPU状态保存在安全内存中。  </p>
+<p>对于每个VM-Exit，HA-VMSI必须确定导致VM-Exit的原因，并可能向hypervisor公开某些寄存器以进行特权指令仿真。  </p>
+<p>需要特别注意的是，在HA-VMSI系统中，即使是受到入侵的hypervisor也无法非法使用带有错误参数的这些接口，因为要检查这些参数以确认它们没有违反系统安全性。 此外，在TrustZone体系结构中，HA-VMSI和hypervisor具有不同的安全位标志。 每个核心都有一个独立的TLB，每个TLB条目都包含一个与该地址相对应的VMID标签。 因此，HA VMSI可以在虚拟系统旁边的不同内核上同时但安全地运行。 另外，<strong>为了避免由于竞争而损坏PUT表或Stage-2页表，HA-VMSI采用了一种简单的锁定机制</strong>，该机制强制对这些关键数据进行独占访问。</p>
+<h2 id="5-测试评估"><a href="#5-测试评估" class="headerlink" title="5 测试评估"></a>5 测试评估</h2><h3 id="5-1-安全性分析"><a href="#5-1-安全性分析" class="headerlink" title="5.1 安全性分析"></a>5.1 安全性分析</h3><h4 id="5-1-1-镜像安全"><a href="#5-1-1-镜像安全" class="headerlink" title="5.1.1 镜像安全"></a>5.1.1 镜像安全</h4><p><strong>攻击的目的是在系统引导期间提供修改过的二进制文件</strong>，HA-VMSI通过挑战-响应-验证这种机制来验证镜像文件是否被非法修改过，并且通过发送随机的挑战值，来防止重放攻击。</p>
+<h4 id="5-1-2-内存保护"><a href="#5-1-2-内存保护" class="headerlink" title="5.1.2 内存保护"></a>5.1.2 内存保护</h4><p>主要是双映射访问内存的问题，HA-VMSI设计实现的安全机制，通过一些数据结构包括PUT表象等，严格跟踪每个物理页的使用，防止双重映射，PUT跟踪表等措施。从而防止双映射访问内存，并且严格隔离。</p>
+<h4 id="5-1-3-DMA影响"><a href="#5-1-3-DMA影响" class="headerlink" title="5.1.3 DMA影响"></a>5.1.3 DMA影响</h4><p>攻击者实施DMA攻击，试图访问到一些内存信息。通过DMA绕过cpu和内存管理，直接进行内存访问。是否会影响到内存安全性，使得内存并没有完全隔离，从而泄露敏感数据。<strong>DMA攻击对HA-VMSI并不构成威胁，因为HA-VMSI使用TrustZone保护对DMA具有固有的安全性</strong>。在HA-VMSI系统中，通过支持地址转换和隔离的ARM system MMU (SMMU)也可以抵御旨在修改VM内存或页表的DMA攻击。</p>
+<p>磁盘交换带来的不安全性，的解决方式是哈希验证。</p>
+<h4 id="5-1-4-运行时状态"><a href="#5-1-4-运行时状态" class="headerlink" title="5.1.4 运行时状态"></a>5.1.4 运行时状态</h4><p>攻击者试图通过控制hypervisor来修改VM的上下文的状态，从而泄露一些敏感数据。修改VMCB类似，但是交换代理不可绕过，同时VM的上下文存在HA-VMSI安全内存中，hypervisor无权限修改。</p>
+<h4 id="5-1-5-Security-world"><a href="#5-1-5-Security-world" class="headerlink" title="5.1.5 Security world"></a>5.1.5 Security world</h4><p>HA-VMSI托管在TrustZone安全世界中，它的有效性依赖于TrustZone的安全性。因此TrustZone的本身的安全性是十分重要的，但是这并不在本文的考虑范围内。</p>
+<h4 id="5-1-6-合成攻击"><a href="#5-1-6-合成攻击" class="headerlink" title="5.1.6 合成攻击"></a>5.1.6 合成攻击</h4><p>引入了一些脆<strong>弱的超级调用接口</strong>或是制造一些漏洞。通过利用这些漏洞，攻击者可以直接控制KVM来写入系统控制寄存器(例如ttbr0 el1/2、vttbr el2等)、阶段2页表及其部分数据以及VM的处理器状态。不出所料，<strong>所有的攻击都以失败告终</strong>。</p>
+<p><img src="/2021/07/15/HA-VMSI%20A%20Lightweight%20Virtual%20Machine%20Isolation%20Approach%20with%20Commodity%20Hardware%20for%20ARM/Image-1621928408549-1621928410336.png" alt="Image"></p>
+<p>通过引入漏洞，而HA-VMSI依然能够使得内存被安全隔离，若违反HA-VMSI的安全策略，则拒绝。从而证明HA-VMSI的有效性。</p>
+<h4 id="5-1-7-限制和未来工作"><a href="#5-1-7-限制和未来工作" class="headerlink" title="5.1.7 限制和未来工作"></a>5.1.7 限制和未来工作</h4><ul>
+<li>HA-VMSI不能保证防止侧信道攻击和物理攻击：以前有研究来解决这些问题</li>
+<li>HA-VMSI没有提供统一的I/O方案来保护不受信任的网络和存储中的数据的隐私和完整性：关注于构建一个在HA-VMSI中为可信I/O运行的I/O拦截和保护方案</li>
+<li><strong>HA-VMSI也没有考虑客户操作系统和用户应用程序的安全问题</strong>：提供基于HA-VMSI体系结构的细粒度保护使用VM自省、为虚拟机用户提供一种基于属性的物理资源审计机制</li>
+<li><strong>HA-VMSI没有提供保护虚拟机迁移的安全技术</strong>：构建安全迁移协议</li>
+</ul>
+<h3 id="5-2-性能影响"><a href="#5-2-性能影响" class="headerlink" title="5.2 性能影响"></a>5.2 性能影响</h3><p>我们进行了一组实验来评估HA-VMSI对原始KVM系统(基线)的性能影响。为了简单起见，我们只在Juno板上提供6核和8GB内存的性能评估。除了HAVMSI支持的保护外，原始系统和HA-VMSI系统都有相同的配置。这些实验的偏差是微不足道的。所有的实验重复了五次，这里报告了平均结果。</p>
+<h4 id="5-2-1-SMC接口"><a href="#5-2-1-SMC接口" class="headerlink" title="5.2.1 SMC接口"></a>5.2.1 SMC接口</h4><p>由于HA-VMSI需要频繁调用安全世界服务，所以我们度量每个HA-VMSI接口的执行时间，以表示单个操作开销。我们使用输出指令来记录进出安全世界的时间。</p>
+<p>用2MB表示的接口表示大页面映射，它一次映射512个页面(4KB)。NULL操作用于度量正常世界和安全世界之间不经过任何处理的完整往返行程的执行时间。在我们的目标平台上，NULL操作约为40µs，说明每个SMC接口的性能开销很低。大多数接口的使用时间在100 ~ 410µs之间。</p>
+<p>与页面映射界面相比，取消页面映射需要更多的时间，因为要清除发布页面的内容。</p>
+<p>结果表明，在加密指令的支持下，对加密和哈希操作造成的性能损失很小。</p>
+<p><img src="/2021/07/15/HA-VMSI%20A%20Lightweight%20Virtual%20Machine%20Isolation%20Approach%20with%20Commodity%20Hardware%20for%20ARM/Image-1621929075306.png" alt="Image"></p>
+<p>安全世界与不安全世界交互的开销对比，不同操作和不操作之间的对比。</p>
+<h4 id="5-2-2-基准性能"><a href="#5-2-2-基准性能" class="headerlink" title="5.2.2 基准性能"></a>5.2.2 基准性能</h4><h5 id="单个操作产生的性能差异"><a href="#单个操作产生的性能差异" class="headerlink" title="单个操作产生的性能差异"></a>单个操作产生的性能差异</h5><p>如图7所示，HA-VMSI对大多数情况下的LMBench测试产生的开销小于3%。这<strong>是因为这些操作产生的VM陷阱很少。因此，HA-VMSI对这些操作的影响很</strong>小。<strong>性能下降实际上来自于上下文切换</strong>。<strong>然而，与内存分配相关的操作受到的影响最大。特别是，mmap操作的性能损失约为1.6倍</strong>，其次是操作10KB文件的延迟和上下文切换(全部超过1.2倍)。<strong>原因是这些操作中的大多数都涉及大量的页表更新，因为它们需要系统管理程序中的一系列页。而HA-VMSI在更新阶段2页表时带来了更多的额外操作。我们注意到，由于HA-VMSI支持页表的批量更新，这些开销可能会减少。</strong></p>
+<p><img src="/2021/07/15/HA-VMSI%20A%20Lightweight%20Virtual%20Machine%20Isolation%20Approach%20with%20Commodity%20Hardware%20for%20ARM/Image-1621929562997.png" alt="Image"></p>
+<h5 id="多个应用程序产生的性能差异"><a href="#多个应用程序产生的性能差异" class="headerlink" title="多个应用程序产生的性能差异"></a>多个应用程序产生的性能差异</h5><p>为了在实际使用过程中获得HA-VMSI对云客户的影响，我们在<strong>Linux VM中执行多个应用程序基准测试</strong>。</p>
+<p>guest虚拟机为双核虚拟机，内存512MB。对于Bonnnie++，我们选择一个1GB的文件来执行顺序读、写和随机访问。对于Netperf，我们在HA-VMSI运行Netperf服务器与TCP STREAM和UDP STREAM基准。</p>
+<p>图8：大多数SPEC CPU2000基准测试(前12组)显示的性能开销不到5%，平均为2.3%。<strong>这并不奇怪，因为这些测试是计算限制的，并且很少有操作系统交互</strong>。然而，<strong>mcf和解析器的性能损失最大，分别为15%和13%。这是因为这些操作对系统的MMU和TLB功能造成了压力。</strong>这些开销是不可避免的，<strong>因为HA-VMSI在设计上比原来的KVM管理程序调用更多的SMC接口。对于I/O应用程序基准测试，最大的性能损失是随机访问基准测试，</strong>其次是顺序写基准测试，损失6.1%。而其他基准测试显示，管理费用不超过4%。这是因为HA-VMSI没有针对I/O数据的额外内存操作。</p>
+<p><img src="/2021/07/15/HA-VMSI%20A%20Lightweight%20Virtual%20Machine%20Isolation%20Approach%20with%20Commodity%20Hardware%20for%20ARM/Image-1621929729117.png" alt="Image"></p>
+<h4 id="5-2-3-加载时间和内存开销"><a href="#5-2-3-加载时间和内存开销" class="headerlink" title="5.2.3 加载时间和内存开销"></a>5.2.3 加载时间和内存开销</h4><p>我们使用内存大小从512MB到4GB的<strong>4种虚拟机类型</strong>来评估HA-VMSI原型对虚拟机创建的性能影响。不包括图像验证的时间。</p>
+<p><strong>在HA-VMSI中，虚拟机启动时间随着内存大小的增加而增加，并且增长幅度越来越大，这是由于频繁的内存分配导致的世界切换页面跟踪。我们还测量了完全启动一个VM(配置了2个VCPU和512MB内存)的影响。结果显示，HA-VMSI下的启动时间慢了2.3倍，这是由于解密、完整性检查和频繁SMC调用的额外开销。这样的开销是值得的，因为HA-VMSI可以确保VM的引导不受篡改</strong>。（涉及内存越多，就会越慢。）</p>
+<p>HA-VMSI中主要的额外内存使用是PUT表（每个页32位的PUT条目）和VM表的存储，大型机而言是微不足道的。</p>
+<h2 id="6-总结"><a href="#6-总结" class="headerlink" title="6 总结"></a>6 总结</h2><p>优点：</p>
+<ol>
+<li>内存分配和管理的权限向上提级到EL3，比EL2的隔离显然更强大。</li>
+<li>HA-VMSI位于security monitor安全依赖于TrustZone，安全性提高</li>
+<li>相比要保证整个hypervisor的安全，现在只需要保证HA-VMSI位于EL3的安全，显然TCB减少</li>
+</ol>
+<p>缺点：</p>
+<ol>
+<li>修改了hypervisor(lowvisor -&gt; switch agent)，兼容性差，不可移植。</li>
+<li>文章广义上说明在虚拟机逃逸后可以实现不泄露其他VM的数据敏感，因为hypervisor处于EL2上，本文实际上，是将hypervisor扩展到了EL3，根本上来说，增大了EL3的攻击面和用户交互接口，更大程度上提高了EL3的风险，一方面来说，EL3位于最高层次并且于security world切换相关，实际上提高了security world的风险，而security world可以访问全局的内存和资源，也就是说提高了整个底层体系的风险。</li>
+<li>镜像安全，攻击者主动请求创建VM,攻击者身份为伪造的customer，已经控制了hypervisor,也就是说攻击者已知存在的image（hash），来启动镜像，从而获得敏感信息。</li>
+</ol>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><p>[1].<a href="https://www.arm.com/zh/files/downloads/ARMv8_white_paper_v5.pdf" target="_blank" rel="noopener">https://www.arm.com/zh/files/downloads/ARMv8_white_paper_v5.pdf</a></p>
+<p>[2].<a href="https://developer.arm.com/documentation/102418/0100/What-is-TrustZone-" target="_blank" rel="noopener">https://developer.arm.com/documentation/102418/0100/What-is-TrustZone-</a></p>
+<p>[3].<a href="https://developer.arm.com/documentation/ddi0595/2020-12/AArch64-Registers/TTBR0-EL1--Translation-Table-Base-Register-0--EL1-" target="_blank" rel="noopener">https://developer.arm.com/documentation/ddi0595/2020-12/AArch64-Registers/TTBR0-EL1--Translation-Table-Base-Register-0--EL1-</a></p>
+<p>[4].<a href="https://www.cnblogs.com/lvdongjie/p/6644848.html" target="_blank" rel="noopener">https://www.cnblogs.com/lvdongjie/p/6644848.html</a></p>
+<p>[5].<a href="https://www.cnblogs.com/LoyenWang/p/11523678.html" target="_blank" rel="noopener">https://www.cnblogs.com/LoyenWang/p/11523678.html</a></p>
+<p>[6].<a href="https://www.cnblogs.com/LoyenWang/p/14017052.html" target="_blank" rel="noopener">https://www.cnblogs.com/LoyenWang/p/14017052.html</a></p>
+<p>[7].<a href="https://www.cnblogs.com/arnoldlu/p/13993375.html" target="_blank" rel="noopener">https://www.cnblogs.com/arnoldlu/p/13993375.html</a></p>
+<p>[8].<a href="https://www.eet-china.com/mp/a32179.html" target="_blank" rel="noopener">https://www.eet-china.com/mp/a32179.html</a></p>
+<p>[9].<a href="https://developer.arm.com/documentation/102142/latest/Stage-2-translation" target="_blank" rel="noopener">https://developer.arm.com/documentation/102142/latest/Stage-2-translation</a></p>
+<p>[10].<a href="https://developer.arm.com/documentation/ddi0595/2020-12/AArch64-Registers/HCR-EL2--Hypervisor-Configuration-Register" target="_blank" rel="noopener">https://developer.arm.com/documentation/ddi0595/2020-12/AArch64-Registers/HCR-EL2--Hypervisor-Configuration-Register</a></p>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong s>
+              本博客所有文章除特别声明外，均采用 <a href="https://www.apache.org/licenses/LICENSE-2.0.html" rel="external nofollow"
+                target="_blank">Apache License 2.0</a> 许可协议。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://drag0nf1y.github.io/2021/07/15/HA-VMSI%20A%20Lightweight%20Virtual%20Machine%20Isolation%20Approach%20with%20Commodity%20Hardware%20for%20ARM/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ARM/" rel="tag">ARM</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/TrustZone/" rel="tag">TrustZone</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%A0%94%E7%A9%B6/" rel="tag">研究</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%99%9A%E6%8B%9F%E5%8C%96/" rel="tag">虚拟化</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%AE%BA%E6%96%87/" rel="tag">论文</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+    
+      <a href="/2021/07/12/ucore_lab3_%E7%90%86%E8%AE%BA/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">ucore_lab3_理论</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: '',
+        app_key: '',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'mp',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2021
+        Drag0nf1y
+      </li>
+      <li>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+    <div class="to_top">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+      </div>
+    </main>
+      <aside class="sidebar">
+        <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.svg" alt="Drag0nf1y"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives/">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/">标签</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E7%A0%94%E7%A9%B6/">研究</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about/">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="Search">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+      </aside>
+      <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>请我喝杯咖啡吧~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+      
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script src="/js/share.js"></script>
+
+
+
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+
+
+
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer:'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto',
+    onClick: (e) => {
+      $('.toc-link').removeClass('is-active-link');
+      $(`a[href=${e.target.hash}]`).addClass('is-active-link');
+      $(e.target.hash).scrollIntoView();
+      return false;
+    }
+  });
+</script>
+
+
+<script>
+  var ayerConfig = {
+    mathjax: false
+  }
+</script>
+
+
+<script src="/js/ayer.js"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+  </div>
+</body>
+
+</html>

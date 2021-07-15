@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="description" content="Drag0nf1y" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    hello-world-kvm |  Drag0nf1y
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="/favicon.ico" />
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+<script src="/js/pace.min.js"></script>
+
+
+  
+
+  
+
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content">
+      <section class="outer">
+  <article id="post-hello-world-kvm" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  hello-world-kvm
+</h1>
+  
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2021/04/29/hello-world-kvm/" class="article-date">
+  <time datetime="2021-04-29T13:04:50.806Z" itemprop="datePublished">2021-04-29</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">4.3k字</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">16分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+      <h1 id="kvm-hello-world-分析"><a href="#kvm-hello-world-分析" class="headerlink" title="kvm-hello-world 分析"></a>kvm-hello-world 分析</h1><h2 id="运行"><a href="#运行" class="headerlink" title="运行"></a>运行</h2><p><img src="/2021/04/29/hello-world-kvm/2021-04-21-08-43-38.png" alt></p>
+<h2 id="简单的模型"><a href="#简单的模型" class="headerlink" title="简单的模型"></a>简单的模型</h2><p>通过kvm创建vm的7个步骤如下：</p>
+<p>通过open打开<code>/dev/kvm kvmfd=open(&quot;/dev/kvm&quot;, O_RDWR|O_CLOEXEC)</code></p>
+<p>通过ioctl创建vm <code>vmfd=ioctl(kvmfd, KVM_CREATE_VM, 0)</code></p>
+<p>为vm guest设置内存范围 <code>ioctl(vmfd, KVM_SET_USER_MEMORY_REGION, &amp;region)</code><br>为vm创建一个虚拟cpu <code>vcpufd=ioctl(vmfd, KVM_CREATE_VCPU, 0)</code>vcpu可以有多个</p>
+<p>给vcpu分配内存<br><code>vcpu_size=ioctl(kvmfd, KVM_GET_VCPU_MMAP_SIZE, NULL)</code><br><code>run=(struct kvm_run*)mmap(NULL, mmap_size, PROT_READ|``PROT_WRITE, MAP_SHARED, vcpufd, 0)</code></p>
+<p>把汇编代码放入到用户空间，设置vcpu的寄存器的值，例如rip等等<br>运行vm并根据退出状态做好处理 <code>while(1) { ioctl(vcpufd, KVM_RUN, 0); ... }</code></p>
+<h2 id="guest-c"><a href="#guest-c" class="headerlink" title="guest.c"></a>guest.c</h2><p>相当于构建了一个最简单VM：guest os<br>运行在kvm支持之上，接下来分析这个程序的主要内容。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stddef.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdint.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">outb</span><span class="params">(<span class="keyword">uint16_t</span> port, <span class="keyword">uint8_t</span> value)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">asm</span>(<span class="string">"outb %0,%1"</span> : <span class="comment">/* empty */</span> : <span class="string">"a"</span> (value), <span class="string">"Nd"</span> (port) : <span class="string">"memory"</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">void</span></span><br><span class="line">__attribute__((noreturn))</span><br><span class="line">__attribute__((section(<span class="string">".start"</span>)))</span><br><span class="line">_start(<span class="keyword">void</span>) &#123;</span><br><span class="line">	<span class="keyword">const</span> <span class="keyword">char</span> *p;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> (p = <span class="string">"Hello, world!\n"</span>; *p; ++p)</span><br><span class="line">		outb(<span class="number">0xE9</span>, *p);</span><br><span class="line"></span><br><span class="line">	*(<span class="keyword">long</span> *) <span class="number">0x400</span> = <span class="number">42</span>;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> (;;)</span><br><span class="line">		<span class="keyword">asm</span>(<span class="string">"hlt"</span> : <span class="comment">/* empty */</span> : <span class="string">"a"</span> (<span class="number">42</span>) : <span class="string">"memory"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="attribute-noreturn"><a href="#attribute-noreturn" class="headerlink" title="attribute((noreturn))"></a><strong>attribute</strong>((noreturn))</h3><p><code>__attribute__((noreturn))</code> 没有返回值<br><strong>attribute</strong> noreturn</p>
+<p>该属性通知编译器函数从不返回值，当遇到类似函数需要返回值而却不可能运行到返回值处就已经退出来的情况，该属性可以避免出现错误信息。C库函数中的abort（）和exit（）的声明格式就采用了这种格式，如下所示：<br>extern void exit(int)   <strong>attribute</strong>((noreturn));<br>extern void abort(void) <strong>attribute</strong>((noreturn));</p>
+<h3 id="attribute-section-“-start”"><a href="#attribute-section-“-start”" class="headerlink" title="attribute((section(“.start”)))"></a><strong>attribute</strong>((section(“.start”)))</h3><p><strong>attribute</strong>((section(“.start”))) 告诉编译器运行的起点在.start。这是函数的起始地址。</p>
+<h3 id="outb"><a href="#outb" class="headerlink" title="outb()"></a>outb()</h3><p>这里写了一个函数，函数中写到是内联汇编</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">asm</span>(<span class="string">"outb %0,%1"</span> </span><br><span class="line">	: <span class="comment">/* empty */</span> <span class="comment">//output</span></span><br><span class="line">	: <span class="string">"a"</span> (value), <span class="string">"Nd"</span> (port) <span class="comment">//input</span></span><br><span class="line">	: <span class="string">"memory"</span>);<span class="comment">//内联汇编会改变内存的 值</span></span><br></pre></td></tr></table></figure>
+<p>此处表示 outb %0,%1 将%1输出到端口%0<br>%0为第一个操作数，是传过来的value<br>%1为第二个操作数，是传过来的port<br>也就是说这条指令实际上就是 outb value, port的意思。</p>
+<h3 id="hlt指令"><a href="#hlt指令" class="headerlink" title="hlt指令"></a>hlt指令</h3><p>循环执行hlt指令</p>
+<p>该函数只是简单地将中断使能，然后执行HLT指令，即停止CPU的运行，并做好接收中断退出HALT状态的准备</p>
+<p>HLT指令是特权指令，所以需要在Ring 0中执行，对于Linux来说，只能由内核执行。</p>
+<p>来宾将数字42写入内存位置和EAX寄存器，然后调用停止hlt指令退出。</p>
+<p>1,使程序停止运行，处理器进入暂停状态，不执行任何操作，不影响标志。当RESET线上有复位信号、CPU响应非屏蔽中断、CPU响应可屏蔽中断3种情况之一时，CPU脱离暂停状态，执行HLT的下一条指令。</p>
+<p>  如果hlt指令之前，做了cli，那可屏蔽中断不能唤醒cpu。</p>
+<p>2,hlt是“只能在实方式和ring0执行的指令”，要区别于“IO敏感指令”。通过设置IOPI或IO许可位图，可以让ring1乃至ring3执行“IO敏感指令”，但“只能在实方式和ring0执行的指令”是规定死的。</p>
+<h2 id="kvm-hello-world-c"><a href="#kvm-hello-world-c" class="headerlink" title="kvm-hello-world.c"></a>kvm-hello-world.c</h2><h3 id="main"><a href="#main" class="headerlink" title="main"></a>main</h3><p>声明使用VM  vcpu<br>选择模式：四种模式<br>初始化VM vcpu</p>
+<p><strong>枚举变量</strong>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">enum</span> &#123;</span><br><span class="line">		REAL_MODE,</span><br><span class="line">		PROTECTED_MODE,</span><br><span class="line">		PAGED_32BIT_MODE,</span><br><span class="line">		LONG_MODE,</span><br><span class="line">	&#125; mode = REAL_MODE;</span><br><span class="line">	<span class="keyword">int</span> opt;</span><br></pre></td></tr></table></figure>
+<p>四种模式可供选择测试：实模式，保护模式、分页式32位模式，长模式</p>
+<p><strong>首先初始化vm,vcpu</strong>，接下来进入四种执行模式。</p>
+<h3 id="vm-init"><a href="#vm-init" class="headerlink" title="vm_init"></a>vm_init</h3><p><code>vm_init(&amp;vm, 0x200000)</code>内存大小为0x200000字节<br><code>vm-&gt;sys_fd = open(&quot;/dev/kvm&quot;, O_RDWR);</code>打开设备文件<br><code>api_ver = ioctl(vm-&gt;sys_fd, KVM_GET_API_VERSION, 0);</code>获得kvm api的版本<br><code>vm-&gt;fd = ioctl(vm-&gt;sys_fd, KVM_CREATE_VM, 0);</code>创建vm<br><code>ioctl(vm-&gt;fd, KVM_SET_TSS_ADDR, 0xfffbd000) &lt; 0)</code> 初始化体系结构</p>
+<p><code>vm-&gt;mem = mmap(NULL, mem_size, PROT_READ | PROT_WRITE,MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);</code>  通过mmap分配虚拟地址空间，后面作为guest的物理地址<br><code>madvise(vm-&gt;mem, mem_size, MADV_MERGEABLE);</code>用户空间，定期扫描已经注册的用户空间内存，寻找有相同内容的内存页，这些内存页可以被一页写保护（write-protected）的内存页所替代。汇编后的代码放在这里，guest应当从此处开始执行。rip开始执行，</p>
+<p>guest_phys_addr指定从来宾看到的基本“物理”地址，而userspace_addr指向我们使用mmap（）分配的进程中的后备内存；请注意，即使在32位平台上，它们也始终使用64位值。 memory_size指定要映射的内存量：一页，0x200000字节。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">memreg.slot = <span class="number">0</span>;</span><br><span class="line">memreg.flags = <span class="number">0</span>;</span><br><span class="line">memreg.guest_phys_addr = <span class="number">0</span>;</span><br><span class="line">memreg.memory_size = mem_size;</span><br><span class="line">memreg.userspace_addr = (<span class="keyword">unsigned</span> <span class="keyword">long</span>)vm-&gt;mem;</span><br></pre></td></tr></table></figure>
+<p><code>ioctl(vm-&gt;fd, KVM_SET_USER_MEMORY_REGION, &amp;memreg)</code> 该函数来向kvm模块注册guest物理内存<br>下面是初始化体系结构的操作：io event操作初始化</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ioctl(kvm-&gt;vm_fd, KVM_SET_TSS_ADDR, <span class="number">0xfffbd000</span>);</span><br><span class="line">ioctl(kvm-&gt;vm_fd, KVM_CREATE_PIT2, &amp;pit_config);</span><br><span class="line">ioctl(kvm-&gt;vm_fd, KVM_CREATE_IRQCHIP);</span><br><span class="line">ioctl(kvm-&gt;vm_fd, KVM_SET_USER_MEMORY_REGION, &amp;mem);</span><br></pre></td></tr></table></figure>
+<h3 id="vcpu-init"><a href="#vcpu-init" class="headerlink" title="vcpu_init"></a>vcpu_init</h3><p><code>vcpu-&gt;fd = ioctl(vm-&gt;fd, KVM_CREATE_VCPU, 0);</code>创建vcpu<br><code>vcpu_mmap_size = ioctl(vm-&gt;sys_fd, KVM_GET_VCPU_MMAP_SIZE, 0);</code>vcpu内存空间映射<br><code>vcpu-&gt;kvm_run = mmap(NULL, vcpu_mmap_size, PROT_READ |PROT_WRITE,MAP_SHARED, vcpu-&gt;fd, 0);</code>mmap为vcpu分配虚拟地址，作为guest的虚拟地址<br>接下来进入常用的模式测试</p>
+<h2 id="run-long-mode"><a href="#run-long-mode" class="headerlink" title="run_long_mode"></a>run_long_mode</h2><p><code>ioctl(vcpu-&gt;fd, KVM_GET_SREGS, &amp;sregs)</code> 获得特殊的寄存器</p>
+<p><code>setup_long_mode(vm, &amp;sregs);</code>获得寄存器后转向函数，以至于设置这些特殊的寄存器</p>
+<p><code>ioctl(vcpu-&gt;fd, KVM_SET_SREGS, &amp;sregs)</code>返回设置后的特殊寄存器，给kvm，以达到重新设置寄存器的目的。</p>
+<p><code>memset(&amp;regs, 0, sizeof(regs));</code>初始化    标准regs,为0 标准寄存器包括：通用寄存器和标志寄存器。</p>
+<p><code>ioctl(vcpu-&gt;fd, KVM_SET_REGS, &amp;regs)</code>传递给kvm使重设标准寄存器的值<br><code>memcpy(vm-&gt;mem, guest64, guest64_end-guest64);</code>将guest64的值拷贝到vm-&gt;mem,长度为guest64_end-guest64<br><code>return run_vm(vm, vcpu, 8);</code>运行run_vm(0)</p>
+<p>要执行64位汇编代码，我们需要将vCPU设置为long模式。切换到长模式的最复杂部分是设置页表，以将虚拟地址映射到物理地址。x86-64处理器使用名为PAE（物理地址扩展）的内存管理功能，其中包含四种表：PML4T，PDPT，PDT和PT。这些表的工作方式是PML4T中的每个条目都指向一个PDPT，PDPT中的每个条目都指向一个PDT，PDT中的每个条目都指向一个PT。然后，PT中的每个条目都指向物理地址。</p>
+<h3 id="setup-long-mode"><a href="#setup-long-mode" class="headerlink" title="setup_long_mode"></a>setup_long_mode</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">pml4[<span class="number">0</span>] = PDE64_PRESENT | PDE64_RW | PDE64_USER | pdpt_addr;<span class="comment">//1|3|3|*</span></span><br><span class="line">pdpt[<span class="number">0</span>] = PDE64_PRESENT | PDE64_RW | PDE64_USER | pd_addr;</span><br><span class="line">pd[<span class="number">0</span>] = PDE64_PRESENT | PDE64_RW | PDE64_USER | PDE64_PS;</span><br><span class="line"></span><br><span class="line">sregs-&gt;cr3 = pml4_addr;</span><br><span class="line">sregs-&gt;cr4 = CR4_PAE;<span class="comment">//</span></span><br><span class="line">sregs-&gt;cr0</span><br><span class="line">		= CR0_PE | CR0_MP | CR0_ET | CR0_NE | CR0_WP | CR0_AM | CR0_PG;</span><br><span class="line">sregs-&gt;efer = EFER_LME | EFER_LMA;</span><br></pre></td></tr></table></figure>
+<p>表中记录了一些控制位，包括页面是否被映射，可写以及是否可以在用户模式下访问。例如3（PDE64_PRESENT | PDE64_RW）表示内存已映射且可写，(pdpt)0x80（PDE64_PS）表示2M分页而不是4K。 结果，这些页表可以将低于0x200000的地址映射到自身（即，虚拟地址等于物理地址）。 2M页面：使用PML4T，PDPT 和PDT三级页转化表结构；因此不使用4k页面</p>
+<p>PML4T(Page Map Level4 Table)及表内的PML4E结构，每个表为4K，内含512个PML4E结构，每个8字节<br>PDPT (Page Directory Pointer Table)及表内的PDPTE结构，每个表4K，内含512个PDPTE结构，每个8字节<br>PDT (Page Directory Table) 及表内的PDE结构，每个表4K，内含512个PDE结构，每个8字节<br>PT(Page Table)及表内额PTE结构，每个表4K，内含512个PTE结构，每个8字节。</p>
+<p>接下来设置段寄存器：需要开启64位支持。<br><code>sregs.cs.base = sregs.cs.selector = 0; // let base of code segment equal to zero</code></p>
+<h2 id="run-kvm"><a href="#run-kvm" class="headerlink" title="run_kvm"></a>run_kvm</h2><p>请注意，KVM_RUN在当前线程的上下文中运行VM，并且直到仿真停止后才返回。要运行多CPU VM，用户空间进程必须产生多个线程，并为不同线程中的不同虚拟CPU调用KVM_RUN。<br><code>ioctl(vcpu-&gt;fd, KVM_RUN, 0)</code>交给kvm模块去执行。</p>
+<p>要处理退出，我们检查run-&gt; exit_reason以了解为什么退出。这可以包含几十个退出原因中的任何一个，它们对应于kvm_run中的并集的不同分支。对于这个简单的VM，我们将只处理其中的几个，并将任何其他exit_reason视为错误。</p>
+<p>就是一个while 1的大循环。通过ioctl vcpufd run来运行，直到遇到需要退出vm的指令如hlt out等。需要对退出的原因进行处理，是结束运行还是IO中断还是出了问题shutdown等等。其中比较重要的是IO，in和out指令会触发KVM_EXIT_IO。这要是hypervisor和host通信的手段。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">switch</span> (vcpu-&gt;kvm_run-&gt;exit_reason) &#123;</span><br><span class="line">		<span class="keyword">case</span> KVM_EXIT_HLT:</span><br><span class="line">			<span class="keyword">goto</span> check;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">case</span> KVM_EXIT_IO:</span><br><span class="line">			<span class="keyword">if</span> (vcpu-&gt;kvm_run-&gt;io.direction == KVM_EXIT_IO_OUT</span><br><span class="line">			    &amp;&amp; vcpu-&gt;kvm_run-&gt;io.port == <span class="number">0xE9</span>) &#123;</span><br><span class="line">				<span class="keyword">char</span> *p = (<span class="keyword">char</span> *)vcpu-&gt;kvm_run;</span><br><span class="line">				fwrite(p + vcpu-&gt;kvm_run-&gt;io.data_offset,</span><br><span class="line">				       vcpu-&gt;kvm_run-&gt;io.<span class="built_in">size</span>, <span class="number">1</span>, <span class="built_in">stdout</span>);</span><br><span class="line">				fflush(<span class="built_in">stdout</span>);</span><br><span class="line">				<span class="keyword">continue</span>;</span><br><span class="line">			&#125;</span><br><span class="line"></span><br><span class="line">			<span class="comment">/* fall through */</span></span><br><span class="line">		<span class="keyword">default</span>:</span><br><span class="line">			<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>,	<span class="string">"Got exit_reason %d,"</span></span><br><span class="line">				<span class="string">" expected KVM_EXIT_HLT (%d)\n"</span>,</span><br><span class="line">				vcpu-&gt;kvm_run-&gt;exit_reason, KVM_EXIT_HLT);</span><br><span class="line">			<span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">		&#125;</span><br></pre></td></tr></table></figure>
+<p>首先，判断vm_exit的原因，然后根据原因做不同的相应。<br>如果kvm_exit_io:判断是否为out指令触发的和端口，然后，及格线相应处理<br>如果是kvm_exit_hlt:则转到check部分进行其他操作。</p>
+<h2 id="问答"><a href="#问答" class="headerlink" title="问答"></a>问答</h2><p>问：在函数vm_init中设置的来宾内存（来宾将其视为其物理内存）的大小是多少？来宾存储器是如何从主机OS分配在hyprevisor代码中的以及在何处？该内存在哪个虚拟地址处映射到此简单虚拟机管理程序的虚拟地址空间？（请注意，mmap返回的地址是主机虚拟地址。）<br>1.vm通过mmap分配的内存大小:0x200000<br>2.vm通过mmap分配的内存，是guest用户空间,rip=0，汇编后的代码被放在这里3.第一页，rip=0使得从此处开始执行（    memcpy(vm-&gt;mem, guest64, guest64_end-guest64);使得guest代码放到用户空间内|run_long_mode()中）</p>
+<p>问：除了来宾内存，每个VCPU还在功能中从主机OS分配一小部分VCPU运行时内存，以存储必须与KVM交换的信息。在程序的哪几行中分配该内存，它的大小是多少，以及它在虚拟机管理程序的虚拟地址空间中的什么位置？<br><code>vcpu-&gt;kvm_run = mmap(NULL, vcpu_mmap_size, PROT_READ | PROT_WRITE,MAP_SHARED, vcpu-&gt;fd, 0);</code> 大小是从kvm设备中读取出来的<br><code>vcpu_mmap_size = ioctl(vm-&gt;sys_fd, KVM_GET_VCPU_MMAP_SIZE, 0);</code><br>分配来宾和VCPU内存后，程序将通过KVM API配置这些值，以格式化来宾存储区和CPU寄存器的格式。让我们了解如何在长模式下设置访客。</p>
+<p>问：来宾存储区的格式设置为包含来宾代码（可在可执行文件中作为extern char数组使用），来宾页表和内核堆栈。您能确定每个代码在代码中的什么位置吗？在来宾物理地址空间和主机虚拟地址空间中，这些地址分别占用什么地址范围？也就是说，<strong>您是否可以可视化来宾VM的物理地址空间以及正在设置VM的主机用户进程的虚拟地址空间？</strong><br>vm_init()<br>1.guest_phys_addr指定从来宾看到的基本“物理”地址，而userspace_addr指向我们使用mmap（）分配的进程中的后备内存；请注意，即使在32位平台上，它们也始终使用64位值。 memory_size指定要映射的内存量：一页，0x200000字节。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">memreg.slot = <span class="number">0</span>;</span><br><span class="line">memreg.flags = <span class="number">0</span>;</span><br><span class="line">memreg.guest_phys_addr = <span class="number">0</span>;</span><br><span class="line">memreg.memory_size = mem_size;</span><br><span class="line">memreg.userspace_addr = (<span class="keyword">unsigned</span> <span class="keyword">long</span>)vm-&gt;mem;</span><br></pre></td></tr></table></figure>
+<p>2.guest看到的物理地址，host的虚拟地址<br>3.在guest物理地址与host的虚拟地址地址映射</p>
+<p>问：对代码进行更详细的研究将帮助您了解访客页表的结构，以及如何使用其页表将访客虚拟地址空间映射到其物理地址空间。访客页面表在长模式下有几个级别？它占用多少页？来宾页面表中（客体）病毒到物理的映射是什么？此页表映射来宾虚拟地址空间的哪些部分？您可以在访客中可视化页表结构和地址转换吗？<br>1.长模式页表寻址模式解析<br>2.内存转换，直接访问内存</p>
+<p>最后，guest虚拟机的花式页表只计算出与虚拟地址完全相等的物理地址，这样就可以直接对guest虚拟机的整个物理地址空间进行寻址，而无需任何虚拟寻址的概念。但是您将需要了解页表结构以使自己相信这一事实。以下提示可帮助您了解64位页表的设置。</p>
+<p>64位系统中页表结构的简要概述：在典型的64位系统中，最低有效的48位用于当今的虚拟地址。假设有4 KB页面，则虚拟地址空间具有2 ^ 36页。假设每个页表条目为8个字节，则每个页可以存储2 ^ 9个页表条目。因此，页表有4个级别。CR3寄存器存储最外面的页面表的物理地址，称为PML4（页面映射级别4）。最高的9位（48位中的最高位）用于索引pml4表以获得PDP（页面目录指针）表的物理地址。接下来的9位用于索引PDP，以获得页目录（PD）表的地址。接下来的9位索引到页面目录中以获得（最里面的）页面表的地址。接下来的9位用于索引页表以获得物理帧号。后12位形成页面内的偏移量。<br>但是，当通过CR4_PAE标志启用物理地址扩展时，页面大小将被视为2MB，最后21位用于索引pgdir。也就是说，页面表只有3个级别，最高有效的27位用于索引这3个级别，并且省略了最里面的页面表中的查找。<br>如果页表项没有物理帧号并且只有一组标志，则存储的物理帧号将为零。</p>
+<p>问：来宾在运行时从哪个（来宾虚拟）地址开始执行？该地址在哪里配置？<br>rip=0<br>配置来宾存储器和寄存器后，系统管理程序将继续在功能run_vm中运行来宾。</p>
+<p>问：控制程序在管理程序的哪一行从运行管理程序切换为运行来宾？控制从客户在哪一行切换回虚拟机监控程序？</p>
+<p>现在是时候开始读取guest.c中的来宾代码了，该文件的二进制文件已由管理程序复制到来宾存储区中。请注意，此来宾代码是极简主义的，并且不使用很多精美的C库，以使来宾内存占用较小。来宾没有多个进程。它只有一个可执行文件，一个简单的页表和一个基本堆栈，所有这些文件均已设置。没有跨进程，页表或堆栈的切换。实际的来宾操作系统当然更加完善，但是我们希望了解的来宾和主机之间切换的机制仍然相同。</p>
+<p>我们的简单客人首先打印出“世界，您好！” 屏幕上的字符串。来宾使用outb CPU指令将数据字节写入特定的I / O端口号。此指令使来宾退出,我们的管理程序，因为来宾无法执行特权操作（例如访问I / O端口），然后管理程序代表来宾打印输出字符。</p>
+<p>请注意，outb的实际I / O指令是用汇编语言编写的，并嵌入到C代码中，该技术称为“内联汇编”。您可以在此处，此处，此处以及许多在线此类链接中了解有关内联汇编的更多信息。尽管我们鼓励您充分理解内联汇编，但是下面的简短说明目前已经足够。</p>
+<p>考虑guest.c中的以下代码片段</p>
+<p>void outb（uint16_t端口，uint8_t值）{<br>    asm（“ outb％0，％1”：/ <em>空</em> /：“ a”（value），“ Nd”(port）：“memory”）；<br>}<br>这个C函数outb带有两个参数，一个端口号和一个值。请注意，x86 EAX和EDX寄存器通常用于保存outb指令的参数。因此，此函数中的汇编代码将要在端口上输出的值加载到EAX寄存器中，将端口号加载到EDX寄存器中，并使用适当的参数调用outb指令。<br>来宾执行此指令后，将导致退出虚拟机监控程序代码。系统管理程序将检查退出原因并进行相应处理。</p>
+<p>问：您能否完全理解“您好，世界！” 访客是否通过管理程序将字符串打印出来？此通信使用哪个端口号？您如何读取虚拟机管理程序中的端口号和写入端口的值？哪个内存缓冲区用于将来宾写入的值传达给系统管理程序？要打印出完整的字符串，需要多少个出口（从来宾到虚拟机管理程序）？<br><img src="/2021/04/29/hello-world-kvm/2021-04-20-20-35-58.png" alt><br>向世界问好之后，来宾将数字42写入内存位置和EAX寄存器，然后调用停止指令退出。</p>
+<p>问：您能弄清楚数字42发生了什么吗？它在guest虚拟机中写在哪里，在hypervisor中在哪里读出？<br><code>memcpy(&amp;memval, &amp;vm-&gt;mem[0x400], sz);</code>卸载用户空间0x400处</p>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong s>
+              本博客所有文章除特别声明外，均采用 <a href="https://www.apache.org/licenses/LICENSE-2.0.html" rel="external nofollow"
+                target="_blank">Apache License 2.0</a> 许可协议。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://drag0nf1y.github.io/2021/04/29/hello-world-kvm/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+      <a href="/2021/05/07/rop/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            ROP攻击-----ctfwiki
+          
+        </div>
+      </a>
+    
+    
+      <a href="/2021/04/29/Qt+winPcap=QtSniffer%20winpcap%E6%8A%93%E5%8C%85%E6%A1%86%E6%9E%B6/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">Qt+winPcap=QtSniffer winpcap抓包框架</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: '',
+        app_key: '',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'mp',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2021
+        Drag0nf1y
+      </li>
+      <li>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+    <div class="to_top">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+      </div>
+    </main>
+      <aside class="sidebar">
+        <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.svg" alt="Drag0nf1y"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives/">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/">标签</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E7%A0%94%E7%A9%B6/">研究</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about/">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="Search">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+      </aside>
+      <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>请我喝杯咖啡吧~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+      
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script src="/js/share.js"></script>
+
+
+
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+
+
+
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer:'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto',
+    onClick: (e) => {
+      $('.toc-link').removeClass('is-active-link');
+      $(`a[href=${e.target.hash}]`).addClass('is-active-link');
+      $(e.target.hash).scrollIntoView();
+      return false;
+    }
+  });
+</script>
+
+
+<script>
+  var ayerConfig = {
+    mathjax: false
+  }
+</script>
+
+
+<script src="/js/ayer.js"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+  </div>
+</body>
+
+</html>

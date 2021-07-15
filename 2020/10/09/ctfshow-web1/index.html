@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="description" content="Drag0nf1y" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    ctfshow-web入门|信息搜集web1-20 |  Drag0nf1y
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="/favicon.ico" />
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+<script src="/js/pace.min.js"></script>
+
+
+  
+
+  
+
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content">
+      <section class="outer">
+  <article id="post-ctfshow-web1" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  ctfshow-web入门|信息搜集web1-20
+</h1>
+  
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2020/10/09/ctfshow-web1/" class="article-date">
+  <time datetime="2020-10-09T07:11:48.000Z" itemprop="datePublished">2020-10-09</time>
+</a>
+      
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/ctf/">ctf</a> / <a class="article-category-link" href="/categories/ctf/web/">web</a>
+  </div>
+
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">974字</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">4分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+      <h1 id="0x00-web1"><a href="#0x00-web1" class="headerlink" title="0x00 web1"></a>0x00 web1</h1><p>右键查看源码</p>
+<h1 id="0x01-web2"><a href="#0x01-web2" class="headerlink" title="0x01 web2"></a>0x01 web2</h1><p>web开发者工具打开，在页面中</p>
+<h1 id="0x02-web3"><a href="#0x02-web3" class="headerlink" title="0x02 web3"></a>0x02 web3</h1><p>web开发者工具/f12打开，其中的网络部分的响应头中</p>
+<h1 id="0x03-web4"><a href="#0x03-web4" class="headerlink" title="0x03 web4"></a>0x03 web4</h1><p>在url中请求/robots.txt</p>
+<p>发现一个文件。</p>
+<p>直接请求该文件</p>
+<h1 id="0x04-web5"><a href="#0x04-web5" class="headerlink" title="0x04 web5"></a>0x04 web5</h1><p>在url中，请求index.phps</p>
+<h1 id="0x06-web6"><a href="#0x06-web6" class="headerlink" title="0x06 web6"></a>0x06 web6</h1><p><img src="/2020/10/09/ctfshow-web1/iCjEIW2Je9ZKFnoE.png!thumbnail" alt="图片"></p>
+<p><img src="/2020/10/09/ctfshow-web1/BsqivOSUXwg5SSLK.png!thumbnail" alt="图片"></p>
+<p><img src="/2020/10/09/ctfshow-web1/w5w5I2XS9dU0RUSn.png!thumbnail" alt="图片">)<img src="/2020/10/09/ctfshow-web1/MF1C52ZFcPLyZout.png!thumbnail" alt="图片">)<img src="/2020/10/09/ctfshow-web1/SJcIQsnU19sYyNi0.png!thumbnail" alt="图片"></p>
+<h1 id="0x07-web7"><a href="#0x07-web7" class="headerlink" title="0x07 web7"></a>0x07 web7</h1><p>提示版本控制很重要，但不要部署到生产环境更重要。</p>
+<p>关于版本控制，首先想到的是git泄露，访问/.git，得到flag</p>
+<p>ps:</p>
+<p>Git 是一个开源的分布式版本控制系统，用于敏捷高效地处理任何或小或大的项目。</p>
+<p>Git 是 Linus Torvalds 为了帮助管理 Linux 内核开发而开发的一个开放源码的版本控制软件。</p>
+<p>Git 与常用的版本控制工具 CVS, Subversion 等不同，它采用了分布式版本库的方式，不必服务器端软件支持。</p>
+<p>Git 不仅仅是个版本控制系统，它也是个内容管理系统(CMS)，工作管理系统等。</p>
+<h1 id="0x08-web8"><a href="#0x08-web8" class="headerlink" title="0x08 web8"></a>0x08 web8</h1><p>Apache Subversion 通常被缩写成 SVN，是一个开放源代码的版本控制系统，Subversion 在 2000 年由  CollabNet Inc 开发，现在发展成为 Apache 软件基金会的一个项目，同样是一个丰富的开发者和用户社区的一部分。</p>
+<p>SVN相对于的RCS、CVS，采用了分支管理系统，它的设计目标就是取代CVS。互联网上免费的版本控制服务多基于Subversion。</p>
+<p>考虑svn泄露：直接访问/.svn</p>
+<h1 id="0x09-web9"><a href="#0x09-web9" class="headerlink" title="0x09 web9"></a>0x09 web9</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">发现网页有个错别字？赶紧在生产环境vim改下，不好，死机了</span><br></pre></td></tr></table></figure>
+<p>当我们在使用vim编辑的时候，vim会在被编辑文件同一目录下，创建一个名为filename.swp的文件，记录我们的动作，比如在编辑index.php的时候会存在一个index.php.swp的文件，访问/index.php.swp下载文件得到flag</p>
+<h1 id="0x0A-web10"><a href="#0x0A-web10" class="headerlink" title="0x0A web10"></a>0x0A web10</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cookie 只是一块饼干，不能存放任何隐私数据</span><br></pre></td></tr></table></figure>
+<p>f12查看原始响应头：<br><img src="/2020/10/09/ctfshow-web1/G85vSkPbeQWHwTIx.png!thumbnail" alt="图片"></p>
+<p>或者：</p>
+<p><img src="/2020/10/09/ctfshow-web1/VyjoPjSmfJt4SW8A.png!thumbnail" alt="图片"></p>
+<h1 id="0x0B-web11"><a href="#0x0B-web11" class="headerlink" title="0x0B web11"></a>0x0B web11</h1><blockquote>
+<p><a href="http://www.jsons.cn/nslookup/" target="_blank" rel="noopener">http://www.jsons.cn/nslookup/</a></p>
+</blockquote>
+<p><img src="/2020/10/09/ctfshow-web1/9xbUMVQiCIqDrmWb.png!thumbnail" alt="图片"></p>
+<h1 id="0x0C-web12"><a href="#0x0C-web12" class="headerlink" title="0x0C web12"></a>0x0C web12</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">密码在页面上：有时候网站上的公开信息，就是管理员常用密码</span><br></pre></td></tr></table></figure>
+<p>页面末：</p>
+<p><img src="/2020/10/09/ctfshow-web1/CteYC0EK8IM7X51T.png!thumbnail" alt="图片"></p>
+<p>访问：/admin</p>
+<p>输入admin/密码，就可以得到flag</p>
+<h1 id="0x0D-web13"><a href="#0x0D-web13" class="headerlink" title="0x0D web13"></a>0x0D web13</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">技术文档里面不要出现敏感信息，部署到生产环境后及时修改默认密码</span><br></pre></td></tr></table></figure>
+<p>在文档中有敏感信息，如密码等。<br><img src="/2020/10/09/ctfshow-web1/TiAdgUSvk7gf9VWV.png!thumbnail" alt="图片"></p>
+<p>一个文件，直接访问：</p>
+<p><img src="/2020/10/09/ctfshow-web1/ZKrtlOh7gXBbFnC5.png!thumbnail" alt="图片"></p>
+<p><a href="http://4ac3b328-7b2c-4159-84f3-21a4062d49d3.chall.ctf.show/system1103/login.php" target="_blank" rel="noopener">http://4ac3b328-7b2c-4159-84f3-21a4062d49d3.chall.ctf.show/system1103/login.php</a></p>
+<p>替换成题目的域名，输入账号密码就可以得到flag</p>
+<h1 id="0x0E-web14"><a href="#0x0E-web14" class="headerlink" title="0x0E web14"></a>0x0E web14</h1><p><img src="/2020/10/09/ctfshow-web1/G0JkTp7jV9XreRG8.png!thumbnail" alt="图片"></p>
+<p>访问nothinghere/fl000g.txt得到flag</p>
+<h1 id="0x0F-web15"><a href="#0x0F-web15" class="headerlink" title="0x0F web15"></a>0x0F web15</h1><blockquote>
+<p>公开的信息比如邮箱，可能造成信息泄露，产生严重后果</p>
+</blockquote>
+<p><img src="/2020/10/09/ctfshow-web1/br2NIYG7R8LmoiKZ.png!thumbnail" alt="图片"></p>
+<p>/admin</p>
+<p><img src="/2020/10/09/ctfshow-web1/KbEyehM5o8njzi0T.png!thumbnail" alt="图片"></p>
+<p>如果用户名错误会返回：用户名错误；密码错误：会提示密码错误</p>
+<p><img src="/2020/10/09/ctfshow-web1/UzmC5CHxXKZ9cz86.png!thumbnail" alt="图片"></p>
+<p>之前发现一个qq邮箱，用qq搜一下，可以得到居住城市。就可以重置密码，返回登陆，就可以得到flag</p>
+<h1 id="0x10-web16"><a href="#0x10-web16" class="headerlink" title="0x10 web16"></a>0x10 web16</h1><p>访问tz.php</p>
+<p><img src="/2020/10/09/ctfshow-web1/mqQGjSLeJAhDauAR.png!thumbnail" alt="图片"></p>
+<p>查看phpinfo:</p>
+<p><img src="/2020/10/09/ctfshow-web1/y1eTMaD6jXZUGZHu.png!thumbnail" alt="图片"></p>
+<h1 id="0x11-web17"><a href="#0x11-web17" class="headerlink" title="0x11 web17"></a>0x11 web17</h1><p><img src="/2020/10/09/ctfshow-web1/SSXPQAQfOyyK3oww.png!thumbnail" alt="图片"></p>
+<h1 id="0x12-web18"><a href="#0x12-web18" class="headerlink" title="0x12 web18"></a>0x12 web18</h1><p><img src="/2020/10/09/ctfshow-web1/2nzzkDAqQUuoifnY.png!thumbnail" alt="图片"></p>
+<p><img src="/2020/10/09/ctfshow-web1/2EV2A9yTNLzKXQ0B.png!thumbnail" alt="图片"></p>
+<h1 id="0x13-web19"><a href="#0x13-web19" class="headerlink" title="0x13 web19"></a>0x13 web19</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">&lt;script type&#x3D;&quot;text&#x2F;javascript&quot;&gt;</span><br><span class="line">    function checkForm()&#123;</span><br><span class="line">        var key &#x3D; &quot;0000000372619038&quot;;</span><br><span class="line">        var iv &#x3D; &quot;ilove36dverymuch&quot;;</span><br><span class="line">        var pazzword &#x3D; $(&quot;#pazzword&quot;).val();</span><br><span class="line">        pazzword &#x3D; encrypt(pazzword,key,iv);</span><br><span class="line">        $(&quot;#pazzword&quot;).val(pazzword);</span><br><span class="line">        $(&quot;#loginForm&quot;).submit();</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">    function encrypt(data,key,iv) &#123; &#x2F;&#x2F;key,iv：16位的字符串</span><br><span class="line">        var key1  &#x3D; CryptoJS.enc.Latin1.parse(key);</span><br><span class="line">        var iv1   &#x3D; CryptoJS.enc.Latin1.parse(iv);</span><br><span class="line">        return CryptoJS.AES.encrypt(data, key1,&#123;</span><br><span class="line">            iv : iv1,</span><br><span class="line">            mode : CryptoJS.mode.CBC,</span><br><span class="line">            padding : CryptoJS.pad.ZeroPadding</span><br><span class="line">        &#125;).toString();</span><br><span class="line">    &#125;</span><br><span class="line">&lt;&#x2F;script&gt;</span><br><span class="line">    &lt;!--</span><br><span class="line">    error_reporting(0);</span><br><span class="line">    $flag&#x3D;&quot;fakeflag&quot;</span><br><span class="line">    $u &#x3D; $_POST[&#39;username&#39;];</span><br><span class="line">    $p &#x3D; $_POST[&#39;pazzword&#39;];</span><br><span class="line">    if(isset($u) &amp;&amp; isset($p))&#123;</span><br><span class="line">        if($u&#x3D;&#x3D;&#x3D;&#39;admin&#39; &amp;&amp; $p &#x3D;&#x3D;&#x3D;&#39;a599ac85a73384ee3219fa684296eaa62667238d608efa81837030bd1ce1bf04&#39;)&#123;</span><br><span class="line">            echo $flag;</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br><span class="line">    --&gt;</span><br><span class="line">&lt;&#x2F;html&gt;</span><br></pre></td></tr></table></figure>
+<p>非预期解：<br>出题人的考点应该是前端加密，post提示数据可以直接绕过：</p>
+<p><img src="/2020/10/09/ctfshow-web1/QykXgC013JdvRkbn.png!thumbnail" alt="图片"></p>
+<h1 id="0x14-web20"><a href="#0x14-web20" class="headerlink" title="0x14 web20"></a>0x14 web20</h1><p>可以用强大的字典，御剑、dirseach扫描目录：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;db&#x2F;db.mdb</span><br></pre></td></tr></table></figure>
+<p>查看文件即可</p>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong s>
+              本博客所有文章除特别声明外，均采用 <a href="https://www.apache.org/licenses/LICENSE-2.0.html" rel="external nofollow"
+                target="_blank">Apache License 2.0</a> 许可协议。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://drag0nf1y.github.io/2020/10/09/ctfshow-web1/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ctf/" rel="tag">ctf</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/web/" rel="tag">web</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+      <a href="/2020/10/25/yuebingbeiweb/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            ctfswhow月饼杯-web
+          
+        </div>
+      </a>
+    
+    
+      <a href="/2020/10/09/ctfshow-webrumeng/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">ctfshow-web入门|爆破web21-28</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: '',
+        app_key: '',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'mp',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2021
+        Drag0nf1y
+      </li>
+      <li>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+    <div class="to_top">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+      </div>
+    </main>
+      <aside class="sidebar">
+        <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.svg" alt="Drag0nf1y"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives/">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/">标签</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E7%A0%94%E7%A9%B6/">研究</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about/">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="Search">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+      </aside>
+      <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>请我喝杯咖啡吧~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+      
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script src="/js/share.js"></script>
+
+
+
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+
+
+
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer:'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto',
+    onClick: (e) => {
+      $('.toc-link').removeClass('is-active-link');
+      $(`a[href=${e.target.hash}]`).addClass('is-active-link');
+      $(e.target.hash).scrollIntoView();
+      return false;
+    }
+  });
+</script>
+
+
+<script>
+  var ayerConfig = {
+    mathjax: false
+  }
+</script>
+
+
+<script src="/js/ayer.js"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+  </div>
+</body>
+
+</html>

@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="description" content="Drag0nf1y" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    arch-x86-kvm-vmx-c-虚拟机切换切出 |  Drag0nf1y
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="/favicon.ico" />
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+<script src="/js/pace.min.js"></script>
+
+
+  
+
+  
+
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content">
+      <section class="outer">
+  <article id="post-arch-x86-kvm-vmx-c-虚拟机切换切出" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  arch-x86-kvm-vmx-c-虚拟机切换切出
+</h1>
+  
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2021/06/23/arch-x86-kvm-vmx-c-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%88%87%E6%8D%A2%E5%88%87%E5%87%BA/" class="article-date">
+  <time datetime="2021-06-23T03:09:35.704Z" itemprop="datePublished">2021-06-23</time>
+</a>
+      
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/qemu/">qemu</a> / <a class="article-category-link" href="/categories/qemu/kvm/">kvm</a>
+  </div>
+
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">1.4k字</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">7分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+      <h1 id="arch-x86-kvm-vmx-c-虚拟机切换切出"><a href="#arch-x86-kvm-vmx-c-虚拟机切换切出" class="headerlink" title="//arch/x86/kvm/vmx.c-虚拟机切换切出"></a>//arch/x86/kvm/vmx.c-虚拟机切换切出</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;arch&#x2F;x86&#x2F;kvm&#x2F;vmx.c</span><br><span class="line">       vmx-&gt;__launched &#x3D; vmx-&gt;loaded_vmcs-&gt;launched;</span><br><span class="line">        asm(</span><br><span class="line">                &#x2F;* Store host registers *&#x2F;</span><br><span class="line">                &quot;push %%&quot;R&quot;dx; push %%&quot;R&quot;bp;&quot;</span><br><span class="line">                &quot;push %%&quot;R&quot;cx \n\t&quot; &#x2F;* placeholder for guest rcx *&#x2F;</span><br><span class="line">                &quot;push %%&quot;R&quot;cx \n\t&quot;</span><br><span class="line">                &quot;cmp %%&quot;R&quot;sp, %c[host_rsp](%0) \n\t&quot;</span><br><span class="line">                &quot;je 1f \n\t&quot;</span><br><span class="line">                &quot;mov %%&quot;R&quot;sp, %c[host_rsp](%0) \n\t&quot;</span><br><span class="line">                __ex(ASM_VMX_VMWRITE_RSP_RDX) &quot;\n\t&quot;</span><br><span class="line">                &quot;1: \n\t&quot;</span><br><span class="line">                &#x2F;* Reload cr2 if changed *&#x2F;</span><br><span class="line">                &quot;mov %c[cr2](%0), %%&quot;R&quot;ax \n\t&quot;</span><br><span class="line">                &quot;mov %%cr2, %%&quot;R&quot;dx \n\t&quot;</span><br><span class="line">                &quot;cmp %%&quot;R&quot;ax, %%&quot;R&quot;dx \n\t&quot;</span><br><span class="line">                &quot;je 2f \n\t&quot;</span><br><span class="line">                &quot;mov %%&quot;R&quot;ax, %%cr2 \n\t&quot;</span><br><span class="line">                &quot;2: \n\t&quot;</span><br><span class="line">                &#x2F;* Check if vmlaunch of vmresume is needed *&#x2F;</span><br><span class="line">                &quot;cmpl $0, %c[launched](%0) \n\t&quot;</span><br><span class="line">                &#x2F;* Load guest registers.  Don&#39;t clobber flags. *&#x2F;</span><br><span class="line">                &quot;mov %c[rax](%0), %%&quot;R&quot;ax \n\t&quot;</span><br><span class="line">                &quot;mov %c[rbx](%0), %%&quot;R&quot;bx \n\t&quot;</span><br><span class="line">                &quot;mov %c[rdx](%0), %%&quot;R&quot;dx \n\t&quot;</span><br><span class="line">                &quot;mov %c[rsi](%0), %%&quot;R&quot;si \n\t&quot;</span><br><span class="line">                &quot;mov %c[rdi](%0), %%&quot;R&quot;di \n\t&quot;</span><br><span class="line">                &quot;mov %c[rbp](%0), %%&quot;R&quot;bp \n\t&quot;#ifdef CONFIG_X86_64</span><br><span class="line">                &quot;mov %c[r8](%0),  %%r8  \n\t&quot;</span><br><span class="line">                &quot;mov %c[r9](%0),  %%r9  \n\t&quot;</span><br><span class="line">                &quot;mov %c[r10](%0), %%r10 \n\t&quot;</span><br><span class="line">                &quot;mov %c[r11](%0), %%r11 \n\t&quot;</span><br><span class="line">                &quot;mov %c[r12](%0), %%r12 \n\t&quot;</span><br><span class="line">                &quot;mov %c[r13](%0), %%r13 \n\t&quot;</span><br><span class="line">                &quot;mov %c[r14](%0), %%r14 \n\t&quot;</span><br><span class="line">                &quot;mov %c[r15](%0), %%r15 \n\t&quot;#endif</span><br><span class="line">                &quot;mov %c[rcx](%0), %%&quot;R&quot;cx \n\t&quot; &#x2F;* kills %0 (ecx) *&#x2F;</span><br><span class="line"></span><br><span class="line">                &#x2F;* Enter guest mode *&#x2F;</span><br><span class="line">                &quot;jne .Llaunched \n\t&quot;</span><br><span class="line">                __ex(ASM_VMX_VMLAUNCH) &quot;\n\t&quot;</span><br><span class="line">                &quot;jmp .Lkvm_vmx_return \n\t&quot;</span><br><span class="line">                &quot;.Llaunched: &quot; __ex(ASM_VMX_VMRESUME) &quot;\n\t&quot;</span><br><span class="line">                &quot;.Lkvm_vmx_return: &quot;</span><br><span class="line">                &#x2F;* Save guest registers, load host registers, keep flags *&#x2F;</span><br><span class="line">                &quot;mov %0, %c[wordsize](%%&quot;R&quot;sp) \n\t&quot; &#x2F;&#x2F;栈顶的值与ecx的值交换</span><br><span class="line">                &quot;pop %0 \n\t&quot;</span><br><span class="line">                &quot;mov %%&quot;R&quot;ax, %c[rax](%0) \n\t&quot;</span><br><span class="line">                &quot;mov %%&quot;R&quot;bx, %c[rbx](%0) \n\t&quot;</span><br><span class="line">                &quot;pop&quot;Q&quot; %c[rcx](%0) \n\t&quot;</span><br><span class="line">                &quot;mov %%&quot;R&quot;dx, %c[rdx](%0) \n\t&quot;</span><br><span class="line">                &quot;mov %%&quot;R&quot;si, %c[rsi](%0) \n\t&quot;</span><br><span class="line">                &quot;mov %%&quot;R&quot;di, %c[rdi](%0) \n\t&quot;</span><br><span class="line">                &quot;mov %%&quot;R&quot;bp, %c[rbp](%0) \n\t&quot;#ifdef CONFIG_X86_64</span><br><span class="line">                &quot;mov %%r8,  %c[r8](%0) \n\t&quot;</span><br><span class="line">                &quot;mov %%r9,  %c[r9](%0) \n\t&quot;</span><br><span class="line">                &quot;mov %%r10, %c[r10](%0) \n\t&quot;</span><br><span class="line">                &quot;mov %%r11, %c[r11](%0) \n\t&quot;</span><br><span class="line">                &quot;mov %%r12, %c[r12](%0) \n\t&quot;</span><br><span class="line">                &quot;mov %%r13, %c[r13](%0) \n\t&quot;</span><br><span class="line">                &quot;mov %%r14, %c[r14](%0) \n\t&quot;</span><br><span class="line">                &quot;mov %%r15, %c[r15](%0) \n\t&quot;#endif</span><br><span class="line">                &quot;mov %%cr2, %%&quot;R&quot;ax   \n\t&quot;</span><br><span class="line">                &quot;mov %%&quot;R&quot;ax, %c[cr2](%0) \n\t&quot;</span><br><span class="line"></span><br><span class="line">                &quot;pop  %%&quot;R&quot;bp; pop  %%&quot;R&quot;dx \n\t&quot;</span><br><span class="line">                &quot;setbe %c[fail](%0) \n\t&quot;</span><br><span class="line">              : : &quot;c&quot;(vmx), &quot;d&quot;((unsigned long)HOST_RSP),</span><br><span class="line">                [launched]&quot;i&quot;(offsetof(struct vcpu_vmx, __launched)),</span><br><span class="line">                [fail]&quot;i&quot;(offsetof(struct vcpu_vmx, fail)),</span><br><span class="line">                [host_rsp]&quot;i&quot;(offsetof(struct vcpu_vmx, host_rsp)),</span><br><span class="line">                [rax]&quot;i&quot;(offsetof(struct vcpu_vmx, vcpu.arch.regs[VCPU_REGS_RAX])),</span><br><span class="line">                [rbx]&quot;i&quot;(offsetof(struct vcpu_vmx, vcpu.arch.regs[VCPU_REGS_RBX])),</span><br><span class="line">                [rcx]&quot;i&quot;(offsetof(struct vcpu_vmx, vcpu.arch.regs[VCPU_REGS_RCX])),</span><br><span class="line">                [rdx]&quot;i&quot;(offsetof(struct vcpu_vmx, vcpu.arch.regs[VCPU_REGS_RDX])),</span><br><span class="line">                [rsi]&quot;i&quot;(offsetof(struct vcpu_vmx, vcpu.arch.regs[VCPU_REGS_RSI])),</span><br><span class="line">                [rdi]&quot;i&quot;(offsetof(struct vcpu_vmx, vcpu.arch.regs[VCPU_REGS_RDI])),</span><br><span class="line">                [rbp]&quot;i&quot;(offsetof(struct vcpu_vmx, vcpu.arch.regs[VCPU_REGS_RBP])),#ifdef CONFIG_X86_64</span><br><span class="line">                [r8]&quot;i&quot;(offsetof(struct vcpu_vmx, vcpu.arch.regs[VCPU_REGS_R8])),</span><br><span class="line">                [r9]&quot;i&quot;(offsetof(struct vcpu_vmx, vcpu.arch.regs[VCPU_REGS_R9])),</span><br><span class="line">                [r10]&quot;i&quot;(offsetof(struct vcpu_vmx, vcpu.arch.regs[VCPU_REGS_R10])),</span><br><span class="line">                [r11]&quot;i&quot;(offsetof(struct vcpu_vmx, vcpu.arch.regs[VCPU_REGS_R11])),</span><br><span class="line">                [r12]&quot;i&quot;(offsetof(struct vcpu_vmx, vcpu.arch.regs[VCPU_REGS_R12])),</span><br><span class="line">                [r13]&quot;i&quot;(offsetof(struct vcpu_vmx, vcpu.arch.regs[VCPU_REGS_R13])),</span><br><span class="line">                [r14]&quot;i&quot;(offsetof(struct vcpu_vmx, vcpu.arch.regs[VCPU_REGS_R14])),</span><br><span class="line">                [r15]&quot;i&quot;(offsetof(struct vcpu_vmx, vcpu.arch.regs[VCPU_REGS_R15])),#endif</span><br><span class="line">                [cr2]&quot;i&quot;(offsetof(struct vcpu_vmx, vcpu.arch.cr2)),</span><br><span class="line">                [wordsize]&quot;i&quot;(sizeof(ulong))</span><br><span class="line">              : &quot;cc&quot;, &quot;memory&quot;</span><br><span class="line">                , R&quot;ax&quot;, R&quot;bx&quot;, R&quot;di&quot;, R&quot;si&quot;#ifdef CONFIG_X86_64</span><br><span class="line">                , &quot;r8&quot;, &quot;r9&quot;, &quot;r10&quot;, &quot;r11&quot;, &quot;r12&quot;, &quot;r13&quot;, &quot;r14&quot;, &quot;r15&quot;#endif</span><br><span class="line">              );</span><br></pre></td></tr></table></figure>
+
+<p><strong>第一部分：保存host的相关寄存器</strong></p>
+<ul>
+<li>宏R,在64位下为 r，在32位下为e</li>
+<li>通用寄存器自动压入栈中，保存了，这里只保存了rdx,rbp。这两个寄存器是gcc保留 的regparm特性，不能放在clobber list中，只能手动保存。</li>
+<li>保存rcx，rcx中在input处可以看出，它实际上的内容为vmx的首地址，也就是相当于把vmx的首地址放在栈上。</li>
+<li>并不是每次退出或者切入，host栈都会发生变化，因此rsp无需每次更新。比较host_rsp与当前rsp的值来判断是否发生了变化，来减少更新vmcs中的host rsp字段。</li>
+</ul>
+<p><code>&quot;mov %%&quot;R&quot;sp, %c[host_rsp](%0) \n\t&quot;</code></p>
+<p><code>__ex(ASM_VMX_VMWRITE_RSP_RDX) &quot;\n\t&quot;</code></p>
+<p>第二句是指，将rsp的值写入到rdx指向的内容，也就是HOST_RSP</p>
+<blockquote>
+<p>arch/x86/include/asm/vmx.h</p>
+<p>可见host_rsp整个宏的定义：</p>
+<p>/* VMCS Encodings */</p>
+<p>enum vmcs_field {</p>
+<p>HOST_RSP = 0x00006c14,</p>
+<p>HOST_RIP = 0x00006c16,};</p>
+</blockquote>
+<p><strong>第二部分：重载入CR2寄存器</strong></p>
+<p>vmx没有定义cpu自动保存cr2寄存器的内容，cr2的内容是可能被host改变的，比如出现页错误的时候。</p>
+<ul>
+<li>把vcpu的cr2寄存器与当前的cr2寄存器相比较</li>
+<li>如果不同，则更新cr2寄存器的内容为vcpu的cr2</li>
+</ul>
+<p>绝大多数情况下，cr2寄存器的内容不会发生变化，更新cr2寄存器需要的开销很大<br><strong>第三部分：载入通用寄存器</strong></p>
+<p>环境加载完成，接下来进入guest模式去执行</p>
+<p><strong>第四部分：进入guest模式</strong></p>
+<p>根据相关位，来判断是第一次加载还是恢复</p>
+<p><strong>第五部分：保存guest,进入host</strong></p>
+<p>这里需要注意的是，关于cr2寄存器，通过通用寄存器作为中间变量来传给vcpu</p>
+<p>接着将之前的rdx,ebp出栈，其他寄存器自动恢复。</p>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong s>
+              本博客所有文章除特别声明外，均采用 <a href="https://www.apache.org/licenses/LICENSE-2.0.html" rel="external nofollow"
+                target="_blank">Apache License 2.0</a> 许可协议。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://drag0nf1y.github.io/2021/06/23/arch-x86-kvm-vmx-c-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%88%87%E6%8D%A2%E5%88%87%E5%87%BA/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/kvm/" rel="tag">kvm</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/qemu/" rel="tag">qemu</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+      <a href="/2021/06/23/kvm%E6%A8%A1%E5%9D%97%E5%88%9D%E5%A7%8B%E5%8C%96/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            kvm模块初始化
+          
+        </div>
+      </a>
+    
+    
+      <a href="/2021/06/21/ucore_lab2_%E5%AE%9E%E9%AA%8C/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">ucore_lab2_实验</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: '',
+        app_key: '',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'mp',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2021
+        Drag0nf1y
+      </li>
+      <li>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+    <div class="to_top">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+      </div>
+    </main>
+      <aside class="sidebar">
+        <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.svg" alt="Drag0nf1y"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives/">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/">标签</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E7%A0%94%E7%A9%B6/">研究</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about/">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="Search">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+      </aside>
+      <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>请我喝杯咖啡吧~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+      
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script src="/js/share.js"></script>
+
+
+
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+
+
+
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer:'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto',
+    onClick: (e) => {
+      $('.toc-link').removeClass('is-active-link');
+      $(`a[href=${e.target.hash}]`).addClass('is-active-link');
+      $(e.target.hash).scrollIntoView();
+      return false;
+    }
+  });
+</script>
+
+
+<script>
+  var ayerConfig = {
+    mathjax: false
+  }
+</script>
+
+
+<script src="/js/ayer.js"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+  </div>
+</body>
+
+</html>

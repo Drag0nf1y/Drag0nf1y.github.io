@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="description" content="Drag0nf1y" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    QtRBAC |  Drag0nf1y
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="/favicon.ico" />
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+<script src="/js/pace.min.js"></script>
+
+
+  
+
+  
+
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content">
+      <section class="outer">
+  <article id="post-QtRBAC" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  QtRBAC
+</h1>
+  
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2021/04/29/QtRBAC/" class="article-date">
+  <time datetime="2021-04-29T12:30:48.804Z" itemprop="datePublished">2021-04-29</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">2.3k字</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">9分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+      <h1 id="QtRBAC"><a href="#QtRBAC" class="headerlink" title="QtRBAC"></a>QtRBAC</h1><p>基于角色访问控制的Linux安全模块，QtRBAC是我给这个实现的模块自定义的一个名称。</p>
+<blockquote>
+<p><a href="https://github.com/Drag0nf1y/QtRBAC/tree/main" target="_blank" rel="noopener">https://github.com/Drag0nf1y/QtRBAC/tree/main</a></p>
+</blockquote>
+<h2 id="1-模块介绍"><a href="#1-模块介绍" class="headerlink" title="1 模块介绍"></a>1 模块介绍</h2><p>Linux安全模块（LSM）是Linux内核的一个轻量级通用访问控制框架，但在内核2.6.x后，LSM模块不再运行动态加载到内核，而需要将模块编译进内核，于是需要编写Makefile以及Kconfig，除<code>kernel/security/demo</code>中的Makefile和Kconfig可以直接复制使用外，<code>kernel/security</code>中的Makefile以及Kconfig应该在当前内核源码所提供的内容上添加。</p>
+<h2 id="2-RBAC"><a href="#2-RBAC" class="headerlink" title="2 RBAC"></a>2 RBAC</h2><h3 id="2-1-RBAC"><a href="#2-1-RBAC" class="headerlink" title="2.1 RBAC"></a>2.1 RBAC</h3><p>RBAC模型（<code>Role-Based Access Control</code>：基于角色的访问控制)，在RBAC中，用户不再直接与权限相连，而是通过“角色”这一属性来间接的被赋予权限，用户通过成为适当的角色来的到这些角色固有的权限，这样处理就解耦了用户与权限的关系。这就极大地简化了权限的管理。在一个组织中，角色是为了完成各种工作而创造，用户则依据它的责任和资格来被指派相应的角色，用户可以很容易地从一个角色被指派到另一个角色。角色可依新的需求和系统的合并而赋予新的权限，而权限也可根据需要而从某角色中回收。角色与角色的关系可以建立起来以囊括更广泛的客观情况。</p>
+<p><img src="/2021/04/29/QtRBAC/Image(1).png" alt="29627ea8ffb46f66ff081109a0f234a4.png"></p>
+<p>每个用户扮演一个或多个角色（多对多），一个角色具有多种权限（多对多）。简化统一后的 模型如下：</p>
+<p><img src="/2021/04/29/QtRBAC/image-20210429195237142.png" alt="image-20210429195237142"></p>
+<h3 id="2-2-LSM"><a href="#2-2-LSM" class="headerlink" title="2.2 LSM"></a>2.2 LSM</h3><p><code>LSM （Linux Security Module）</code>是Linux内核的一个轻量级通用访问控制框架。用户可以根据其需求选择适合的安全模块加载到Linux内核中，从而大大提高了Linux安全访问控制机制的灵活性和易用性。<br>LSM不干扰原先的安全策略，它通过hook技术执行增加一层（访问）控制策略，也就是在通往内核的大道上加了一个关卡，这个关卡如果没有哨兵就是空架子（对应于LSM没有加载任何安全机制）。</p>
+<h2 id="3-配置管理程序"><a href="#3-配置管理程序" class="headerlink" title="3 配置管理程序"></a>3 配置管理程序</h2><h3 id="3-1-菜单"><a href="#3-1-菜单" class="headerlink" title="3.1 菜单"></a>3.1 菜单</h3><p>直接运行程序，就会弹出菜单提示：</p>
+<p><img src="/2021/04/29/QtRBAC/image-20210429182232528.png" alt="image-20210429182232528"></p>
+<h3 id="3-2-模块启用与关闭"><a href="#3-2-模块启用与关闭" class="headerlink" title="3.2 模块启用与关闭"></a>3.2 模块启用与关闭</h3><p>通过<code>manager -state</code>可以查看模块当前的状态，如果为<code>Disable</code>，该模块不干预访问控制，当为<code>Enable</code>时才干预访问控制。通过<code>-enable</code>可以激活模块，通过<code>-disable</code>可以禁用模块</p>
+<p><img src="/2021/04/29/QtRBAC/image-20210429180030112.png" alt="image-20210429180030112"></p>
+<h3 id="3-3-角色管理"><a href="#3-3-角色管理" class="headerlink" title="3.3 角色管理"></a>3.3 角色管理</h3><h4 id="3-3-1-查询角色"><a href="#3-3-1-查询角色" class="headerlink" title="3.3.1 查询角色"></a>3.3.1 查询角色</h4><p>通过<code>manager</code>进行角色管理，通过<code>-s</code>选项为显示当前的角色信息<code>roles</code></p>
+<p><code>role1</code>的权限:重命名文件、创建文件、创建文件夹、删除文件夹，不能删除文件</p>
+<p><code>role3</code>的权限：重命名文件、删除文件、删除文件夹，不能创建文件、创建文件夹</p>
+<p><img src="/2021/04/29/QtRBAC/image-20210429175615440.png" alt="image-20210429175615440"></p>
+<p>对于角色没有涉及的其他权限，采用默认DAC，该模块不做限制</p>
+<h4 id="3-3-2-增加角色"><a href="#3-3-2-增加角色" class="headerlink" title="3.3.2 增加角色"></a>3.3.2 增加角色</h4><p>通过<code>-addrole rolename perm</code>可以加入新的角色，其中权限的给出方式为按顺序给出该该模块针对的操作是否允许被访问，为<code>0</code>表示不允许，为<code>1</code>表示允许，该模块只是基于LSM对RBAC的简单尝试，当前只针对5个操作提供访问控制，下面创建一个对所有操作都允许的新角色<code>role1</code>和<code>role2</code></p>
+<p><img src="/2021/04/29/QtRBAC/image-20210429175437217.png" alt="image-20210429175437217"></p>
+<h4 id="3-3-3-删除角色"><a href="#3-3-3-删除角色" class="headerlink" title="3.3.3 删除角色"></a>3.3.3 删除角色</h4><p><code>-delrole rolename</code>即可删除一个角色</p>
+<p><img src="/2021/04/29/QtRBAC/image-20210429181222637.png" alt="image-20210429181222637"></p>
+<h4 id="3-3-4-更新角色权限"><a href="#3-3-4-更新角色权限" class="headerlink" title="3.3.4 更新角色权限"></a>3.3.4 更新角色权限</h4><p><img src="/2021/04/29/QtRBAC/image-20210429181500214.png" alt="image-20210429181500214"></p>
+<h3 id="3-4-用户到角色"><a href="#3-4-用户到角色" class="headerlink" title="3.4 用户到角色"></a>3.4 用户到角色</h3><h4 id="3-4-1-用户角色分配"><a href="#3-4-1-用户角色分配" class="headerlink" title="3.4.1 用户角色分配"></a>3.4.1 用户角色分配</h4><p>通过<code>-match uid rolename</code>可以将角色赋予到对应用户上</p>
+<p><img src="/2021/04/29/QtRBAC/image-20210429180737493.png" alt="image-20210429180737493"></p>
+<h4 id="3-4-2-显示用户角色分配"><a href="#3-4-2-显示用户角色分配" class="headerlink" title="3.4.2 显示用户角色分配"></a>3.4.2 显示用户角色分配</h4><p><code>-s user2role</code>显示用户对应的角色表</p>
+<p><img src="/2021/04/29/QtRBAC/image-20210429181658678.png" alt="image-20210429181658678"></p>
+<h4 id="3-4-3-修改用户角色分配"><a href="#3-4-3-修改用户角色分配" class="headerlink" title="3.4.3 修改用户角色分配"></a>3.4.3 修改用户角色分配</h4><p>通过<code>-updateu2r uid rolename</code>可以更新uid用户的角色，如下将<code>user1</code>的角色更换为<code>role3</code></p>
+<p>为了直观，新建了一个角色<code>role3</code>用来替换</p>
+<p><img src="/2021/04/29/QtRBAC/image-20210429181829466.png" alt="image-20210429181829466"></p>
+<h4 id="3-4-4-删除用户角色分配"><a href="#3-4-4-删除用户角色分配" class="headerlink" title="3.4.4 删除用户角色分配"></a>3.4.4 删除用户角色分配</h4><p>通过<code>-deluser2role uid</code>可以取消uid用户所分配的角色</p>
+<p><img src="/2021/04/29/QtRBAC/image-20210429182055759.png" alt="image-20210429182055759"></p>
+<h2 id="4-内核编译"><a href="#4-内核编译" class="headerlink" title="4 内核编译"></a>4 内核编译</h2><p>下载内核源码linu-4.4.0:</p>
+<blockquote>
+<p><a href="https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/linux-lts-xenial/4.4.0-31.50~14.04.1/linux-lts-xenial_4.4.0.orig.tar.gz" target="_blank" rel="noopener">https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/linux-lts-xenial/4.4.0-31.50~14.04.1/linux-lts-xenial_4.4.0.orig.tar.gz</a></p>
+</blockquote>
+<p>将<code>/boot/config-&#39;uname -r&#39;</code>拷贝到源码根目录中，并重命名为<code>.config</code>，然后<code>make menuconfig</code>即可进行配置编译选项（如果失败需要<code>apt-get install libncurses5-dev</code>），对LSM而言，进入<code>Security options</code></p>
+<p><img src="/2021/04/29/QtRBAC/image-20210429194802661.png" alt="image-20210429194802661"></p>
+<p>将该模块选上，而将SELinux、Yama等其他安全模块都取消，再将该模块选为默认安全模块</p>
+<p><img src="/2021/04/29/QtRBAC/image-20210429194824749.png" alt="image-20210429194824749"></p>
+<p>接着即可编译内核：<br><code>make bzImage -j8</code>                                  漫长</p>
+<p> <code>make modules -j8</code>                                漫漫长</p>
+<p><code>make modules_install</code></p>
+<p><code>make install</code><br>重启，按shift进入grub界面，选择我们的内核：</p>
+<p><img src="/2021/04/29/QtRBAC/image-20210429173826586.png" alt="image-20210429173826586"></p>
+<p>新的安全模块即可生效：此处是因为我在代码中，编写每个hook函数 的时候，将函数体复制粘贴过去，疏忽了提示信息的对应修改，在编译内核生成好了之后才发现，但是由于编译内核时间<strong>过长</strong>，因此就没有二次修改编译了。</p>
+<p><img src="/2021/04/29/QtRBAC/image-20210429173959431.png" alt="image-20210429173959431"></p>
+<h2 id="5-安全策略"><a href="#5-安全策略" class="headerlink" title="5 安全策略"></a>5 安全策略</h2><h3 id="5-1-用户列表"><a href="#5-1-用户列表" class="headerlink" title="5.1 用户列表"></a>5.1 用户列表</h3><p>创建用户：<code>useradd -m user1</code></p>
+<p>设置密码： <code>passwd user1</code></p>
+<p>切换用户：<code>su - user1</code></p>
+<p>删除一个角色：<code>userdel -r user1</code></p>
+<p>设置了两个用户：<code>user1/user1</code> ,<code>user2/user2</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">giantbranch@ubuntu:~/Desktop/lsm$ id user1</span><br><span class="line">uid=<span class="number">1001</span>(user1) gid=<span class="number">1001</span>(user1) groups=<span class="number">1001</span>(user1)</span><br><span class="line">giantbranch@ubuntu:~/Desktop/lsm$ id user2</span><br><span class="line">uid=<span class="number">1006</span>(user2) gid=<span class="number">1006</span>(user2) groups=<span class="number">1006</span>(user2)</span><br><span class="line">giantbranch@ubuntu:~/Desktop/lsm$</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2021/04/29/QtRBAC/image-20210429192136619.png" alt="image-20210429192136619"></p>
+<h3 id="5-2-角色列表"><a href="#5-2-角色列表" class="headerlink" title="5.2 角色列表"></a>5.2 角色列表</h3><p>创建了两个角色：<code>role1</code>和<code>role2</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">root@ubuntu:/<span class="built_in">home</span>/giantbranch/Desktop/lsm# ./manager -s roles</span><br><span class="line">role1 permission: inode_rename[<span class="number">0</span>], inode_create[<span class="number">0</span>],inode_unlink[<span class="number">1</span>],inode_mkdir[<span class="number">0</span>],inode_rmdir[<span class="number">0</span>]</span><br><span class="line">role2 permission: inode_rename[<span class="number">1</span>], inode_create[<span class="number">1</span>],inode_unlink[<span class="number">0</span>],inode_mkdir[<span class="number">1</span>],inode_rmdir[<span class="number">1</span>]</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-3-用户角色匹配"><a href="#5-3-用户角色匹配" class="headerlink" title="5.3 用户角色匹配"></a>5.3 用户角色匹配</h3><p><img src="/2021/04/29/QtRBAC/image-20210429192212412.png" alt="image-20210429192212412"></p>
+<p><code>user1</code>与<code>user2</code>的权限是相反的。</p>
+<h2 id="6-运行测试"><a href="#6-运行测试" class="headerlink" title="6 运行测试"></a>6 运行测试</h2><h3 id="6-1-关闭安全模块"><a href="#6-1-关闭安全模块" class="headerlink" title="6.1 关闭安全模块"></a>6.1 关闭安全模块</h3><p>在关闭安全模块时，对用户的权限限制并不生效：</p>
+<p><img src="/2021/04/29/QtRBAC/image-20210429185623614.png" alt="image-20210429185623614"></p>
+<h3 id="6-2-开启安全模块"><a href="#6-2-开启安全模块" class="headerlink" title="6.2 开启安全模块"></a>6.2 开启安全模块</h3><h4 id="6-2-1-user1权限"><a href="#6-2-1-user1权限" class="headerlink" title="6.2.1 user1权限"></a>6.2.1 user1权限</h4><p>role1的权限：不能重命名文件，不能创建文件，能删除文件，不能创建目录，不能删除目录</p>
+<p><img src="/2021/04/29/QtRBAC/image-20210429190237145.png" alt="image-20210429190237145"></p>
+<p>由结果可以看见，user1的权限在控制范围之内</p>
+<h4 id="6-2-2-user2权限"><a href="#6-2-2-user2权限" class="headerlink" title="6.2.2 user2权限"></a>6.2.2 user2权限</h4><p><img src="/2021/04/29/QtRBAC/image-20210429192453209.png" alt="image-20210429192453209"></p>
+<p>结果 可以看见，user2,的权限在控制范围之内</p>
+<h2 id="7-代码分析"><a href="#7-代码分析" class="headerlink" title="7 代码分析"></a>7 代码分析</h2><h3 id="7-1-安全模块QtRBAC"><a href="#7-1-安全模块QtRBAC" class="headerlink" title="7.1 安全模块QtRBAC"></a>7.1 安全模块QtRBAC</h3><h4 id="7-1-2-安装钩子"><a href="#7-1-2-安装钩子" class="headerlink" title="7.1.2 安装钩子"></a>7.1.2 安装钩子</h4><p>钩取对对象的操作，并安装钩子。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> __init <span class="title">demo_add_hooks</span><span class="params">(<span class="keyword">void</span>)</span></span>&#123;</span><br><span class="line">    pr_info(<span class="string">"QtRBAC: LSM LOADED!\n"</span>);<span class="comment">//打印进入信息 dmesg | grep demo查看</span></span><br><span class="line">    security_add_hooks(demo_hooks,ARRAY_SIZE(demo_hooks)); <span class="comment">//添加安全没模块</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">static</span> __init <span class="keyword">int</span> <span class="title">demo_init</span><span class="params">(<span class="keyword">void</span>)</span></span>&#123;</span><br><span class="line">    demo_add_hooks();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span> ;</span><br><span class="line">&#125;</span><br><span class="line">security_initcall(demo_init);</span><br></pre></td></tr></table></figure>
+
+<p>相关操作权限：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">security_hook_list</span> <span class="title">demo_hooks</span>[] = &#123;</span></span><br><span class="line">    LSM_HOOK_INIT(inode_rename,rbac_inode_rename),<span class="comment">//文件重命名</span></span><br><span class="line">    LSM_HOOK_INIT(inode_create,rbac_inode_create),<span class="comment">//文件创建</span></span><br><span class="line">    LSM_HOOK_INIT(inode_unlink,rbac_inode_unlink),<span class="comment">//文件删除</span></span><br><span class="line">    LSM_HOOK_INIT(inode_mkdir ,rbac_inode_mkdir),<span class="comment">//目录创建</span></span><br><span class="line">    LSM_HOOK_INIT(inode_rmdir ,rbac_inode_rmdir),<span class="comment">//目录删除</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="7-1-3-操作权限控制"><a href="#7-1-3-操作权限控制" class="headerlink" title="7.1.3 操作权限控制"></a>7.1.3 操作权限控制</h4><p>以：<code>rbac_inode_rmdir</code>为例，获得uid然后继续权限检查</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">rbac_inode_rmdir</span><span class="params">(struct inode *inode, struct dentry *dentry)</span></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> uid = current-&gt;real_cred-&gt;uid.val ;</span><br><span class="line">	printk (<span class="string">"QtRBAC: call [inode_rmdir] by uid: %d\n"</span>, uid) ;</span><br><span class="line">	<span class="keyword">return</span> permission_check (uid, <span class="number">4</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="7-1-4-权限检查流程"><a href="#7-1-4-权限检查流程" class="headerlink" title="7.1.4 权限检查流程"></a>7.1.4 权限检查流程</h4><p>系统用户，是否开启安全模块，是否分配角色，若分配角色则按照角色权限控制：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">permission_check</span> <span class="params">(<span class="keyword">int</span> uid, <span class="keyword">int</span> op)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">char</span> role[MAX_ROLENAME+<span class="number">1</span>] ;</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">if</span> (uid &lt;= <span class="number">999</span>)<span class="comment">//系统用户直接过,系统用户直接拥有权限</span></span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span> ;</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">if</span> (!is_enable())<span class="comment">//模块是否开启，未开启模块直接拥有权限</span></span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span> ;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (get_role (uid, role) != <span class="number">1</span>)<span class="comment">//获得用户角色：获得用户角色不成功，或者说不存在相对于的角色，则直接拥有权限</span></span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span> ;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (role_permission (role, op) == <span class="number">0</span>)<span class="comment">//获得对应权限，权限位为0，则不拥有权限</span></span><br><span class="line">		<span class="keyword">return</span> <span class="number">-1</span>;<span class="comment">//-1 负数</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span> ;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="7-1-5-角色权限检查"><a href="#7-1-5-角色权限检查" class="headerlink" title="7.1.5 角色权限检查"></a>7.1.5 角色权限检查</h4><p>转化为对配置文件中权限的按位检查，为1则拥有权限，为0则没有权限。</p>
+<p><img src="/2021/04/29/QtRBAC/image-20210429193516208.png" alt="image-20210429193516208"></p>
+<h4 id="7-1-6-配置文件"><a href="#7-1-6-配置文件" class="headerlink" title="7.1.6 配置文件"></a>7.1.6 配置文件</h4><p>包含3个配置文件：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> USER2ROLE_PATH <span class="meta-string">"/etc/demo/user2role"</span>   	<span class="comment">//content: uid(int)role(max_rolename+1) </span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> ROLES_PATH <span class="meta-string">"/etc/demo/roles"</span>			<span class="comment">//role(max_rolename+1)permission(5)</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> CONTROL_PATH <span class="meta-string">"/etc/demo/control"</span> 		<span class="comment">//content: state（int）</span></span></span><br></pre></td></tr></table></figure>
+
+<p>第一个配置文件：<code>/etc/demo/user2role</code> 中包含了每个用户(<code>uid</code>)对应的角色<code>role</code></p>
+<p>第二个配置文件：<code>/etc/demo/roles</code>包含了每个<code>role</code>对应的权限<code>perm</code></p>
+<p>第三个配置文件：<code>/etc/demo/control</code>包含了对模块的控制，打开<code>enable</code>或禁用<code>disable</code></p>
+<h4 id="7-1-7-钩子函数的参数"><a href="#7-1-7-钩子函数的参数" class="headerlink" title="7.1.7 钩子函数的参数"></a>7.1.7 钩子函数的参数</h4><p>linux内核中关于LSM hook的操作，具有详细的说明，每个函数的的参数和函数执行的含义。</p>
+<blockquote>
+<p><a href="https://elixir.bootlin.com/linux/latest/source/include/linux/lsm_hooks.h" target="_blank" rel="noopener">https://elixir.bootlin.com/linux/latest/source/include/linux/lsm_hooks.h</a></p>
+</blockquote>
+<h3 id="7-2-配置管理程序"><a href="#7-2-配置管理程序" class="headerlink" title="7.2 配置管理程序"></a>7.2 配置管理程序</h3><p>配置管理程序，来管理安全模块、角色、用户角色分配</p>
+<p>通过对配置文件的操作，来达到配置管理的目的。</p>
+<h2 id="8-参考文献"><a href="#8-参考文献" class="headerlink" title="8 参考文献"></a>8 参考文献</h2><p>[1].<a href="https://elixir.bootlin.com/linux/latest/source/include/linux/lsm_hooks.h" target="_blank" rel="noopener">https://elixir.bootlin.com/linux/latest/source/include/linux/lsm_hooks.h</a></p>
+<p>[2].<a href="https://blog.csdn.net/u010994304/article/details/50265681" target="_blank" rel="noopener">https://blog.csdn.net/u010994304/article/details/50265681</a></p>
+<p>[3].<a href="https://blog.csdn.net/qq_37960324/article/details/83023315" target="_blank" rel="noopener">https://blog.csdn.net/qq_37960324/article/details/83023315</a></p>
+<p>[4].<a href="https://blog.csdn.net/jnq624847569/article/details/88561123" target="_blank" rel="noopener">https://blog.csdn.net/jnq624847569/article/details/88561123</a></p>
+<p>[5].<a href="https://blog.csdn.net/jmh1996/article/details/88935907" target="_blank" rel="noopener">https://blog.csdn.net/jmh1996/article/details/88935907</a></p>
+<p>[6].<a href="https://www.cnblogs.com/0xJDchen/p/6040446.html" target="_blank" rel="noopener">https://www.cnblogs.com/0xJDchen/p/6040446.html</a></p>
+<p>[7].<a href="https://forum.radxa.com/t/drivers-error-trying-to-compile-kernel/2463" target="_blank" rel="noopener">https://forum.radxa.com/t/drivers-error-trying-to-compile-kernel/2463</a></p>
+<p>[8].<a href="https://github.com/avk7vk/RBAC-LSM" target="_blank" rel="noopener">https://github.com/avk7vk/RBAC-LSM</a></p>
+<p>[9].<a href="https://blog.csdn.net/jmh1996/article/details/88935907?utm_medium=distribute.pc_relevant.none-task-blog-baidujs_title-9&amp;spm=1001.2101.3001.4242" target="_blank" rel="noopener">https://blog.csdn.net/jmh1996/article/details/88935907?utm_medium=distribute.pc_relevant.none-task-blog-baidujs_title-9&amp;spm=1001.2101.3001.4242</a></p>
+<p>[10].<a href="https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/linux-lts-xenial/4.4.0-31.50~14.04.1/linux-lts-xenial_4.4.0.orig.tar.gz" target="_blank" rel="noopener">https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/linux-lts-xenial/4.4.0-31.50~14.04.1/linux-lts-xenial_4.4.0.orig.tar.gz</a></p>
+<p>[11].<a href="https://github.com/guomo233/LSM-based-RBAC" target="_blank" rel="noopener">https://github.com/guomo233/LSM-based-RBAC</a></p>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong s>
+              本博客所有文章除特别声明外，均采用 <a href="https://www.apache.org/licenses/LICENSE-2.0.html" rel="external nofollow"
+                target="_blank">Apache License 2.0</a> 许可协议。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://drag0nf1y.github.io/2021/04/29/QtRBAC/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+      <a href="/2021/04/29/Qt+winPcap=QtSniffer%20winpcap%E6%8A%93%E5%8C%85%E6%A1%86%E6%9E%B6/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            Qt+winPcap=QtSniffer winpcap抓包框架
+          
+        </div>
+      </a>
+    
+    
+      <a href="/2021/04/16/Qt+winPcap=QtSniffer%20%E6%A6%82%E8%BF%B0/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">Qt+winPcap=QtSniffer 概述</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: '',
+        app_key: '',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'mp',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2021
+        Drag0nf1y
+      </li>
+      <li>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+    <div class="to_top">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+      </div>
+    </main>
+      <aside class="sidebar">
+        <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.svg" alt="Drag0nf1y"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives/">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/">标签</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E7%A0%94%E7%A9%B6/">研究</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about/">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="Search">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+      </aside>
+      <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>请我喝杯咖啡吧~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+      
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script src="/js/share.js"></script>
+
+
+
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+
+
+
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer:'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto',
+    onClick: (e) => {
+      $('.toc-link').removeClass('is-active-link');
+      $(`a[href=${e.target.hash}]`).addClass('is-active-link');
+      $(e.target.hash).scrollIntoView();
+      return false;
+    }
+  });
+</script>
+
+
+<script>
+  var ayerConfig = {
+    mathjax: false
+  }
+</script>
+
+
+<script src="/js/ayer.js"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+  </div>
+</body>
+
+</html>

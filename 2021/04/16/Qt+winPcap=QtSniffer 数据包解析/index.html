@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="description" content="Drag0nf1y" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    Qt+winPcap=QtSniffer 数据包解析 |  Drag0nf1y
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="/favicon.ico" />
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+<script src="/js/pace.min.js"></script>
+
+
+  
+
+  
+
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content">
+      <section class="outer">
+  <article id="post-Qt+winPcap=QtSniffer 数据包解析" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  Qt+winPcap=QtSniffer 数据包解析
+</h1>
+  
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2021/04/16/Qt+winPcap=QtSniffer%20%E6%95%B0%E6%8D%AE%E5%8C%85%E8%A7%A3%E6%9E%90/" class="article-date">
+  <time datetime="2021-04-16T13:25:46.794Z" itemprop="datePublished">2021-04-16</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">1.3k字</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">6分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+      <h1 id="Qt-winPcap-QtSniffer-数据包解析"><a href="#Qt-winPcap-QtSniffer-数据包解析" class="headerlink" title="Qt+winPcap=QtSniffer: 数据包解析"></a>Qt+winPcap=QtSniffer: 数据包解析</h1><h2 id="数据包"><a href="#数据包" class="headerlink" title="数据包"></a>数据包</h2><p>数据是从链路层到应用层一层一层装配起来的，因此，对于捕获到的数据包，需要一层一层的进行解析。同时，由于每一层可能有多种协议要工作，因此在解析数据包时，要根据不同的特征来判断上层协议。</p>
+<p>在网络层，有 ARP、IPv4、IPv6 这三种情况，在链路层的 MAC 头结构中，定义了一个 type 字段，用于指示网络层的数据包的类型，根据协议栈的规定，有：</p>
+<ul>
+<li><p>ARP包：type=0x0806</p>
+</li>
+<li><p>IPv4包：type=0x0800</p>
+</li>
+<li><p>IPv6包：type=0x86dd<br>在传输层，当下层数据包是 IPv4 包时，有 ICMPv4、TCP、UDP 三种情况，在网络层的 IPv4 头结构中，定义了一个 proto 字段，用来对应指示传输层的数据包类型，根据协议栈规定，有：</p>
+</li>
+<li><p>ICMPv4包：proto=1</p>
+</li>
+<li><p>TCP包：proto=6</p>
+</li>
+<li><p>UDP包：proto=17<br>而当下层数据包是 IPv6 包时，有 ICMPv6、TCP、UDP 三种情况，在网络层的 IPv6 头结构中，定义了 next_head 字段，用来指示对应传输层的数据包类型，根据协议栈规定，有：</p>
+</li>
+<li><p>ICMPv6包：next_head=0x3a</p>
+</li>
+<li><p>TCP包：next_head=0x06</p>
+</li>
+<li><p>UDP包：next_head=0x11<br>在应用层，这里只支持 HTTP 协议，因此只要 TCP 头结构中的源端口 src_port 或目的端口 dest_port 是否为 80 端口即可。</p>
+</li>
+</ul>
+<p>根据流程图，将负责解析的函数写到 analysis.h 头文件中，这里实现了以下几个模块：![analyze.png](Qt+winPcap=QtSniffer 数据包解析/analyze.png)</p>
+<p>数据链路层：解析数据帧</p>
+<p>网络层：解析ARP包</p>
+<p>网络层：解析IP包</p>
+<p>传输层：解析ICMP包</p>
+<p>传输层：解析TCP包</p>
+<p>传输层：解析UDP包</p>
+<h2 id="数据包分析"><a href="#数据包分析" class="headerlink" title="数据包分析"></a>数据包分析</h2><h3 id="分析函数定义"><a href="#分析函数定义" class="headerlink" title="分析函数定义"></a>分析函数定义</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">extern int analyze_frame(const u_char* pkt, datapkt* data, pktcount* npacket);</span><br><span class="line"></span><br><span class="line">extern int analyze_arp(const u_char* pkt, datapkt* data, pktcount* npacket);</span><br><span class="line"></span><br><span class="line">extern int analyze_ip(const u_char* pkt, datapkt* data, pktcount* npacket);</span><br><span class="line"></span><br><span class="line">extern int analyze_icmp(const u_char* pkt, datapkt* data, pktcount* npacket);</span><br><span class="line"></span><br><span class="line">extern int analyze_tcp(const u_char* pkt, datapkt* data, pktcount* npacket);</span><br><span class="line"></span><br><span class="line">extern int analyze_udp(const u_char* pkt, datapkt* data, pktcount* npacket);</span><br></pre></td></tr></table></figure>
+
+<h3 id="数据链路层"><a href="#数据链路层" class="headerlink" title="数据链路层"></a>数据链路层</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;&#x2F;*分析链路层*&#x2F;</span><br><span class="line"></span><br><span class="line">int analyze_frame(const u_char* pkt, datapkt* data, pktcount* npacket)</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">    ……</span><br><span class="line"></span><br><span class="line">    switch (data-&gt;ethh-&gt;type)</span><br><span class="line"></span><br><span class="line">    &#123;</span><br><span class="line"></span><br><span class="line">    case 0x0806:</span><br><span class="line"></span><br><span class="line">        return analyze_arp((u_char*)pkt + 14, data, npacket);      &#x2F;&#x2F;mac 头大小为14</span><br><span class="line"></span><br><span class="line">        break;</span><br><span class="line"></span><br><span class="line">    case 0x0800:</span><br><span class="line"></span><br><span class="line">        return analyze_ip((u_char*)pkt + 14, data, npacket);</span><br><span class="line"></span><br><span class="line">        break;</span><br><span class="line"></span><br><span class="line">    default:</span><br><span class="line"></span><br><span class="line">        npacket-&gt;n_other++;</span><br><span class="line"></span><br><span class="line">        ……</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="网络层"><a href="#网络层" class="headerlink" title="网络层"></a>网络层</h3><h4 id="ARP"><a href="#ARP" class="headerlink" title="ARP"></a>ARP</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;&#x2F;*分析网络层：ARP*&#x2F;</span><br><span class="line"></span><br><span class="line">int analyze_arp(const u_char* pkt, datapkt* data, pktcount* npacket)</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">    ……</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F;复制IP及MAC</span><br><span class="line"></span><br><span class="line">    for (i &#x3D; 0; i &lt; 6; i++)</span><br><span class="line"></span><br><span class="line">    &#123;</span><br><span class="line"></span><br><span class="line">        if (i &lt; 4)</span><br><span class="line"></span><br><span class="line">        &#123;</span><br><span class="line"></span><br><span class="line">            data-&gt;arph-&gt;ar_destip[i] &#x3D; arph-&gt;ar_destip[i];</span><br><span class="line"></span><br><span class="line">            data-&gt;arph-&gt;ar_srcip[i] &#x3D; arph-&gt;ar_srcip[i];</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        data-&gt;arph-&gt;ar_destmac[i] &#x3D; arph-&gt;ar_destmac[i];</span><br><span class="line"></span><br><span class="line">        data-&gt;arph-&gt;ar_srcmac[i] &#x3D; arph-&gt;ar_srcmac[i];</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    npacket-&gt;n_arp++;</span><br><span class="line"></span><br><span class="line">    data-&gt;arph-&gt;ar_hln &#x3D; arph-&gt;ar_hln;</span><br><span class="line"></span><br><span class="line">    data-&gt;arph-&gt;ar_hrd &#x3D; ntohs(arph-&gt;ar_hrd);</span><br><span class="line"></span><br><span class="line">    data-&gt;arph-&gt;ar_op &#x3D; ntohs(arph-&gt;ar_op);</span><br><span class="line"></span><br><span class="line">    data-&gt;arph-&gt;ar_pln &#x3D; arph-&gt;ar_pln;</span><br><span class="line"></span><br><span class="line">    data-&gt;arph-&gt;ar_pro &#x3D; ntohs(arph-&gt;ar_pro);</span><br><span class="line"></span><br><span class="line">    ……</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="IP"><a href="#IP" class="headerlink" title="IP"></a>IP</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;&#x2F;*分析网络层：IP*&#x2F;</span><br><span class="line"></span><br><span class="line">int analyze_ip(const u_char* pkt, datapkt* data, pktcount* npacket)</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">    ……</span><br><span class="line"></span><br><span class="line">    data-&gt;iph-&gt;saddr &#x3D; iph-&gt;saddr;</span><br><span class="line"></span><br><span class="line">    data-&gt;iph-&gt;daddr &#x3D; iph-&gt;daddr;</span><br><span class="line">    data-&gt;iph-&gt;frag_off &#x3D; iph-&gt;frag_off;</span><br><span class="line"></span><br><span class="line">    data-&gt;iph-&gt;id &#x3D; iph-&gt;id;</span><br><span class="line"></span><br><span class="line">    data-&gt;iph-&gt;proto &#x3D; iph-&gt;proto;</span><br><span class="line"></span><br><span class="line">    data-&gt;iph-&gt;tlen &#x3D; ntohs(iph-&gt;tlen);</span><br><span class="line"></span><br><span class="line">    data-&gt;iph-&gt;tos &#x3D; iph-&gt;tos;</span><br><span class="line"></span><br><span class="line">    data-&gt;iph-&gt;ttl &#x3D; iph-&gt;ttl;</span><br><span class="line"></span><br><span class="line">    data-&gt;iph-&gt;ihl &#x3D; iph-&gt;ihl;</span><br><span class="line"></span><br><span class="line">    data-&gt;iph-&gt;version &#x3D; iph-&gt;version;</span><br><span class="line"></span><br><span class="line">    data-&gt;iph-&gt;op_pad &#x3D; iph-&gt;op_pad;</span><br><span class="line"></span><br><span class="line">    int iplen &#x3D; iph-&gt;ihl * 4;                                           &#x2F;&#x2F;ip头长度</span><br><span class="line"></span><br><span class="line">    switch (iph-&gt;proto)</span><br><span class="line"></span><br><span class="line">    &#123;</span><br><span class="line"></span><br><span class="line">    case PROTO_ICMP:</span><br><span class="line"></span><br><span class="line">        return analyze_icmp((u_char*)iph + iplen, data, npacket);</span><br><span class="line"></span><br><span class="line">        break;</span><br><span class="line"></span><br><span class="line">    case PROTO_TCP:</span><br><span class="line"></span><br><span class="line">        return analyze_tcp((u_char*)iph + iplen, data, npacket);</span><br><span class="line"></span><br><span class="line">        break;</span><br><span class="line"></span><br><span class="line">    case PROTO_UDP:</span><br><span class="line"></span><br><span class="line">        return analyze_udp((u_char*)iph + iplen, data, npacket);</span><br><span class="line"></span><br><span class="line">        break;</span><br><span class="line"></span><br><span class="line">    default:</span><br><span class="line"></span><br><span class="line">        ……</span><br></pre></td></tr></table></figure>
+
+<h4 id="ICMP"><a href="#ICMP" class="headerlink" title="ICMP"></a>ICMP</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;&#x2F;*分析传输层：ICMP*&#x2F;</span><br><span class="line"></span><br><span class="line">int analyze_icmp(const u_char* pkt, datapkt* data, pktcount* npacket)</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">   ……</span><br><span class="line"></span><br><span class="line">    if (NULL &#x3D;&#x3D; data-&gt;icmph)</span><br><span class="line"></span><br><span class="line">        return -1;</span><br><span class="line"></span><br><span class="line">    data-&gt;icmph-&gt;chksum &#x3D; icmph-&gt;chksum;</span><br><span class="line"></span><br><span class="line">    data-&gt;icmph-&gt;code &#x3D; icmph-&gt;code;</span><br><span class="line"></span><br><span class="line">    data-&gt;icmph-&gt;seq &#x3D; icmph-&gt;seq;</span><br><span class="line"></span><br><span class="line">    data-&gt;icmph-&gt;type &#x3D; icmph-&gt;type;</span><br><span class="line"></span><br><span class="line">    strcpy(data-&gt;pktType, &quot;ICMP&quot;);</span><br><span class="line"></span><br><span class="line">    npacket-&gt;n_icmp++;</span><br><span class="line"></span><br><span class="line">    ……</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="TCP"><a href="#TCP" class="headerlink" title="TCP"></a>TCP</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;&#x2F;*分析传输层：TCP*&#x2F;</span><br><span class="line"></span><br><span class="line">int analyze_tcp(const u_char* pkt, datapkt* data, pktcount* npacket)</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">    ……</span><br><span class="line"></span><br><span class="line">    if (NULL &#x3D;&#x3D; data-&gt;tcph)</span><br><span class="line"></span><br><span class="line">        return -1;</span><br><span class="line"></span><br><span class="line">    data-&gt;tcph-&gt;ack_seq &#x3D; tcph-&gt;ack_seq;</span><br><span class="line"></span><br><span class="line">    data-&gt;tcph-&gt;check &#x3D; tcph-&gt;check;</span><br><span class="line"></span><br><span class="line">    data-&gt;tcph-&gt;doff &#x3D; tcph-&gt;doff;</span><br><span class="line"></span><br><span class="line">    data-&gt;tcph-&gt;res1 &#x3D; tcph-&gt;res1;</span><br><span class="line"></span><br><span class="line">    data-&gt;tcph-&gt;cwr &#x3D; tcph-&gt;cwr;</span><br><span class="line"></span><br><span class="line">    data-&gt;tcph-&gt;ece &#x3D; tcph-&gt;ece;</span><br><span class="line"></span><br><span class="line">    data-&gt;tcph-&gt;urg &#x3D; tcph-&gt;urg;</span><br><span class="line"></span><br><span class="line">    data-&gt;tcph-&gt;ack &#x3D; tcph-&gt;ack;</span><br><span class="line"></span><br><span class="line">    data-&gt;tcph-&gt;psh &#x3D; tcph-&gt;psh;</span><br><span class="line"></span><br><span class="line">    data-&gt;tcph-&gt;rst &#x3D; tcph-&gt;rst;</span><br><span class="line"></span><br><span class="line">    data-&gt;tcph-&gt;syn &#x3D; tcph-&gt;syn;</span><br><span class="line"></span><br><span class="line">    data-&gt;tcph-&gt;fin &#x3D; tcph-&gt;fin;</span><br><span class="line"></span><br><span class="line">    data-&gt;tcph-&gt;dport &#x3D; ntohs(tcph-&gt;dport);</span><br><span class="line"></span><br><span class="line">    data-&gt;tcph-&gt;seq &#x3D; tcph-&gt;seq;</span><br><span class="line"></span><br><span class="line">    data-&gt;tcph-&gt;sport &#x3D; ntohs(tcph-&gt;sport);</span><br><span class="line"></span><br><span class="line">    data-&gt;tcph-&gt;urg_ptr &#x3D; tcph-&gt;urg_ptr;</span><br><span class="line"></span><br><span class="line">    data-&gt;tcph-&gt;window &#x3D; tcph-&gt;window;</span><br><span class="line"></span><br><span class="line">    data-&gt;tcph-&gt;opt &#x3D; tcph-&gt;opt;</span><br><span class="line"></span><br><span class="line">    if (ntohs(tcph-&gt;dport) &#x3D;&#x3D; 80 || ntohs(tcph-&gt;sport) &#x3D;&#x3D; 80)</span><br><span class="line"></span><br><span class="line">    &#123;</span><br><span class="line"></span><br><span class="line">        npacket-&gt;n_http++;</span><br><span class="line"></span><br><span class="line">        strcpy(data-&gt;pktType, &quot;HTTP&quot;);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    else &#123;</span><br><span class="line"></span><br><span class="line">        npacket-&gt;n_tcp++;</span><br><span class="line"></span><br><span class="line">        strcpy(data-&gt;pktType, &quot;TCP&quot;);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ……</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="UDP"><a href="#UDP" class="headerlink" title="UDP"></a>UDP</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">&#x2F;*分析传输层：UDP*&#x2F;</span><br><span class="line"></span><br><span class="line">int analyze_udp(const u_char* pkt, datapkt* data, pktcount* npacket)</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">    udphdr* udph &#x3D; (udphdr*)pkt;</span><br><span class="line"></span><br><span class="line">    data-&gt;udph &#x3D; (udphdr*)malloc(sizeof(udphdr));</span><br><span class="line"></span><br><span class="line">    if (NULL &#x3D;&#x3D; data-&gt;udph)</span><br><span class="line"></span><br><span class="line">        return -1;</span><br><span class="line"></span><br><span class="line">    data-&gt;udph-&gt;check &#x3D; udph-&gt;check;</span><br><span class="line"></span><br><span class="line">    data-&gt;udph-&gt;dport &#x3D; ntohs(udph-&gt;dport);</span><br><span class="line"></span><br><span class="line">    data-&gt;udph-&gt;len &#x3D; ntohs(udph-&gt;len);</span><br><span class="line"></span><br><span class="line">    data-&gt;udph-&gt;sport &#x3D; ntohs(udph-&gt;sport);</span><br><span class="line"></span><br><span class="line">    strcpy(data-&gt;pktType, &quot;UDP&quot;);</span><br><span class="line"></span><br><span class="line">    npacket-&gt;n_udp++;</span><br><span class="line"></span><br><span class="line">    return 1;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong s>
+              本博客所有文章除特别声明外，均采用 <a href="https://www.apache.org/licenses/LICENSE-2.0.html" rel="external nofollow"
+                target="_blank">Apache License 2.0</a> 许可协议。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://drag0nf1y.github.io/2021/04/16/Qt+winPcap=QtSniffer%20%E6%95%B0%E6%8D%AE%E5%8C%85%E8%A7%A3%E6%9E%90/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+      <a href="/2021/04/16/Qt+winPcap=QtSniffer%20%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            Qt+winPcap=QtSniffer 网络协议
+          
+        </div>
+      </a>
+    
+    
+      <a href="/2021/04/16/Qt+winPcap=QtSniffer%20%E6%95%B0%E6%8D%AE%E5%8C%85%E6%8E%A5%E6%94%B6%E7%BA%BF%E7%A8%8BSniff/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">Qt+winPcap=QtSniffer 数据包接收线程Sniff</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: '',
+        app_key: '',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'mp',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2021
+        Drag0nf1y
+      </li>
+      <li>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+    <div class="to_top">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+      </div>
+    </main>
+      <aside class="sidebar">
+        <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.svg" alt="Drag0nf1y"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives/">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/">标签</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E7%A0%94%E7%A9%B6/">研究</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about/">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="Search">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+      </aside>
+      <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>请我喝杯咖啡吧~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+      
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script src="/js/share.js"></script>
+
+
+
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+
+
+
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer:'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto',
+    onClick: (e) => {
+      $('.toc-link').removeClass('is-active-link');
+      $(`a[href=${e.target.hash}]`).addClass('is-active-link');
+      $(e.target.hash).scrollIntoView();
+      return false;
+    }
+  });
+</script>
+
+
+<script>
+  var ayerConfig = {
+    mathjax: false
+  }
+</script>
+
+
+<script src="/js/ayer.js"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+  </div>
+</body>
+
+</html>

@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="description" content="Drag0nf1y" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    ucore_lab0_实验 |  Drag0nf1y
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="/favicon.ico" />
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+<script src="/js/pace.min.js"></script>
+
+
+  
+
+  
+
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content">
+      <section class="outer">
+  <article id="post-ucore_lab0_实验" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  ucore_lab0_实验
+</h1>
+  
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2021/03/24/ucore_lab0_%E5%AE%9E%E9%AA%8C/" class="article-date">
+  <time datetime="2021-03-24T01:47:25.115Z" itemprop="datePublished">2021-03-24</time>
+</a>
+      
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/linux/">linux</a> / <a class="article-category-link" href="/categories/linux/ucore/">ucore</a>
+  </div>
+
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">3.1k字</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">17分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+      <h1 id="ucore-lab0-实验"><a href="#ucore-lab0-实验" class="headerlink" title="ucore lab0 实验"></a>ucore lab0 实验</h1><h2 id="了解汇编"><a href="#了解汇编" class="headerlink" title="了解汇编"></a>了解汇编</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">int count &#x3D; 1;</span><br><span class="line">int value &#x3D; 1;</span><br><span class="line">int buf[10];</span><br><span class="line"></span><br><span class="line">void main()&#123;</span><br><span class="line">	asm(</span><br><span class="line">		&quot;cld \n\t&quot;&#x2F;&#x2F;将标志寄存器Flag的方向标志位DF清零。</span><br><span class="line">		&quot;rep \n\t&quot;&#x2F;&#x2F;重复前缀指令</span><br><span class="line">		&quot;stosl&quot;	&#x2F;&#x2F;将EAX中的值保存到ES:EDI指向的地址中</span><br><span class="line">	:</span><br><span class="line">	:&quot;c&quot;(count),&quot;a&quot;(value),&quot;D&quot;(buf[0])</span><br><span class="line">	:</span><br><span class="line">	);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">drag@drag-virtual-machine:~&#x2F;桌面&#x2F;ucore_lab&#x2F;lab0$ gcc -Wall -S -m32 lab0-ex2.c -o lab0-ex2&#x2F;&#x2F;-S :表示仅编译，不链接或汇编； -m32：表示生成32位汇编代码</span><br><span class="line">lab0-ex2.c:5:6: warning: return type of ‘main’ is not ‘int’ [-Wmain]</span><br><span class="line"> void main()&#123;</span><br><span class="line">      ^</span><br><span class="line"> drag@drag-virtual-machine:~&#x2F;桌面&#x2F;ucore_lab&#x2F;lab0$ ls&#x2F;&#x2F;得到.s文件</span><br><span class="line">lab0-ex1  lab0-ex1.c  lab0-ex1.c~  lab0-ex2.c  lab0-ex2.s</span><br></pre></td></tr></table></figure>
+
+<p>声明部分</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">	.file	&quot;lab0-ex2.c&quot;</span><br><span class="line">	.globl	count</span><br><span class="line">	.data</span><br><span class="line">	.align 4</span><br><span class="line">	.type	count, @object</span><br><span class="line">	.size	count, 4</span><br><span class="line">count:</span><br><span class="line">	.long	1</span><br><span class="line">	.globl	value</span><br><span class="line">	.align 4</span><br><span class="line">	.type	value, @object</span><br><span class="line">	.size	value, 4</span><br><span class="line">value:</span><br><span class="line">	.long	1</span><br><span class="line">	.comm	buf,40,32</span><br><span class="line">	.text</span><br><span class="line">	.globl	main</span><br><span class="line">	.type	main, @function</span><br></pre></td></tr></table></figure>
+
+<p>进入main函数部分，首先保存现场，将其他参数入栈</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">main:</span><br><span class="line">.LFB0:</span><br><span class="line">	.cfi_startproc</span><br><span class="line">	pushl	%ebp</span><br><span class="line">	.cfi_def_cfa_offset 8</span><br><span class="line">	.cfi_offset 5, -8</span><br><span class="line">	movl	%esp, %ebp</span><br><span class="line">	.cfi_def_cfa_register 5</span><br><span class="line">	pushl	%edi</span><br><span class="line">	pushl	%ebx</span><br><span class="line">	.cfi_offset 7, -12</span><br><span class="line">	.cfi_offset 3, -16</span><br></pre></td></tr></table></figure>
+
+<p>然后进入操作阶段，首先cld命令对DF寄存器进行复位，决定接下来的操作向着内存增大的方向进行，随后rep表示重复，再结合stosl命令就可以实现向buf中写上count个value值</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"> movl	count, %edx</span><br><span class="line"> movl	value, %eax</span><br><span class="line"> movl	buf, %ebx</span><br><span class="line"> movl	%edx, %ecx</span><br><span class="line"> movl	%ebx, %edi</span><br><span class="line">#APP</span><br><span class="line"># 6 &quot;lab0-ex2.c&quot; 1</span><br><span class="line"> cld </span><br><span class="line"> rep </span><br><span class="line"> stosl</span><br><span class="line"># 0 &quot;&quot; 2</span><br><span class="line">#NO_APP</span><br></pre></td></tr></table></figure>
+
+<p>接下来恢复现场</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">popl	%ebx</span><br><span class="line">.cfi_restore 3</span><br><span class="line">popl	%edi</span><br><span class="line">.cfi_restore 7</span><br><span class="line">popl	%ebp</span><br><span class="line">.cfi_restore 5</span><br><span class="line">.cfi_def_cfa 4, 4</span><br><span class="line">ret</span><br><span class="line">.cfi_endproc</span><br></pre></td></tr></table></figure>
+
+<p>最后是一些关于当前操作系统、使用的gcc编译器的注释说明</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">.LFE0:</span><br><span class="line">	.size	main, .-main</span><br><span class="line">	.ident	&quot;GCC: (Ubuntu 4.8.4-2ubuntu1~14.04.4) 4.8.4&quot;</span><br><span class="line">	.section	.note.GNU-stack,&quot;&quot;,@progbits</span><br></pre></td></tr></table></figure>
+
+<h2 id="gcc编译"><a href="#gcc编译" class="headerlink" title="gcc编译"></a>gcc编译</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">drag@drag-virtual-machine:~&#x2F;桌面&#x2F;ucore_lab&#x2F;lab0$ gedit lab0-ex1.c </span><br><span class="line">drag@drag-virtual-machine:~&#x2F;桌面&#x2F;ucore_lab&#x2F;lab0$ gcc -Wall -m32 lab0-ex1.c -o lab0-ex1</span><br><span class="line">drag@drag-virtual-machine:~&#x2F;桌面&#x2F;ucore_lab&#x2F;lab0$ .&#x2F;lab0-ex1 </span><br><span class="line">hello wolrd</span><br><span class="line">drag@drag-virtual-machine:~&#x2F;桌面&#x2F;ucore_lab&#x2F;lab0$</span><br></pre></td></tr></table></figure>
+
+<p>该命令将文件‘hello.c’中的代码编译为机器码并存储在可执行文件 ‘hello’中。</p>
+<p>机器码的文件名是通过 -o 选项指定的。该选项通常作为命令行中的最后一个参数。</p>
+<p>如果被省略，输出文件默认为 ‘a.out’。</p>
+<p>注意到如果当前目录中与可执行文件重名的文件已经存在，它将被复盖。 选项 -Wall 开启编译器几乎所有常用的警告──强烈建议你始终使用该选项。编译器有很多其他的警告选项，但 -Wall 是最常用的。</p>
+<p>默认情况下GCC 不会产生任何警告信息。当编写 C 或 C++ 程序时编译器警告非常有助于检测程序存在的问题。</p>
+<p>本例中，编译器使用了 -Wall 选项而没产生任何警告，因为示例程序是完全合法的。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line"></span><br><span class="line">int main()&#123;</span><br><span class="line">	printf(&quot;hello wolrd\n&quot;);</span><br><span class="line">	return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="使用gdb调试"><a href="#使用gdb调试" class="headerlink" title="使用gdb调试"></a>使用gdb调试</h2><p>在实验中，使用的是pwndbg</p>
+<p>使用start可以直接运行到main函数入口<img src="/2021/03/24/ucore_lab0_%E5%AE%9E%E9%AA%8C/ooo.png" alt=".png"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br></pre></td><td class="code"><pre><span class="line">gdb-peda$ start</span><br><span class="line"></span><br><span class="line">[----------------------------------registers-----------------------------------]</span><br><span class="line">EAX: 0xf7fb5dbc --&gt; 0xffffd02c --&gt; 0xffffd226 (&quot;XDG_VTNR&#x3D;7&quot;)</span><br><span class="line">EBX: 0x0 </span><br><span class="line">ECX: 0xffffcf90 --&gt; 0x1 </span><br><span class="line">EDX: 0xffffcfb4 --&gt; 0x0 </span><br><span class="line">ESI: 0xf7fb4000 --&gt; 0x1b2db0 </span><br><span class="line">EDI: 0xf7fb4000 --&gt; 0x1b2db0 </span><br><span class="line">EBP: 0xffffcf78 --&gt; 0x0 </span><br><span class="line">ESP: 0xffffcf74 --&gt; 0xffffcf90 --&gt; 0x1 </span><br><span class="line">EIP: 0x8048419 (&lt;main+14&gt;:	sub    esp,0x4)</span><br><span class="line">EFLAGS: 0x282 (carry parity adjust zero SIGN trap INTERRUPT direction overflow)</span><br><span class="line">[-------------------------------------code-------------------------------------]</span><br><span class="line">   0x8048415 &lt;main+10&gt;:	push   ebp</span><br><span class="line">   0x8048416 &lt;main+11&gt;:	mov    ebp,esp</span><br><span class="line">   0x8048418 &lt;main+13&gt;:	push   ecx</span><br><span class="line">&#x3D;&gt; 0x8048419 &lt;main+14&gt;:	sub    esp,0x4</span><br><span class="line">   0x804841c &lt;main+17&gt;:	sub    esp,0xc</span><br><span class="line">   0x804841f &lt;main+20&gt;:	push   0x80484c0</span><br><span class="line">   0x8048424 &lt;main+25&gt;:	call   0x80482e0 &lt;puts@plt&gt;</span><br><span class="line">   0x8048429 &lt;main+30&gt;:	add    esp,0x10</span><br><span class="line">[------------------------------------stack-------------------------------------]</span><br><span class="line">0000| 0xffffcf74 --&gt; 0xffffcf90 --&gt; 0x1 </span><br><span class="line">0004| 0xffffcf78 --&gt; 0x0 </span><br><span class="line">0008| 0xffffcf7c --&gt; 0xf7e19647 (&lt;__libc_start_main+247&gt;:	add    esp,0x10)</span><br><span class="line">0012| 0xffffcf80 --&gt; 0xf7fb4000 --&gt; 0x1b2db0 </span><br><span class="line">0016| 0xffffcf84 --&gt; 0xf7fb4000 --&gt; 0x1b2db0 </span><br><span class="line">0020| 0xffffcf88 --&gt; 0x0 </span><br><span class="line">0024| 0xffffcf8c --&gt; 0xf7e19647 (&lt;__libc_start_main+247&gt;:	add    esp,0x10)</span><br><span class="line">0028| 0xffffcf90 --&gt; 0x1 </span><br><span class="line">[------------------------------------------------------------------------------]</span><br><span class="line">Legend: code, data, rodata, value</span><br><span class="line"></span><br><span class="line">Temporary breakpoint 1, 0x08048419 in main ()</span><br><span class="line">LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA</span><br><span class="line">─────────────────────────────────[ REGISTERS ]──────────────────────────────────</span><br><span class="line"> EAX  0xf7fb5dbc (environ) —▸ 0xffffd02c —▸ 0xffffd226 ◂— &#39;XDG_VTNR&#x3D;7&#39;</span><br><span class="line"> EBX  0x0</span><br><span class="line"> ECX  0xffffcf90 ◂— 0x1</span><br><span class="line"> EDX  0xffffcfb4 ◂— 0x0</span><br><span class="line"> EDI  0xf7fb4000 (_GLOBAL_OFFSET_TABLE_) ◂— 0x1b2db0</span><br><span class="line"> ESI  0xf7fb4000 (_GLOBAL_OFFSET_TABLE_) ◂— 0x1b2db0</span><br><span class="line"> EBP  0xffffcf78 ◂— 0x0</span><br><span class="line"> ESP  0xffffcf74 —▸ 0xffffcf90 ◂— 0x1</span><br><span class="line"> EIP  0x8048419 (main+14) ◂— sub    esp, 4</span><br><span class="line">───────────────────────────────────[ DISASM ]───────────────────────────────────</span><br><span class="line"> ► 0x8048419 &lt;main+14&gt;    sub    esp, 4</span><br><span class="line">   0x804841c &lt;main+17&gt;    sub    esp, 0xc</span><br><span class="line">   0x804841f &lt;main+20&gt;    push   0x80484c0</span><br><span class="line">   0x8048424 &lt;main+25&gt;    call   puts@plt &lt;0x80482e0&gt;</span><br><span class="line"> </span><br><span class="line">   0x8048429 &lt;main+30&gt;    add    esp, 0x10</span><br><span class="line">   0x804842c &lt;main+33&gt;    mov    eax, 0</span><br><span class="line">   0x8048431 &lt;main+38&gt;    mov    ecx, dword ptr [ebp - 4]</span><br><span class="line">   0x8048434 &lt;main+41&gt;    leave  </span><br><span class="line">   0x8048435 &lt;main+42&gt;    lea    esp, [ecx - 4]</span><br><span class="line">   0x8048438 &lt;main+45&gt;    ret    </span><br><span class="line"> </span><br><span class="line">   0x8048439              nop    </span><br><span class="line">───────────────────────────────────[ STACK ]────────────────────────────────────</span><br><span class="line">00:0000│ esp  0xffffcf74 —▸ 0xffffcf90 ◂— 0x1</span><br><span class="line">01:0004│ ebp  0xffffcf78 ◂— 0x0</span><br><span class="line">02:0008│      0xffffcf7c —▸ 0xf7e19647 (__libc_start_main+247) ◂— add    esp, 0x10</span><br><span class="line">03:000c│      0xffffcf80 —▸ 0xf7fb4000 (_GLOBAL_OFFSET_TABLE_) ◂— 0x1b2db0</span><br><span class="line">... ↓</span><br><span class="line">05:0014│      0xffffcf88 ◂— 0x0</span><br><span class="line">06:0018│      0xffffcf8c —▸ 0xf7e19647 (__libc_start_main+247) ◂— add    esp, 0x10</span><br><span class="line">07:001c│ ecx  0xffffcf90 ◂— 0x1</span><br><span class="line">─────────────────────────────────[ BACKTRACE ]──────────────────────────────────</span><br><span class="line"> ► f 0  8048419 main+14</span><br><span class="line">   f 1 f7e19647 __libc_start_main+247</span><br><span class="line">Breakpoint main</span><br><span class="line">gdb-peda$ info b</span><br><span class="line">No breakpoints or watchpoints.</span><br><span class="line">gdb-peda$ b* 0x8048424 </span><br><span class="line">Breakpoint 2 at 0x8048424</span><br><span class="line">gdb-peda$ info b</span><br><span class="line">Num     Type           Disp Enb Address    What</span><br><span class="line">2       breakpoint     keep y   0x08048424 &lt;main+25&gt;</span><br><span class="line">gdb-peda$ b* 0x8048431</span><br><span class="line">Breakpoint 3 at 0x8048431</span><br><span class="line">gdb-peda$ info b</span><br><span class="line">Num     Type           Disp Enb Address    What</span><br><span class="line">2       breakpoint     keep y   0x08048424 &lt;main+25&gt;</span><br><span class="line">3       breakpoint     keep y   0x08048431 &lt;main+38&gt;</span><br><span class="line">gdb-peda$</span><br></pre></td></tr></table></figure>
+
+<p>如果运行的程序出现错误：</p>
+<p>run 后出现段错误：</p>
+<p>直接跳出正在运行的所有信息。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">gdb-peda$ run</span><br><span class="line">Starting program: &#x2F;home&#x2F;giantbranch&#x2F;Desktop&#x2F;ucore_lab&#x2F;lab0&#x2F;lab0_ex2 </span><br><span class="line">please input a string: ppp</span><br><span class="line"></span><br><span class="line">Program received signal SIGSEGV, Segmentation fault.</span><br><span class="line"></span><br><span class="line">[----------------------------------registers-----------------------------------]</span><br><span class="line">EAX: 0x70 (&#39;p&#39;)</span><br><span class="line">EBX: 0xf7fb4000 --&gt; 0x1b2db0 </span><br><span class="line">ECX: 0xf7fb45a0 --&gt; 0xfbad2288 </span><br><span class="line">EDX: 0x0 </span><br><span class="line">ESI: 0xf7fb45a0 --&gt; 0xfbad2288 </span><br><span class="line">EDI: 0x0 </span><br><span class="line">EBP: 0xffffcf58 --&gt; 0xffffcf78 --&gt; 0x0 </span><br><span class="line">ESP: 0xffffcf24 --&gt; 0xf7e05538 --&gt; 0x3b74 (&#39;t;&#39;)</span><br><span class="line">EIP: 0xf7e6048e (&lt;_IO_gets+158&gt;:	mov    BYTE PTR [edx],al)</span><br><span class="line">EFLAGS: 0x10246 (carry PARITY adjust ZERO sign trap INTERRUPT direction overflow)</span><br><span class="line">……</span><br></pre></td></tr></table></figure>
+
+<h2 id="掌握指针和类型转换相关的C编程"><a href="#掌握指针和类型转换相关的C编程" class="headerlink" title="掌握指针和类型转换相关的Ｃ编程"></a>掌握指针和类型转换相关的Ｃ编程</h2><h2 id="pwndbg简单使用"><a href="#pwndbg简单使用" class="headerlink" title="pwndbg简单使用"></a>pwndbg简单使用</h2><p>pwndbg</p>
+<p>运行：</p>
+<ul>
+<li><p>开始运行： start</p>
+</li>
+<li><p>继续执行： continue –&gt; c // 会中断</p>
+</li>
+<li><p>直接运行： run –&gt; r // 不会中断</p>
+</li>
+<li><p>单步步入： step –&gt; s</p>
+</li>
+<li><p>单步步过： next –&gt; n<br>断点：</p>
+</li>
+<li><p>查看断点列表： bl / info b</p>
+</li>
+<li><p>下断点： b* address / b fun_name : number</p>
+</li>
+<li><p>在当前位置下断点：b<br>内存查看：</p>
+</li>
+<li><p>显示n行栈内数据： stack [n]</p>
+</li>
+<li><p>查看寄存器：</p>
+</li>
+</ul>
+<p>i r</p>
+<p>i r a</p>
+<p>i r esp</p>
+<ul>
+<li><p>查看数据： x/nfu address</p>
+</li>
+<li><p>参数 n： 个数</p>
+</li>
+</ul>
+<p>这是一个正整数， 表示要显示的数据的个数</p>
+<ul>
+<li>参数 f ： 格式</li>
+</ul>
+<p>字符串：s</p>
+<p>汇编代码：i</p>
+<p>十六进制：x</p>
+<ul>
+<li>参数 u ： 长度</li>
+</ul>
+<p>b， 单字节</p>
+<p>h， 双字节</p>
+<p>w， 四字节</p>
+<p>g， 八字节<br>堆查看：</p>
+<ul>
+<li><p>查看堆： heap</p>
+</li>
+<li><p>查看bins： bins</p>
+</li>
+</ul>
+<p>fastbins</p>
+<p>largebins</p>
+<p>smallbins</p>
+<p>unsortedbin</p>
+<ul>
+<li>查看特定堆块： malloc_chunk addr<h2 id="数据类型转换"><a href="#数据类型转换" class="headerlink" title="数据类型转换"></a>数据类型转换</h2></li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line"></span><br><span class="line">#define STS_IG32        0xE            &#x2F;&#x2F; 32-bit Interrupt Gate</span><br><span class="line">#define STS_TG32        0xF            &#x2F;&#x2F; 32-bit Trap Gate</span><br><span class="line"></span><br><span class="line">typedef unsigned uint32_t;</span><br><span class="line"></span><br><span class="line">#define SETGATE(gate, istrap, sel, off, dpl) &#123;            \</span><br><span class="line">    (gate).gd_off_15_0 &#x3D; (uint32_t)(off) &amp; 0xffff;        \</span><br><span class="line">    (gate).gd_ss &#x3D; (sel);                                \</span><br><span class="line">    (gate).gd_args &#x3D; 0;                                    \</span><br><span class="line">    (gate).gd_rsv1 &#x3D; 0;                                    \</span><br><span class="line">    (gate).gd_type &#x3D; (istrap) ? STS_TG32 : STS_IG32;    \</span><br><span class="line">    (gate).gd_s &#x3D; 0;                                    \</span><br><span class="line">    (gate).gd_dpl &#x3D; (dpl);                                \</span><br><span class="line">    (gate).gd_p &#x3D; 1;                                    \</span><br><span class="line">    (gate).gd_off_31_16 &#x3D; (uint32_t)(off) &gt;&gt; 16;        \</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"> &#x2F;* Gate descriptors for interrupts and traps *&#x2F;</span><br><span class="line"> struct gatedesc &#123;</span><br><span class="line">    unsigned gd_off_15_0 : 16;        &#x2F;&#x2F; low 16 bits of offset in segment</span><br><span class="line">    unsigned gd_ss : 16;            &#x2F;&#x2F; segment selector</span><br><span class="line">    unsigned gd_args : 5;            &#x2F;&#x2F; # args, 0 for interrupt&#x2F;trap gates</span><br><span class="line">    unsigned gd_rsv1 : 3;            &#x2F;&#x2F; reserved(should be zero I guess)</span><br><span class="line">    unsigned gd_type : 4;            &#x2F;&#x2F; type(STS_&#123;TG,IG32,TG32&#125;)</span><br><span class="line">    unsigned gd_s : 1;                &#x2F;&#x2F; must be 0 (system)</span><br><span class="line">    unsigned gd_dpl : 2;            &#x2F;&#x2F; descriptor(meaning new) privilege level</span><br><span class="line">    unsigned gd_p : 1;                &#x2F;&#x2F; Present</span><br><span class="line">    unsigned gd_off_31_16 : 16;        &#x2F;&#x2F; high bits of offset in segment</span><br><span class="line"> &#125;;</span><br><span class="line"> </span><br><span class="line">int main(void)</span><br><span class="line">&#123;</span><br><span class="line">    unsigned before;</span><br><span class="line">    unsigned intr;</span><br><span class="line">    unsigned after;</span><br><span class="line">    struct gatedesc gintr;</span><br><span class="line"></span><br><span class="line">    intr&#x3D;8;</span><br><span class="line">    before&#x3D;after&#x3D;0;</span><br><span class="line">    printf(&quot;gintr -&gt; gd_off_15_0: %d\n&quot;,gintr.gd_off_15_0);</span><br><span class="line">    printf(&quot;gintr -&gt; gd_ss: %d\n&quot;,gintr.gd_ss);</span><br><span class="line">    printf(&quot;gintr -&gt; gd_args  %d\n&quot;,gintr.gd_args );</span><br><span class="line">    printf(&quot;gintr -&gt; gd_rsv1: %d\n&quot;,gintr.gd_rsv1);</span><br><span class="line">    printf(&quot;gintr -&gt; gd_type: %d\n&quot;,gintr.gd_type);</span><br><span class="line">    printf(&quot;gintr -&gt; gd_s: %d\n&quot;,gintr.gd_s);</span><br><span class="line">    printf(&quot;gintr -&gt; gd_dpl : %d\n&quot;,gintr.gd_dpl );</span><br><span class="line">    printf(&quot;gintr -&gt; gd_p : %d\n&quot;,gintr.gd_p );</span><br><span class="line">    printf(&quot;gintr -&gt; gd_off_31_16: %d\n&quot;,gintr.gd_off_31_16);</span><br><span class="line"></span><br><span class="line">    gintr&#x3D;*((struct gatedesc *)&amp;intr);</span><br><span class="line">    printf(&quot;gintr -&gt; gd_off_15_0: %d\n&quot;,gintr.gd_off_15_0);</span><br><span class="line">    printf(&quot;gintr -&gt; gd_ss: %d\n&quot;,gintr.gd_ss);</span><br><span class="line">    printf(&quot;gintr -&gt; gd_args  %d\n&quot;,gintr.gd_args );</span><br><span class="line">    printf(&quot;gintr -&gt; gd_rsv1: %d\n&quot;,gintr.gd_rsv1);</span><br><span class="line">    printf(&quot;gintr -&gt; gd_type: %d\n&quot;,gintr.gd_type);</span><br><span class="line">    printf(&quot;gintr -&gt; gd_s: %d\n&quot;,gintr.gd_s);</span><br><span class="line">    printf(&quot;gintr -&gt; gd_dpl : %d\n&quot;,gintr.gd_dpl );</span><br><span class="line">    printf(&quot;gintr -&gt; gd_p : %d\n&quot;,gintr.gd_p );</span><br><span class="line">    printf(&quot;gintr -&gt; gd_off_31_16: %d\n&quot;,gintr.gd_off_31_16);</span><br><span class="line"></span><br><span class="line">    SETGATE(gintr, 0,1,2,3);</span><br><span class="line">    intr&#x3D;*(unsigned *)&amp;(gintr);</span><br><span class="line">    printf(&quot;intr is 0x%x\n&quot;,intr);</span><br><span class="line">    printf(&quot;gintr is 0x%llx\n&quot;,&amp;gintr);</span><br><span class="line">    printf(&quot;gintr -&gt; gd_off_15_0: %d\n&quot;,gintr.gd_off_15_0);</span><br><span class="line">    printf(&quot;gintr -&gt; gd_ss: %d\n&quot;,gintr.gd_ss);</span><br><span class="line">    printf(&quot;gintr -&gt; gd_args  %d\n&quot;,gintr.gd_args );</span><br><span class="line">    printf(&quot;gintr -&gt; gd_rsv1: %d\n&quot;,gintr.gd_rsv1);</span><br><span class="line">    printf(&quot;gintr -&gt; gd_type: %d\n&quot;,gintr.gd_type);</span><br><span class="line">    printf(&quot;gintr -&gt; gd_s: %d\n&quot;,gintr.gd_s);</span><br><span class="line">    printf(&quot;gintr -&gt; gd_dpl : %d\n&quot;,gintr.gd_dpl );</span><br><span class="line">    printf(&quot;gintr -&gt; gd_p : %d\n&quot;,gintr.gd_p );</span><br><span class="line">    printf(&quot;gintr -&gt; gd_off_31_16: %d\n&quot;,gintr.gd_off_31_16);</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;初始化</span><br><span class="line">gintr -&gt; gd_off_15_0: 7732</span><br><span class="line">gintr -&gt; gd_ss: 65432</span><br><span class="line">gintr -&gt; gd_args  28</span><br><span class="line">gintr -&gt; gd_rsv1: 1</span><br><span class="line">gintr -&gt; gd_type: 14</span><br><span class="line">gintr -&gt; gd_s: 1</span><br><span class="line">gintr -&gt; gd_dpl : 0</span><br><span class="line">gintr -&gt; gd_p : 0</span><br><span class="line">gintr -&gt; gd_off_31_16: 65432</span><br><span class="line">&#x2F;&#x2F;强制类型转换后gintr</span><br><span class="line">gintr -&gt; gd_off_15_0: 8</span><br><span class="line">gintr -&gt; gd_ss: 0</span><br><span class="line">gintr -&gt; gd_args  0</span><br><span class="line">gintr -&gt; gd_rsv1: 0</span><br><span class="line">gintr -&gt; gd_type: 0</span><br><span class="line">gintr -&gt; gd_s: 0</span><br><span class="line">gintr -&gt; gd_dpl : 0</span><br><span class="line">gintr -&gt; gd_p : 0</span><br><span class="line">gintr -&gt; gd_off_31_16: 0</span><br><span class="line">&#x2F;&#x2F;执行宏操作，强制类型转化intr</span><br><span class="line">intr is 0x10002</span><br><span class="line">gintr is 0xf7f60244ff981d74</span><br><span class="line">gintr -&gt; gd_off_15_0: 2</span><br><span class="line">gintr -&gt; gd_ss: 1</span><br><span class="line">gintr -&gt; gd_args  0</span><br><span class="line">gintr -&gt; gd_rsv1: 0</span><br><span class="line">gintr -&gt; gd_type: 14</span><br><span class="line">gintr -&gt; gd_s: 0</span><br><span class="line">gintr -&gt; gd_dpl : 3</span><br><span class="line">gintr -&gt; gd_p : 1</span><br><span class="line">gintr -&gt; gd_off_31_16: 0</span><br></pre></td></tr></table></figure>
+
+<p>high—&gt;low</p>
+<p>|0x0000|0|00|0|0000|000|00000|0x0000      |0x0000|<br>|0     |1|11|0|0xE |000|00000|0x000 0b0001|0x0002|</p>
+<p>小端传值给intr从low开始传值，截断后，intr的值被赋值为前32位的数：0x10002</p>
+<h2 id="双向链表"><a href="#双向链表" class="headerlink" title="双向链表"></a>双向链表</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br></pre></td><td class="code"><pre><span class="line">#ifndef __LIBS_LIST_H__</span><br><span class="line">#define __LIBS_LIST_H__</span><br><span class="line"></span><br><span class="line">#ifndef __ASSEMBLER__</span><br><span class="line"></span><br><span class="line">#include &quot;sys&#x2F;cdefs.h&quot;</span><br><span class="line">#include &quot;stdbool.h&quot;</span><br><span class="line"></span><br><span class="line">&#x2F;* *</span><br><span class="line"> * Simple doubly linked list implementation.</span><br><span class="line"> *</span><br><span class="line"> * Some of the internal functions (&quot;__xxx&quot;) are useful when manipulating</span><br><span class="line"> * whole lists rather than single entries, as sometimes we already know</span><br><span class="line"> * the next&#x2F;prev entries and we can generate better code by using them</span><br><span class="line"> * directly rather than using the generic single-entry routines.</span><br><span class="line"> * *&#x2F;</span><br><span class="line"></span><br><span class="line">struct list_entry &#123;</span><br><span class="line">    struct list_entry *prev, *next;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">typedef struct list_entry list_entry_t;</span><br><span class="line"></span><br><span class="line">static inline void list_init(list_entry_t *elm) __attribute__((always_inline));</span><br><span class="line">static inline void list_add(list_entry_t *listelm, list_entry_t *elm) __attribute__((always_inline));</span><br><span class="line">static inline void list_add_before(list_entry_t *listelm, list_entry_t *elm) __attribute__((always_inline));</span><br><span class="line">static inline void list_add_after(list_entry_t *listelm, list_entry_t *elm) __attribute__((always_inline));</span><br><span class="line">static inline void list_del(list_entry_t *listelm) __attribute__((always_inline));</span><br><span class="line">static inline void list_del_init(list_entry_t *listelm) __attribute__((always_inline));</span><br><span class="line">static inline bool list_empty(list_entry_t *list) __attribute__((always_inline));</span><br><span class="line">static inline list_entry_t *list_next(list_entry_t *listelm) __attribute__((always_inline));</span><br><span class="line">static inline list_entry_t *list_prev(list_entry_t *listelm) __attribute__((always_inline));</span><br><span class="line"></span><br><span class="line">static inline void __list_add(list_entry_t *elm, list_entry_t *prev, list_entry_t *next) __attribute__((always_inline));</span><br><span class="line">static inline void __list_del(list_entry_t *prev, list_entry_t *next) __attribute__((always_inline));</span><br><span class="line"></span><br><span class="line">&#x2F;* *</span><br><span class="line"> * list_init - initialize a new entry</span><br><span class="line"> * @elm:        new entry to be initialized</span><br><span class="line"> * *&#x2F;</span><br><span class="line">static inline void</span><br><span class="line">list_init(list_entry_t *elm) &#123;</span><br><span class="line">    elm-&gt;prev &#x3D; elm-&gt;next &#x3D; elm;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;* *</span><br><span class="line"> * list_add - add a new entry</span><br><span class="line"> * @listelm:    list head to add after</span><br><span class="line"> * @elm:        new entry to be added</span><br><span class="line"> *</span><br><span class="line"> * Insert the new element @elm *after* the element @listelm which</span><br><span class="line"> * is already in the list.</span><br><span class="line"> * *&#x2F;</span><br><span class="line">static inline void</span><br><span class="line">list_add(list_entry_t *listelm, list_entry_t *elm) &#123;</span><br><span class="line">    list_add_after(listelm, elm);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;* *</span><br><span class="line"> * list_add_before - add a new entry</span><br><span class="line"> * @listelm:    list head to add before</span><br><span class="line"> * @elm:        new entry to be added</span><br><span class="line"> *</span><br><span class="line"> * Insert the new element @elm *before* the element @listelm which</span><br><span class="line"> * is already in the list.</span><br><span class="line"> * *&#x2F;</span><br><span class="line">static inline void</span><br><span class="line">list_add_before(list_entry_t *listelm, list_entry_t *elm) &#123;</span><br><span class="line">    __list_add(elm, listelm-&gt;prev, listelm);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;* *</span><br><span class="line"> * list_add_after - add a new entry</span><br><span class="line"> * @listelm:    list head to add after</span><br><span class="line"> * @elm:        new entry to be added</span><br><span class="line"> *</span><br><span class="line"> * Insert the new element @elm *after* the element @listelm which</span><br><span class="line"> * is already in the list.</span><br><span class="line"> * *&#x2F;</span><br><span class="line">static inline void</span><br><span class="line">list_add_after(list_entry_t *listelm, list_entry_t *elm) &#123;</span><br><span class="line">    __list_add(elm, listelm, listelm-&gt;next);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;* *</span><br><span class="line"> * list_del - deletes entry from list</span><br><span class="line"> * @listelm:    the element to delete from the list</span><br><span class="line"> *</span><br><span class="line"> * Note: list_empty() on @listelm does not return true after this, the entry is</span><br><span class="line"> * in an undefined state.</span><br><span class="line"> * *&#x2F;</span><br><span class="line">static inline void</span><br><span class="line">list_del(list_entry_t *listelm) &#123;</span><br><span class="line">    __list_del(listelm-&gt;prev, listelm-&gt;next);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;* *</span><br><span class="line"> * list_del_init - deletes entry from list and reinitialize it.</span><br><span class="line"> * @listelm:    the element to delete from the list.</span><br><span class="line"> *</span><br><span class="line"> * Note: list_empty() on @listelm returns true after this.</span><br><span class="line"> * *&#x2F;</span><br><span class="line">static inline void</span><br><span class="line">list_del_init(list_entry_t *listelm) &#123;</span><br><span class="line">    list_del(listelm);</span><br><span class="line">    list_init(listelm);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;* *</span><br><span class="line"> * list_empty - tests whether a list is empty</span><br><span class="line"> * @list:       the list to test.</span><br><span class="line"> * *&#x2F;</span><br><span class="line">static inline bool</span><br><span class="line">list_empty(list_entry_t *list) &#123;</span><br><span class="line">    return list-&gt;next &#x3D;&#x3D; list;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;* *</span><br><span class="line"> * list_next - get the next entry</span><br><span class="line"> * @listelm:    the list head</span><br><span class="line"> **&#x2F;</span><br><span class="line">static inline list_entry_t *</span><br><span class="line">list_next(list_entry_t *listelm) &#123;</span><br><span class="line">    return listelm-&gt;next;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;* *</span><br><span class="line"> * list_prev - get the previous entry</span><br><span class="line"> * @listelm:    the list head</span><br><span class="line"> **&#x2F;</span><br><span class="line">static inline list_entry_t *</span><br><span class="line">list_prev(list_entry_t *listelm) &#123;</span><br><span class="line">    return listelm-&gt;prev;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;* *</span><br><span class="line"> * Insert a new entry between two known consecutive entries.</span><br><span class="line"> *</span><br><span class="line"> * This is only for internal list manipulation where we know</span><br><span class="line"> * the prev&#x2F;next entries already!</span><br><span class="line"> * *&#x2F;</span><br><span class="line">static inline void</span><br><span class="line">__list_add(list_entry_t *elm, list_entry_t *prev, list_entry_t *next) &#123;</span><br><span class="line">    prev-&gt;next &#x3D; next-&gt;prev &#x3D; elm;</span><br><span class="line">    elm-&gt;next &#x3D; next;</span><br><span class="line">    elm-&gt;prev &#x3D; prev;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;* *</span><br><span class="line"> * Delete a list entry by making the prev&#x2F;next entries point to each other.</span><br><span class="line"> *</span><br><span class="line"> * This is only for internal list manipulation where we know</span><br><span class="line"> * the prev&#x2F;next entries already!</span><br><span class="line"> * *&#x2F;</span><br><span class="line">static inline void</span><br><span class="line">__list_del(list_entry_t *prev, list_entry_t *next) &#123;</span><br><span class="line">    prev-&gt;next &#x3D; next;</span><br><span class="line">    next-&gt;prev &#x3D; prev;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">#endif &#x2F;* !__ASSEMBLER__ *&#x2F;</span><br><span class="line"></span><br><span class="line">#endif &#x2F;* !__LIBS_LIST_H__ *&#x2F;</span><br></pre></td></tr></table></figure>
+
+<p>特殊的双向链表。将链表的首尾指针单独作为node，封装了内联函数处理常见的增删改查。</p>
+<p>使用双向链表</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">#include &lt;stdlib.h&gt;</span><br><span class="line">#include &quot;list.h&quot;</span><br><span class="line"></span><br><span class="line">typedef struct linkList&#123;</span><br><span class="line">    list_entry_t node;</span><br><span class="line">    int data;</span><br><span class="line">&#125;link;</span><br><span class="line"></span><br><span class="line">void init(link *linkNode)&#123;</span><br><span class="line">    linkNode-&gt;data &#x3D; 0;</span><br><span class="line">    list_init(&amp;(linkNode-&gt;node));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">void add_before(link *oldNode,link *newNode)&#123;</span><br><span class="line">    list_add_before(&amp;(oldNode-&gt;node),&amp;(newNode-&gt;node));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">void add_after(link *oldNode,link *newNode)&#123;</span><br><span class="line">    list_add_after(&amp;(oldNode-&gt;node),&amp;(newNode-&gt;node));</span><br><span class="line">&#125;</span><br><span class="line">void delete(link *linkNode)&#123;</span><br><span class="line">    list_del(&amp;(linkNode-&gt;node));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">void show_print(link *linkNode)&#123;</span><br><span class="line">    list_entry_t *temp;</span><br><span class="line">    temp &#x3D; &amp;(linkNode-&gt;node);</span><br><span class="line">    temp &#x3D; temp-&gt;next;</span><br><span class="line">    int count &#x3D; 1;</span><br><span class="line">    while(temp !&#x3D; &amp;(linkNode-&gt;node))&#123;</span><br><span class="line">        printf(&quot;[%d] : %d \n&quot;,count,((struct linkList *)temp)-&gt;data);&#x2F;&#x2F;强制类型转换，于是可以自动寻址到链表节点上    temp的地址覆盖了linkList的list_entry_t类型，于是转换后就得到了链表上的节点。</span><br><span class="line">        temp &#x3D; temp-&gt;next;</span><br><span class="line">        count++;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">int main()&#123;</span><br><span class="line">    link *head &#x3D; (struct link*)malloc(sizeof(struct link*));</span><br><span class="line">    init(head);</span><br><span class="line">    int i &#x3D;0;</span><br><span class="line">    for (i&#x3D;1;i&lt;10;i++)&#123;</span><br><span class="line">        link *e &#x3D; (struct link*)malloc(sizeof(struct link*));</span><br><span class="line">        e-&gt;data &#x3D; i;</span><br><span class="line">        add_after(head,e);</span><br><span class="line">    &#125;</span><br><span class="line">    show_print(head);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>low ———————————–&gt;high</p>
+<p><img src="/2021/03/24/ucore_lab0_%E5%AE%9E%E9%AA%8C/end.png" alt="end.png"></p>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong s>
+              本博客所有文章除特别声明外，均采用 <a href="https://www.apache.org/licenses/LICENSE-2.0.html" rel="external nofollow"
+                target="_blank">Apache License 2.0</a> 许可协议。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://drag0nf1y.github.io/2021/03/24/ucore_lab0_%E5%AE%9E%E9%AA%8C/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux-%E5%86%85%E6%A0%B8/" rel="tag">linux 内核</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ucore/" rel="tag">ucore</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+      <a href="/2021/03/25/ucore_lab1_%E7%90%86%E8%AE%BA/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            ucore_lab1_理论
+          
+        </div>
+      </a>
+    
+    
+      <a href="/2021/03/24/ucore_lab0_%E7%90%86%E8%AE%BA/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">ucore_lab0_理论</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: '',
+        app_key: '',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'mp',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2021
+        Drag0nf1y
+      </li>
+      <li>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+    <div class="to_top">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+      </div>
+    </main>
+      <aside class="sidebar">
+        <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.svg" alt="Drag0nf1y"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives/">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/">标签</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E7%A0%94%E7%A9%B6/">研究</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about/">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="Search">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+      </aside>
+      <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>请我喝杯咖啡吧~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+      
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script src="/js/share.js"></script>
+
+
+
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+
+
+
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer:'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto',
+    onClick: (e) => {
+      $('.toc-link').removeClass('is-active-link');
+      $(`a[href=${e.target.hash}]`).addClass('is-active-link');
+      $(e.target.hash).scrollIntoView();
+      return false;
+    }
+  });
+</script>
+
+
+<script>
+  var ayerConfig = {
+    mathjax: false
+  }
+</script>
+
+
+<script src="/js/ayer.js"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+  </div>
+</body>
+
+</html>

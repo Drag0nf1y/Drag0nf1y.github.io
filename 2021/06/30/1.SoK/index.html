@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="description" content="Drag0nf1y" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    1.SoK |  Drag0nf1y
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="/favicon.ico" />
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+<script src="/js/pace.min.js"></script>
+
+
+  
+
+  
+
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content">
+      <section class="outer">
+  <article id="post-1.SoK" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  1.SoK
+</h1>
+  
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2021/06/30/1.SoK/" class="article-date">
+  <time datetime="2021-06-30T07:37:48.461Z" itemprop="datePublished">2021-06-30</time>
+</a>
+      
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E7%A0%94%E7%A9%B6/">研究</a> / <a class="article-category-link" href="/categories/%E7%A0%94%E7%A9%B6/%E5%8F%AF%E4%BF%A1/">可信</a>
+  </div>
+
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">9k字</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">32分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+      <h1 id="1-SoK-Understanding-the-Prevailing-Security-Vulnerabilities-in-TrustZone-assisted-TEE-Systems"><a href="#1-SoK-Understanding-the-Prevailing-Security-Vulnerabilities-in-TrustZone-assisted-TEE-Systems" class="headerlink" title="1-SoK: Understanding the Prevailing Security Vulnerabilities in TrustZone-assisted TEE Systems"></a>1-SoK: Understanding the Prevailing Security Vulnerabilities in TrustZone-assisted TEE Systems</h1><h2 id="00-概述"><a href="#00-概述" class="headerlink" title="00 概述"></a>00 概述</h2><p><strong>文章目的：</strong></p>
+<p>现存的TrustZone辅助的TEE系统有哪些类型的漏洞和限制？（探究程度及原因）</p>
+<p>可以借鉴哪些已有研究贡献来克服或者缓解它们？（探究解决方案）</p>
+<p><strong>贡献：</strong> </p>
+<ul>
+<li>(1) 首次系统研究了广泛使用的 TrustZone 辅助 TEE 系统中的已知漏洞（第三部分）；</li>
+<li>(2) 从现代操作系统的角度分析 TEE 系统的主要<strong>架构缺陷</strong>（第四部分）；</li>
+<li>(3) 引入了一种分类法，用于对更可能用于利用 TEE 系统的<strong>实现错误</strong>进行分类（第 V 部分）；</li>
+<li>(4) 提高对可用于攻击 TEE 的<strong>硬件（缺陷）</strong>元素的认识（第 VI 部分）；</li>
+<li>(5) 分析研究界提出的<strong>主要防御技术</strong>（以上三个部分）（第七部分）；</li>
+<li>(6) 将 TrustZone 辅助 TEE 与替代 TEE 支持技术（第 VIII 部分）放在一起。</li>
+</ul>
+<p><strong>研究对象：</strong></p>
+<p>分析了从 2013 年到 2018 年年中的近 5 年间的 207 份 TEE 错误报告，重点关注五家主要供应商为基于 Arm 的设备开发的广泛部署的 TEE 系统：Qualcomm、Trustonic、Huawei、Nvidia和 Linaro。 我们检查并分类了许多漏洞，特别是其中一些已被用来进行成功攻击的漏洞。 </p>
+<p>通过我们的分析以及对 <strong>TEE 固件的手动检查</strong>，我们获得了关于现有漏洞的程度和原因以及缓解这些漏洞的潜在解决方案的多种见解。</p>
+<h2 id="01-背景"><a href="#01-背景" class="headerlink" title="01 背景"></a>01 背景</h2><h3 id="TEE"><a href="#TEE" class="headerlink" title="TEE"></a>TEE</h3><ul>
+<li><p>Trusted Execution Environments；保护应用程序完整性和机密性的关键安全机制。</p>
+</li>
+<li><p>TEE技术在同一硬件平台上虚拟出两个运行环境：普通运行环境和TEE 执行环境。TEE OS提供一组API用于支持TA的实现，运行在硬件隔离的ARM TrustZone 的安全域。</p>
+</li>
+<li><p>可信执行环境。应用于安全智能设备，安全支付等领域。</p>
+</li>
+</ul>
+<h3 id="ARM-TrustZone"><a href="#ARM-TrustZone" class="headerlink" title="ARM TrustZone"></a>ARM TrustZone</h3><ul>
+<li><p>在移动环境中实现TEEs的硬件技术。</p>
+</li>
+<li><p>提供硬件隔离机制。</p>
+</li>
+<li><p>是系统范围的安全方法，针对高性能计算平台上的大量应用，包括安全支付、数字版权管理 (DRM)、企业服务和基于 Web 的服务。提供了能够支持完全可信执行环境 (TEE) 以及安全感知应用程序和安全服务的平台。</p>
+</li>
+</ul>
+<h3 id="TCB"><a href="#TCB" class="headerlink" title="TCB"></a>TCB</h3><ul>
+<li><p>Trusted Computing Base（可信计算基）；</p>
+</li>
+<li><p>trusted OS、secure monitor 以及 TEE bootloader 共同构成了典型TEE系统的TCB软件。</p>
+</li>
+<li><p>计算机内保护装置的总体，包括硬件、固件、软件和负责执行安全策略的组合体。它建立了一个基本的保护环境并提供一个可信计算机系统所要求的附加用户服务。</p>
+</li>
+</ul>
+<h3 id="SW-和-NW"><a href="#SW-和-NW" class="headerlink" title="SW 和 NW"></a>SW 和 NW</h3><ul>
+<li>TrustZone 的核心是两个保护域： secure world(SW) 和normal world(NW)。</li>
+<li>Normal World和Secure World：即Rich Execution Environment (REE)和Trusted Execution Environment (TEE)</li>
+<li>In the TrustZone architecture, each logical processor core operates as if it had two different “virtual cores”: one operating inside TrustZone and the other running outside of it. TrustZone virtual cores are implemented by fast context switching performed inside the Secure Monitor.(来自<a href="https://azeria-labs.com/trusted-execution-environments-tee-and-trustzone/" target="_blank" rel="noopener">网页</a>)</li>
+<li>它们之间安全切换的机制。 系统状态由处理器的 NS 位标识，该位标识当前正在执行的世界。 启用 TrustZone 的 AMBA 总线中存在的硬件逻辑将处理器的安全状态扩展到其他系统组件，确保 NW 组件无法访问软件资源。</li>
+</ul>
+<h3 id="TrustZone-辅助-TEE-的软件架构"><a href="#TrustZone-辅助-TEE-的软件架构" class="headerlink" title="TrustZone 辅助 TEE 的软件架构"></a><strong>TrustZone 辅助 TEE 的软件架构</strong></h3><p><img src="/2021/06/30/1.SoK/Image-1625034741513.png" alt="Image"></p>
+<p>可信操作系统的核心是<strong>可信内核</strong>，它提供调度和管理 TA 的基本操作系统原语。 可信操作系统还实现了访问可信外设的设备驱动程序，通过世界切换 SMC 指令和共享内存处理跨世界请求，并实现共享库（例如，密码学）和 TEE 原语，即远程证明、可信 I/O 和 安全存储。</p>
+<ul>
+<li><p>trusted OS，在EL1下以特权模式运行；EL0下以用户模式运行。核心是可信内核。通过环境交换SMC指令和共享内存处理跨环境的请求，并且实现了共享库(如加密)和TEE原语（如远程认证、受信任I/O和安全存储）。</p>
+</li>
+<li><p>secure monitor，在EL3中实现了环境之间的安全上下文切换机制，并以最高权限运行。</p>
+</li>
+<li><p>TEE bootloader，引导TEE系统进入一个安全状态，分为两个部分：首先在EL3中运行，然后在EL1中运行。</p>
+</li>
+<li><p>trusted OS、secure monitor 以及 TEE bootloader 共同构成了典型TEE系统的TCB软件。</p>
+</li>
+</ul>
+<h3 id="攻击TEE的利用"><a href="#攻击TEE的利用" class="headerlink" title="攻击TEE的利用"></a>攻击TEE的利用</h3><p><img src="/2021/06/30/1.SoK/image-20210630145010046.png" alt="image-20210630145010046"></p>
+<p>表注：</p>
+<ul>
+<li>E1(2015)： 输入验证 的缺陷可以作为 zero-write(零写)原语在内存QSEOS的虚拟内存的任何位置使用，以获得可信操作系统中的任意代码执行。在Linux内核中需要root特权。（下面的图2中有QSEOS的位置：存在于S-EL1处，估计是运行Linux内核的地方。）</li>
+</ul>
+<p>​    组件：SW Monitor； 影响：Full control of TZ kernel</p>
+<ul>
+<li>E2(2015)：利用TrustZone Linux 驱动程序 中的bug，该bug允许攻击者获得根权限，从而 启动E1攻击 。</li>
+</ul>
+<p>​    组件：NW Driver； 影响：Full control of Linux kernel</p>
+<ul>
+<li>E3(2016)：Android的 Mediaserver进程 的漏洞，允许一个没有特权的REE应用程序访问Qualcomm的TrustZone接口驱动程序。当 与E1和E2一起使用 时，允许非特权应用程序 获得可信的操作系统级的任意执行。</li>
+</ul>
+<p>​    组件：NW Service； 影响：Full control of Android Mediaserver</p>
+<ul>
+<li>E4(2016)：在 TA上下文 中获得任意执行的特权升级攻击。该漏洞发生在 Widevine TA 中，可以通过 使用E3 访问TrustZone接口Linux驱动程序来利用。</li>
+</ul>
+<p>​    组件：SW TA； 影响：Full control of Widevine TA</p>
+<ul>
+<li>E5(2016)：Qualcomm的可信操作系统调用缺乏输入验证，这使得TA可以向操作系统内的任何地址写入数据，并劫持TEE内核。需要通过TA的接口将特权升级到TA。</li>
+</ul>
+<p>​    组件：SW Kernel； 影响：Full control of TZ kernel</p>
+<ul>
+<li>E6(2016)：具有TA级执行特权的攻击者可以获得对Linux内核的控制权。这种攻击可以建立在E4之上。</li>
+</ul>
+<p>​    组件：NW Kernel； 影响：Full control of Linux kernel</p>
+<p><strong>从一些漏洞的利用过程来看，对于一个漏洞的利用来源于不同的处的缺陷的组合利用。</strong></p>
+<h2 id="02-研究思路以及过程"><a href="#02-研究思路以及过程" class="headerlink" title="02 研究思路以及过程"></a>02 研究思路以及过程</h2><blockquote>
+<p>得出研究数据/研究对象，后面都是基于这段得出的数据做出的分析</p>
+</blockquote>
+<h3 id="研究方法"><a href="#研究方法" class="headerlink" title="研究方法"></a>研究方法</h3><ul>
+<li><p><strong>对手模型</strong>：考虑攻击者目标</p>
+<p>a)从TEE中获得秘密;</p>
+<p>b)从REE中获取秘密;</p>
+<p>c)升级权限到REE内核;</p>
+<p>d)升级权限到TEE<br>攻击者只能从NW出发，以两种方式访问SMC接口:直接(N-EL1)、间接(N-EL0)向某个目标 TA 发出命令</p>
+</li>
+<li><p><strong>分析 TEE 系统：</strong>我们分析了 Qualcomm、Trustonic、华为、Nvidia 和 Linaro 的 TEE 系统。 </p>
+</li>
+<li><p><strong>数据来源：</strong>我们求助于多个来源，分为四个领域（见表二）。 我们分析了 CVE 数据库 [43] 中与所研究的 TEE 系统相关的错误报告。</p>
+</li>
+</ul>
+<p><img src="/2021/06/30/1.SoK/Image-1625036173309-1625036175542.png" alt="Image"></p>
+<ul>
+<li><strong>公开的安全漏洞分类：</strong>收集漏洞报告后，我们进行人工分析和分类。</li>
+<li><strong>二进制分析：</strong>对TEE的子集进行逆向，以量化TCB</li>
+<li><strong>有效性威胁</strong>：针对报告过的漏洞进行分类和识别，其他缺少验证性的漏洞不能精确识别，故而不做分类。</li>
+</ul>
+<h3 id="观察总结"><a href="#观察总结" class="headerlink" title="观察总结"></a>观察总结</h3><p><img src="/2021/06/30/1.SoK/Image-1625036415962.png" alt="Image"></p>
+<p>主要作用：允许我们建立此类系统漏洞的下限，对总体趋势进行推理，并将一般TEE趋势与其他类型系统的趋势进行比较。</p>
+<h3 id="漏洞来源"><a href="#漏洞来源" class="headerlink" title="漏洞来源"></a>漏洞来源</h3><p>trustzone 辅助下的TEE架构的漏洞<strong>三个主要来源：</strong>架构、实现和硬件。</p>
+<ul>
+<li><p><strong>架构</strong>问题包括整个TEE系统架构的缺陷，例如使用ASLR缺乏内存保护。</p>
+</li>
+<li><p><strong>实现</strong>问题对应于TEE系统软件中的缺陷，例如缓冲区溢出。</p>
+</li>
+<li><p><strong>硬件</strong>问题涉及硬件行为可能被滥用以破坏TEE的安全性，例如，侧信道。</p>
+</li>
+</ul>
+<h2 id="03-架构问题"><a href="#03-架构问题" class="headerlink" title="03 架构问题"></a>03 架构问题</h2><p>工业上常见的架构如下图所示：</p>
+<p><img src="/2021/06/30/1.SoK/Image-1625036625973.png" alt="Image"></p>
+<p><img src="/2021/06/30/1.SoK/image-20210630152852749.png" alt="image-20210630152852749"></p>
+<h3 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h3><p><strong>TEE 的攻击面：</strong></p>
+<ul>
+<li><p>I01. <strong>SW的驱动程序运行在了TEE内核中：</strong></p>
+<ul>
+<li>通常，TEE系统需要SW中存有的驱动程序，来协调它对安全敏感设备的访问。例如：用于用户身份验证的指纹传感器，或用于DRM所保护内容的安全输出的显示帧缓冲区。</li>
+<li>但驱动程序往往很复杂，且是bug的传统来源，不应该在TEE内核空间中运行(S-EL1)。</li>
+</ul>
+</li>
+<li><p>I02. <strong>TEE</strong>系统子组件之间宽泛的接口：</p>
+<ul>
+<li><p>在Android操作系统中，至少有四个守护进程拥有对TrustZone驱动程序的特权访问权！</p>
+</li>
+<li><p>TEE内核公开的SMC调用接口使NW软件可以访问大量的TAs：(Trustonic TEE依赖32个不同的TAs)</p>
+</li>
+<li><p>TAs处理的命令集太大：(Widevine TA实现了70个不同的命令，其中很多操纵着复杂的媒体数据结构）</p>
+</li>
+<li><p>TEE内核向TAs暴露了大量的系统调用：(在Qualcomm的TEE中有69个系统调用)</p>
+</li>
+<li><p>对TEE系统调用的访问权限控制粗粒度：(在Qualcomm TEE中，TAs对所有系统调用的访问是杂乱的)</p>
+</li>
+<li><p>某些安全驱动程序提供的接口可以扩展得非常大：(在Trustonic TEE中，能对指纹设备驱动程序控制访问的TAs，实际上可以访问部署在TA中的每一个TA)</p>
+</li>
+</ul>
+</li>
+<li><p>I03. <strong>TEE</strong>有过大的TCB：</p>
+<ul>
+<li><p>基于TEE系统的部分设计哲学是：它应该依赖于一个较小的TCB。</p>
+</li>
+<li><p>数值来自TEE二进制文件和固件/系统映像文件系统中可加载的TAs。对于开源系统，软件的编译支持优化，使用SLOCCount计算代码行数。</p>
+</li>
+</ul>
+<p><img src="/2021/06/30/1.SoK/image-20210630155201067.png" alt="image-20210630155201067"></p>
+<ul>
+<li><p>注：这些数字是保守的，毕竟固件包中不包括可以动态加载的额外TAs。</p>
+</li>
+<li><p>一些TAs有其相当大的规模。有了这样的规模，就不能保证这些可信应用（TA）真的可信（因为TA通过SMCs接受来自NW的输入，潜在的漏洞很容易被利用）。</p>
+</li>
+<li><p>从TCB大小的角度来看，尽管现有的TEE内核都明显比Linux内核小(大约三个数量级)，但它们中的大多数都要比与其同复杂度的微内核(seL4)大得多。</p>
+</li>
+</ul>
+</li>
+</ul>
+<p><strong>安全世界和非安全世界的隔离：</strong></p>
+<ul>
+<li><p>I04. <strong>从TAs具有的映射功能上讨论：</strong></p>
+<ul>
+<li><p>某些应用程序，例如DRM保护的视频渲染，需要一个高效的共享内存机制，允许跨世界以低延迟交换大量数据。</p>
+</li>
+<li><p>一些TEE系统提供了很容易被用于特权升级的机制。</p>
+</li>
+<li><p><strong>Qualcomm TEE</strong>公开了一个可信操作系统调用，允许任何TA映射任何属于NW的物理内存，包括到REE操作系统内核。</p>
+</li>
+<li><p><strong>Trustonic</strong> <strong>TEE</strong>阻止TAs映射和修改物理内存,该操作仅限于特定的驱动Tas。<strong>Samsung</strong>使用这种方法来分割基于TrustZone的完整性度量架构(TIMA)的功能，但白名单在TA驱动程序中是硬编码的，允许TA的数量达到34。</p>
+</li>
+</ul>
+<p><img src="/2021/06/30/1.SoK/image-20210630155426099.png" alt="image-20210630155426099"></p>
+<p>关于<a href="https://baike.baidu.com/item/DRM/863505?fr=aladdin" target="_blank" rel="noopener">DRM</a>：目的是保护数字媒体的版权，从技术上防止数字媒体的非法复制，或者在一定程度上使复制很困难，最终用户必须得到授权后才能使用数字媒体。</p>
+<p><strong>Qualcomm TEE</strong>：通过破坏TA，攻击者可以自动接管Android操作系统，扫描Linux内核的物理地址空间，并通过补丁引入后门 (见表I中的E6)。</p>
+<p><strong>Trustonic</strong> <strong>TEE</strong>：TAs若想通过共享内存交换数据卷，必须向一个专用驱动TA发出一个请求。</p>
+<p><strong>Samsung</strong>：一个TA驱动程序提供映射物理内存的能力，另一个TA使用这种服务来度量系统映像的完整性。白名单是用来防止任意TA访问TA驱动程序的。但白名单在TA驱动程序中是硬编码的，允许TA的数量相当大(达到34)，即通过破坏这些TAs，攻击者可以自由地劫持Android。 </p>
+</li>
+<li><p>I05. <strong>从危险的调试通道上讨论：</strong></p>
+<ul>
+<li><p>通过TEE调试机制从SW向NW泄漏信息</p>
+</li>
+<li><p>暴露在NW上的调试日志可能会泄露TAs内部的敏感信息。</p>
+</li>
+<li><p>特权升级攻击利用了Huawei TEE的系统调用，它允许TA应用程序将其堆栈跟踪转储到NW的内存区域。使用这种机制，攻击者可以了解GlobalTask的物理地址空间，并使用这些信息来策划攻击。</p>
+</li>
+</ul>
+<p><img src="/2021/06/30/1.SoK/image-20210630160005364.png" alt="image-20210630160005364"></p>
+</li>
+</ul>
+<p><strong>内存保护机制：</strong></p>
+<ul>
+<li><p>I06. 要么缺乏ASLR，要么ASLR实现的不好：</p>
+<ul>
+<li>在可信TEE中, TAs都被加载到虚拟地址空间的相同固定地址中(0x1000)。每个TA都有一个公共库，它为每个TA都映射到一个常量地址(0x7D01000)。（在TA中发现的任何漏洞都可以被利用）</li>
+</ul>
+<p>对攻击者来说，在TA中发现的任何漏洞都可以被利用，而不需要再花精力去确定TA的加载地址。</p>
+</li>
+</ul>
+<ul>
+<li><p>Trustonic TEE，一个被叫做mcLib的公共库(参见图)包含大量代码，这些代码可以提供小工具的源代码来调用函数、调用可信OS系统的调用等。</p>
+</li>
+<li><p>Huawei、Nvidia和Linaro TEEs 都没有ASLR机制。</p>
+</li>
+<li><p>Qualcomm TEE为所有TAs提供了ASLR的一种形式， 但只使用TA代码加载到其中的一小段物理内存。所有的TAs都被加载到一个持续分配物理内存的相对较小的区域中，这个区域的大小大约为100MB。即，ASLR提供的熵值受到该区域大小的限制。因此，虽然理论上可以通过使用64位虚拟地址空间来实现高熵ASLR，但Qualcomm TEE实现的ASLR大约被限制为9位，这大大减少了攻击者猜测TA的基址所需的猜测次数。</p>
+</li>
+</ul>
+<p>  所研究的TEE系统中没有一个具有<a href="http://www.wowotech.net/memory_management/441.html" target="_blank" rel="noopener">KASLR</a>，即TEE内核的ASLR。</p>
+<ul>
+<li><p>I07. <strong>没有stack cookies、guard pages或者execution protection：</strong></p>
+<ul>
+<li><p>stack cookies(SC)是帮助检测堆栈破坏实例和中止程序执行的唯一值。</p>
+</li>
+<li><p>guard pages(GP)将每个进程中的可变数据段(即堆栈、堆和全局数据)分隔开，以防止攻击者在非法访问时使用一个段的溢出来触发错误，从而破坏另一个段。</p>
+</li>
+<li><p>execution protection(XP)防止程序在某些内存区域内执行，可以通过各种方法实现：</p>
+</li>
+<li><p>在Arm上，SCTLR寄存器中的WXN位可以用于隐式标记为永不执行(XN)的可写内存区域。</p>
+</li>
+<li><p>使用内存页属性XN、Unprivileged XN (UXN)和Privileged (PXN)。</p>
+</li>
+</ul>
+<p><img src="/2021/06/30/1.SoK/image-20210630160207977.png" alt="image-20210630160207977"></p>
+<p>●：完全执行；</p>
+<p>◐和◯：部分执行或未执行；</p>
+<p>-：没有找到与执行相关的信息。</p>
+<ul>
+<li><p>Trustonic TEE缺乏stack cookies，TAs易堆栈溢出，不提供中间的guard pages。<br>该内存布局将堆栈置于数据段的末尾，并在其之前放置全局变量，这是一个区域溢出到另一个区域的完美配置。</p>
+</li>
+<li><p>Qualcomm TEE实现了随机指针大小的stack cookies，但是它没有在全局、堆和堆栈之间提供guard pages。</p>
+</li>
+<li><p>Huawei TEE没有stack canaries，没有data execution protection，也没有write-protected .text部分。<br>（ Huawei TEE是基于Micrium μ/OS的）</p>
+</li>
+</ul>
+</li>
+</ul>
+<p><strong>可信引导指令</strong>：</p>
+<ul>
+<li><p>I08. <strong>缺乏与软件独立的</strong>TEE完整性报告：</p>
+<ul>
+<li>Arm TrustZone缺乏向远程第三方安全地报告软件完整性测量结果的硬件机制，故远程认证需要通过一个TEE组件在软件中实现。这削弱了远程认证的安全性，因为它要求的信任链上所有软件以EL3模式运行。</li>
+</ul>
+</li>
+<li><p>I09. <strong>支持</strong>Ill的TA撤销：</p>
+<ul>
+<li><p>TEE必须撤销旧的TAs，以防止REE中的攻击者故意加载旧的已知易受攻击的TA，并利用它在TEE中获得代码执行。</p>
+</li>
+<li><p>Qualcomm和Trustonic TEE均发现：Widevine TA的成功降级为先前的、已知易受攻击的版本。</p>
+</li>
+</ul>
+</li>
+</ul>
+<p><img src="/2021/06/30/1.SoK/image-20210630160300604.png" alt="image-20210630160300604"></p>
+<h3 id="防御"><a href="#防御" class="headerlink" title="防御"></a>防御</h3><ul>
+<li><p>D1.多隔离的环境</p>
+<ul>
+<li><p>减少商业TEE系统过大的攻击面，除了SW中的标准TA沙箱之外，可建立多个孤立环境：</p>
+<p>(a)增加TEE组件之间的隔离粒度。这样就控制了因安全漏洞而造成的潜在损害的程度；</p>
+<p>(b)限制在SW中运行的代码数量，从而减少具有高度破坏性的SW特权升级攻击的机会。</p>
+</li>
+<li><p>方向1：在NW建立高度孤立的分区，以便分配TAs。为了保护TAs，</p>
+<p>  TrustICE 和 SANCTUARY 利用TZASC OSP的不同特性；</p>
+<p>  PrivateZone和vTZ则相反，探索NW (NS-EL2)中可用的硬件虚拟化扩展来实现孤立的环境。</p>
+<p>方向2：在SW中保留TAs，但旨在加强它们之间的隔离，例：</p>
+<p>  TEEv和PrOS在SW中实现了一个极简管理程序，允许TAs在多个隔离的安全客户操作系统上运行。由于目前在SW中缺乏硬件虚拟化支持，这两个系统都使用了相同特权的隔离，来保护管理程序不受安全客户操作系统的影响。</p>
+</li>
+</ul>
+</li>
+<li><p>D2 安全的跨世界通道：</p>
+<ul>
+<li><p>可能导致从SW提取敏感数据。通过修复TEE内核系统调用可以解决，但通过安全的NW-SW通道可进一步加强隔离。</p>
+<p>这些机制用于克服主流TEE中存在的两个限制:</p>
+<p>(1)在从NW访问TEE资源时缺乏或弱认证；</p>
+<p>(2)在通道内进行数据交换时存在潜在的不安全共享内存。</p>
+<p>SeCReT提供一个会话密钥(给REE应用程序)，可以用来加密消息。为了保护会话密钥不受不可信REE内核的影响，SeCReT将模式切换到内核，并在内核模式执行期间从内存中删除密钥。</p>
+<p>TFence通过创建一个部分特权的进程进一步消除了这种内核依赖关系——这是REE应用进程的屏蔽部分，可以直接与TEE通信。</p>
+<p>TEEv和SANCTUARY都实现了独占共享内存；</p>
+<p>而PrivateZone可以在不共享内存的情况下通信，即通过数据拷贝。</p>
+<p>Aravind等人使用指针消毒防止回旋镖攻击</p>
+</li>
+</ul>
+</li>
+<li><p>D3 加密内存</p>
+<ul>
+<li><p>TEE内存保护的缺陷可以通过主流操作系统的机制来解决。</p>
+<p>(如ASLR、stack cookies等) </p>
+<p>但商业TEE可以提供更强的安全防御，</p>
+<p>例：通过实现加密内存能力，防止cold boot攻击。</p>
+<p>与Intel SGX不同，TrustZone不提供内置的对片上存储器加密的支持。为了弥补这个差距，CaSE允许TAs完全从缓存运行，并确保它们的状态在写回主存时被加密。</p>
+<p>Ginseng通过在CPU寄存器上分配变量并在运行时对它们进行加密，然后将它们保存在内存中，以此来保护被应用程序程序员标记为“敏感”的变量。</p>
+</li>
+</ul>
+</li>
+<li><p>可信计算原语</p>
+<ul>
+<li><p>商业TEE依赖安全引导来保证TEE图像完整性，但并不足以使TA的客户端(本地或远程)验证TEE以及TA二进制文件。</p>
+<p>为此，商业TEE实现额外的可信计算原语来帮助提供这样的保证，即远程认证和密封存储。</p>
+</li>
+<li><p>例：TLR包含一个密封的存储原语，允许以加密方式保护数据，并将其绑定到TEE/TA软件堆栈的特定哈希值。</p>
+<p>Komodo演示了如何为TrustZone-assisted TEEs设备实现密封存储和远程认证的安全协议，这些协议最初是为enclaves(即Intel SGX的TAs安全环境)指定的。</p>
+<p>在可信I/O路径原语中还有一项工作，旨在提供对外设的安全访问。</p>
+<p>由于作者识别了涉及外设访问的相对较少的漏洞，可以使用I/O中介的标准硬件特性(例如SMMU, 总线桥)来缓解这些漏洞，所以Table VIIl省略了这些引用。</p>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="04-实现问题"><a href="#04-实现问题" class="headerlink" title="04 实现问题"></a>04 实现问题</h2><p><img src="/2021/06/30/1.SoK/image-20210630152913101.png" alt="image-20210630152913101"></p>
+<h3 id="问题-1"><a href="#问题-1" class="headerlink" title="问题"></a>问题</h3><p><strong>验证错误：</strong></p>
+<ul>
+<li><p>I10. <strong>安全监视器的验证漏洞：</strong></p>
+<ul>
+<li><p>攻击者可以自动获得对设备的完全控制。例：利用E1劫持Qualcomm TEE内核所滥用的漏洞，允许攻击者通过在SMC调用中构造输入，在SW内存的任何地方写入一个零双字。</p>
+</li>
+<li><p>其他大多数TEE系统使用Arm的参考监视器(ATF)</p>
+</li>
+<li><p>但ATF内部已报告了critical bugs，甚至有bug位于一个C的宏上，它的目标却是帮助检测算术溢出(CVE-2017-9607)。</p>
+</li>
+</ul>
+<p><img src="/2021/06/30/1.SoK/image-20210630161056221.png" alt="image-20210630161056221"></p>
+<p>上图所示，任何依赖于此宏检测整数溢出的AArch32代码都不受保护。所以，使用此宏的多个监视器入口点都不安全。</p>
+</li>
+<li><p>I11. <strong>TAs内部的验证漏洞：</strong></p>
+<ul>
+<li><p>通过SMC接口，TAs大多受到来自NW的攻击。报告中此验证错误占比最大。</p>
+</li>
+<li><p>trustlet中的关键漏洞、bug修复程序验证漏洞、TA不正确地验证输入内存地址</p>
+</li>
+</ul>
+<p>ESECOMM trustlet中的关键漏洞可以用来危害<a href="https://www.samsung.com/cn/apps/samsung-pay/" target="_blank" rel="noopener">Samsung Pay</a>等客户端应用程序。</p>
+<ul>
+<li><p>The ESECOMM Trustlet has a NULL pointer dereference.(<a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-20603" target="_blank" rel="noopener">CVE-2019-20603</a>)</p>
+</li>
+<li><p>A <a href="https://blog.csdn.net/guilanl/article/details/71474783" target="_blank" rel="noopener">NULL pointer dereference</a> occurs when the application dereferences a pointer that it expects to be valid, but is NULL, typically causing a crash or exit.</p>
+</li>
+</ul>
+<p>在Trustonic TEE中，可以使用相应的bug修复程序，系统地利用验证bug。</p>
+<p>一些TA验证错误(例如CVE-2016 - 5349)，可以直接通过<a href="http://www.quadibloc.com/crypto/co4512.htm" target="_blank" rel="noopener">boomerang</a><a href="http://www.quadibloc.com/crypto/co4512.htm" target="_blank" rel="noopener">攻击</a>特权升级到Linux内核，脆弱的TA不会正确地验证输入内存地址，会允许攻击者访问NW内存区域和读写那些被分配给REE应用程序(REE apps)或操作系统(OS)的内存。</p>
+</li>
+</ul>
+<p>  <a href="https://www.samsung.com/cn/apps/samsung-pay/" target="_blank" rel="noopener">Samsung Pay</a> ： <a href="https://www.samsung.com/cn/apps/samsung-pay/" target="_blank" rel="noopener">https://www.samsung.com/cn/apps/samsung-pay/</a></p>
+<p>  <a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-20603" target="_blank" rel="noopener">CVE-2019-20603</a> ： <a href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-20603" target="_blank" rel="noopener">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-20603</a></p>
+<p>  <a href="https://blog.csdn.net/guilanl/article/details/71474783" target="_blank" rel="noopener">NULL pointer dereference</a> ： <a href="https://blog.csdn.net/guilanl/article/details/71474783" target="_blank" rel="noopener">https://blog.csdn.net/guilanl/article/details/71474783</a></p>
+<p>  <a href="http://www.quadibloc.com/crypto/co4512.htm" target="_blank" rel="noopener">boomerang</a><a href="http://www.quadibloc.com/crypto/co4512.htm" target="_blank" rel="noopener">攻击</a> ： <a href="http://www.quadibloc.com/crypto/co4512.htm" target="_blank" rel="noopener">http://www.quadibloc.com/crypto/co4512.htm</a></p>
+<ul>
+<li><p>I12. <strong>可信内核的验证漏洞：</strong></p>
+<ul>
+<li>通过劫持TA，攻击者可以利用TEE内核系统调用接口中的漏洞，提高其特权。</li>
+</ul>
+<p>攻击Huawei TEE依赖脆弱的系统调用,它的<strong>输入</strong>是完全放任绕过可信内核内的安全检查(见上图)。</p>
+<p>图注：从 Huawei TEE (RTOSck) 逆向工程系统调用，没有任何输入检查。攻击者可以覆盖NW或SW的任何地方的内存。</p>
+<p>更甚，Qualcomm TEE内核没有任何代码来验证提供的<strong>输入指针</strong>，这意味着所有的系统调用都是脆弱的。</p>
+<p><img src="/2021/06/30/1.SoK/image-20210630161204350.png" alt="image-20210630161204350"></p>
+</li>
+<li><p>I13. <strong>安全引导加载程序的验证漏洞：</strong></p>
+<ul>
+<li>系统引导过程中的验证错误。</li>
+</ul>
+<p>在CVE-2017-7932中有一个例子，此漏洞是由于X.509证书解析器中基于堆栈的<strong>缓冲区溢出</strong>造成的，这允许攻击者在图像验证期间潜在地安装或加载伪造的X.509证书。故合法的TEE软件映像可以被替换，实现任意代码的执行。</p>
+</li>
+</ul>
+<p><strong>功能缺陷</strong>：</p>
+<ul>
+<li><p>I14. <strong>内存保护：</strong></p>
+<ul>
+<li><p>在TEE系统的内存保护机制中引入安全漏洞。</p>
+</li>
+<li><p>内存转换表的配置错误；寄存器产生错误；</p>
+</li>
+</ul>
+<p>例：报告的ATF漏洞涉及到内存转换表的配置错误，该配置错误允许只读内存区域总是在S-EL1的上下文中可执行。</p>
+<p>在OP-TEE（Linaro TEE的OS）中，发现了15个导致内存保护漏洞的bug报告。例：负责保存和恢复ARMv7的FIQ寄存器的安全监视器代码中的一个错误，可能会允许REE升级权限，以获得TEE中的代码执行权。</p>
+</li>
+<li><p>I15. <strong>外设配置：</strong></p>
+<ul>
+<li><p>在Qualcomm TEE中，CVE-2016-10423披露的一个缺陷允许TA读取先前由另一个TA打开的SPI接口上的数据，这是由于SPI总线的非排他访问。</p>
+</li>
+<li><p>在OP-TEE中，一个补丁旨在修复伪随机数生成器的错误配置，该错误配置导致OP-TEE中使用的加密库的熵源不足。</p>
+</li>
+</ul>
+</li>
+<li><p>I16. <strong>安全机制：</strong></p>
+<ul>
+<li><p>安全协议或加密原语实现中的错误。</p>
+</li>
+<li><p>在ATF中，由于身份验证检查的缺陷，攻击者可以绕过Amlogic S905 SoC安全引导进程，其中只检查了引导映像的完整性，而不检查签名。</p>
+</li>
+</ul>
+<p>例：在OP-TEE中，<a href="https://blog.csdn.net/samsho2/article/details/84819480" target="_blank" rel="noopener">LibTomCrypt</a>中的<a href="https://www.cnblogs.com/zhuowangy2k/p/12245604.html" target="_blank" rel="noopener">Bellcore</a><a href="https://www.cnblogs.com/zhuowangy2k/p/12245604.html" target="_blank" rel="noopener">攻击</a>漏洞可能会危及RSA私钥(CVE-2017-1000412)，以及<a href="https://www.cnblogs.com/dakewei/p/10267774.html" target="_blank" rel="noopener">RPMB</a>的硬编码安全密钥导致密钥泄露(2017年1月23日修复)。</p>
+<p> （<a href="https://www.cnblogs.com/zhuowangy2k/p/12245604.html" target="_blank" rel="noopener">Bellcore</a><a href="https://www.cnblogs.com/zhuowangy2k/p/12245604.html" target="_blank" rel="noopener">攻击</a>：硬件错误可以使得签名模易分解。）</p>
+</li>
+</ul>
+<p>  <a href="https://blog.csdn.net/samsho2/article/details/84819480" target="_blank" rel="noopener">LibTomCrypt</a> ： <a href="https://blog.csdn.net/samsho2/article/details/84819480" target="_blank" rel="noopener">https://blog.csdn.net/samsho2/article/details/84819480</a></p>
+<p>  <a href="https://www.cnblogs.com/dakewei/p/10267774.html" target="_blank" rel="noopener">RPMB</a> ： <a href="https://www.cnblogs.com/dakewei/p/10267774.html" target="_blank" rel="noopener">https://www.cnblogs.com/dakewei/p/10267774.html</a></p>
+<p>  <a href="https://www.cnblogs.com/zhuowangy2k/p/12245604.html" target="_blank" rel="noopener">Bellcore</a><a href="https://www.cnblogs.com/zhuowangy2k/p/12245604.html" target="_blank" rel="noopener">攻击</a>：<a href="https://www.cnblogs.com/zhuowangy2k/p/12245604.html" target="_blank" rel="noopener">https://www.cnblogs.com/zhuowangy2k/p/12245604.html</a></p>
+<p><strong>外部因素</strong>：</p>
+<ul>
+<li><p>I17. <strong>并发问题：</strong></p>
+<ul>
+<li><p>由多个并发程序的干扰引起的，它们的表现取决于程序本身之外的因素(例如线程交错)，故是外在的。</p>
+</li>
+<li><p>并发导致异常删除；TOCTOU漏洞</p>
+</li>
+</ul>
+<p>一些安全漏洞，例：</p>
+<ul>
+<li><p>在OP-TEE中，由于不同的TA并发访问文件系统，而导致的一个bug允许TA在另一个TA创建目录时删除可信存储上的目录。</p>
+</li>
+<li><p>Samsung报告了Trustonic TEE中部署的TIMA驱动程序中的两个竞态漏洞(SVE-2017-8974和SVE-2017-8975)，可能会导致<a href="https://cwe.mitre.org/data/definitions/367.html" target="_blank" rel="noopener">TOCTOU</a><a href="https://cwe.mitre.org/data/definitions/367.html" target="_blank" rel="noopener">漏洞</a>：(软件在使用资源之前检查资源的状态，但是资源的状态可以在检查和使用之间改变，以一种使检查结果无效的方式。这可能导致软件在资源处于意外状态时执行无效操作)。</p>
+</li>
+<li><p>Nvidia TEE的DRM TA中报告了一个TOCTOU漏洞，可能导致权限升级(CVE-2017-6296)。</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>  <a href="https://cwe.mitre.org/data/definitions/367.html" target="_blank" rel="noopener">TOCTOU</a><a href="https://cwe.mitre.org/data/definitions/367.html" target="_blank" rel="noopener">漏洞</a> ： <a href="https://cwe.mitre.org/data/definitions/367.html" target="_blank" rel="noopener">https://cwe.mitre.org/data/definitions/367.html</a></p>
+<ul>
+<li><p>I18. <strong>软件<a href="https://baike.baidu.com/item/边信道攻击/7342042?fr=aladdin" target="_blank" rel="noopener">侧信道</a>：</strong></p>
+<ul>
+<li><p>由特定的实现工件引起的，这些工件与程序逻辑无关，但可以根据程序执行时间揭示不要的信息。例：</p>
+</li>
+<li><p>OP-TEE的可信内核使用的加密库LibTomCrypt中发现了一个定时边信道(CVE-2017-1000413)。此漏洞是在对模块化求幂进行优化时造成的，它泄露了有关指数的信息。它是通过保证常数时间的取幂来固定的。</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="防御-1"><a href="#防御-1" class="headerlink" title="防御"></a>防御</h3><ul>
+<li><p>D05 托管代码运行</p>
+<ul>
+<li><p>像TLR中，TAs不是被编译成本机代码，而是.Net托管代码，然后由小型托管代码编译器(类似于JVM)解释执行。</p>
+<p>以一些性能开销为代价，托管运行编译器可防止验证错误，例：通过实现运行编译器内存检查和垃圾收集。</p>
+</li>
+</ul>
+</li>
+<li><p>D06 类型安全的编程语言</p>
+<ul>
+<li><p>Rust提供了内存和线程安全，那么Rust zone可以帮助防止验证bug和一些导致TA软件瘫痪的并发bug(见I11)。</p>
+<p>在Ginseng中，Rust编程语言也被用于实现在监控模式下运行的大部分软件，即GService(见I10)。</p>
+<p>Rust zone是OP-TEE的扩展，其中TAs是用Rust编程语言实现的。</p>
+</li>
+</ul>
+</li>
+<li><p>D07 软件验证</p>
+<ul>
+<li><p>包括模型检查、符号执行和形式化方法等技术，旨在通过确保实现完全满足所有预想的需求来防止这种不匹配，但它们难以针对复杂的程序进行扩展。</p>
+<p>目前，特定TEE组件的正式验证已经取得了重要进展，<br> 例：Komodo的小型TEE监视器实现了Intel SGX enclaves的规范；MIPE提出的特殊内存整合保护方法。</p>
+<p>由于软件的预期需求与其实际实现之间的不匹配，实现错误往往会存在。</p>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="05-硬件问题"><a href="#05-硬件问题" class="headerlink" title="05 硬件问题"></a>05 硬件问题</h2><p><img src="/2021/06/30/1.SoK/image-20210630152925947.png" alt="image-20210630152925947"></p>
+<h3 id="问题-2"><a href="#问题-2" class="headerlink" title="问题"></a>问题</h3><p><strong>架构影响：</strong></p>
+<ul>
+<li><p>I19. <strong>可重构硬件组件攻击：</strong></p>
+<ul>
+<li><p>可重构平台，即FPGA SoCs，将传统CPU架构与可编程硬件逻辑相结合。FPGA SoCs内的可配置硬件通常连接到主总线。</p>
+</li>
+<li><p>在TrustZone-enabled的系统上，AMBA AXI接口包括一个额外的控制位(NS位)，用于主系统互连上的读(ARPROT)和写(AWPROT)通道，这使得所有硬件组件都可以知道CPU的安全状态。</p>
+</li>
+<li><p>利用部署在FPGA上的恶意硬件可以破坏安全引导进程。</p>
+</li>
+</ul>
+<p>OP-TEE在其主线上支持Xilinx Zynq-7000和Zyng UltraScale+平台，然而新硬件的添加增加了攻击面。</p>
+<ul>
+<li><p>一些攻击利用可重构的硬件逻辑来破坏基于TrustZone的系统的安全性。</p>
+</li>
+<li><p>利用部署在FPGA上的恶意硬件来破坏安全引导进程。</p>
+</li>
+<li><p>在一项关于NS位传播到FPGA的研究中，通过对硬件逻辑的恶意修改，揭露了六种不同的攻击。</p>
+</li>
+</ul>
+<p><a href="https://www.usenix.org/conference/usenixsecurity17/technical-sessions/presentation/tang" target="_blank" rel="noopener">CLKSCREW</a> ： <a href="https://www.usenix.org/conference/usenixsecurity17/technical-sessions/presentation/tang" target="_blank" rel="noopener">https://www.usenix.org/conference/usenixsecurity17/technical-sessions/presentation/tang</a></p>
+</li>
+<li><p>I20. <strong>能量管理机制攻击：</strong></p>
+<ul>
+<li><p>CLKSCREW通过恶意使用内核驱动程序来推动频率和电压调节器，使其超出供应商建议的限制，直到导致错误计算。</p>
+</li>
+<li><p>通过影响软件操作的计算，有可能打破TrustZone硬件强制的边界，以提取秘密密钥并绕过代码签名操作</p>
+</li>
+</ul>
+</li>
+</ul>
+<p><strong>微架构侧信道：</strong></p>
+<ul>
+<li><p>I21. <strong>缓存泄露：</strong></p>
+<ul>
+<li><p>在TrustZone-enabled处理器上，缓存内存是SW和NW之间所共享的。两个世界拥有平等竞争使用高速缓存线的权利。这种设计以两个世界之间的高速缓存争夺为代价，提高系统性能。</p>
+</li>
+<li><p>利用监测NW的高速缓存可以提取SW的信息（如密钥等），也可用于授权。</p>
+</li>
+<li><p>R. Guanciale等人实现了一个低噪声高速缓存存储通道，该通道可以成功地从AES加密服务中提取128位密钥。</p>
+</li>
+<li><p>ARMageddon使用质数+探测技术来推断SW上的活动，并区分提供的密钥是否有效。</p>
+</li>
+<li><p>TruSpy利用Prime+Probe以两种不同的方式恢复完整的128位AES加密密钥。</p>
+</li>
+<li><p>Prime+Count还用于授权TrustZone上的跨世界隐蔽通道。</p>
+</li>
+</ul>
+</li>
+<li><p>I22. <strong>分支预测器泄露：</strong></p>
+<ul>
+<li><p>现代处理器包括一个分支目标缓冲区(BTB)单元，它存储分支指令的目标地址，可预测并获取它们。</p>
+</li>
+<li><p>因为BTB在NW和SW之间共享， Prime+Probe可以执行向NW泄漏安全信息。该过程包括通过执行多个分支启动BTB，再执行受害者进程，从而驱逐攻击者的BTB条目。当攻击者获得执行控制时，攻击者会重新执行这些分支来检测错误预测。鉴于BTB的内部硬件结构以字节粒度而不是缓存行粒度工作，这种特殊的攻击向量大大提高了探测机制的空间分辨率。</p>
+</li>
+<li><p>目前256位的私钥已经可以从Qualcomm的硬件支持密钥库中完全恢复。</p>
+</li>
+</ul>
+</li>
+<li><p>I23. <strong>使用Rowhammer诱导：</strong></p>
+<ul>
+<li><p>Rowhammer是一种软件诱导的硬件故障，它影响DRAM内存，使攻击者能够通过单独执行内存读取操作来翻转物理内存中的位，可被用来破坏TrustZone。</p>
+</li>
+<li><p>恶意的Linux内核模块使用Rowhammer对特定的NW目标地址产生错误。</p>
+</li>
+<li><p>运行在可信的TEE实例上的安全签名服务使用安全的RSA私钥对特定消息进行签名，如果私钥分配在安全内存区域邻近SW/NW内存边界，在NW的内存边界上存读取Rowhammer，在SW的内存上诱发错误，可以破坏私钥并产生错误的RSA签名，在Linux端检索错误生成的签名后，就可以推断出私钥。</p>
+</li>
+<li><p>这种攻击更难进行，因为它通常需要对环境进行更高程度的控制。</p>
+</li>
+</ul>
+</li>
+</ul>
+<p><img src="/2021/06/30/1.SoK/image-20210630161714902.png" alt="image-20210630161714902"></p>
+<h3 id="防御-2"><a href="#防御-2" class="headerlink" title="防御"></a>防御</h3><ul>
+<li><p>D08 架构策略</p>
+<ul>
+<li><p>硬件制造商在SoC芯片中封装的组件，令TEE设计人员很难完全理解。针对滥用可重构硬件技术问题(见I19)，研究人员提出:</p>
+<p>(1)在所有具有AXI接口的IP核中加入一个小的硬件包装，限制其在系统启动期间的操作;(2)实现安全设备专用AXI互连;(3)用一个非安全的端口连接所有不敏感的内存映射IP核，并通过内存保护机制(如SMMU)限制其操作。</p>
+<p>针对硬件稳压器的误用(见I20)，可以在软件或硬件本身设置特定的操作限制。</p>
+</li>
+</ul>
+</li>
+<li><p>D09 微架构策略</p>
+<ul>
+<li><p>针对缓存侧信道(见I21)是通过软件或专用硬件实现的(特定的ISA指令，像AESD和AESE Armv8-A) ，或者利用缓存维护技术。</p>
+<p>谨慎执行的加密算法也能有效防止通过BTB的入侵(见I22)。</p>
+<p>针对Rowhammer攻击(见I23)，TEEs必须避免在NW-SW边界使用内存。</p>
+<p>对于不使用共享L2缓存的TrustZone-assisted TEEs ，在每个SW的出口处刷新L1缓存。 </p>
+<p>如果使用共享L2缓存，尽管在每个SW入口和出口执行缓存刷新(全部或选择性)或缓存归一化操作可能足以防止缓存存储攻击，但L1刷新可能无法防止多核系统中的Prime+Probe攻击。在这种情况下，缓存分区可以解决。</p>
+<p>Keegan等人展示并强调加密算法能有效防止通过BTB的入侵，其中不同版本的算法能够使边信道无效。</p>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="06-其他技术"><a href="#06-其他技术" class="headerlink" title="06 其他技术"></a>06 其他技术</h2><p><img src="/2021/06/30/1.SoK/image-20210630153029917.png" alt="image-20210630153029917"></p>
+<p>表注：</p>
+<p>  Dedicated RAM:用于分配安全敏感状态，并与潜在不安全的主内存隔离。</p>
+<p>  Cross-world isolation:使用内存管理组件(MMU / PMP)或与HW特定特性(例：TrustZone TZASC)；专用的off-SoC芯片通过物理隔离实现隔离。</p>
+<p>  Encrypted memory:表示支持硬件强制内存加密。</p>
+<p>  Protection Ring:分为五个级别，即1 (user), 0 (kernel), -1 (hypervisor), -2 (monitor), -3 (off-chip)。</p>
+<p>  Attestation:如果TEE运行时只能执行本地认证(即安全引导)，或者也可以执行远程认证。</p>
+<p>  Previously exploited:黑圈表示由特定技术所启用的TEE系统的已知漏洞。</p>
+<p>  Communication mechanisms with REE:共享内存、数据复制和通信总线(如USB或SP)。</p>
+<h2 id="07-summary"><a href="#07-summary" class="headerlink" title="07 summary"></a>07 summary</h2><ul>
+<li><p>系统设计层面：</p>
+<p>​    1.TEE内核的TCB太大：如指纹识别、GPU图像渲染等驱动最好放在用户态，使用微内核来降低TCB。</p>
+<p>​    2.TEE内核暴露给TA的系统调用接口太多，导致攻击面变多：应有针对性地开放部分接口给TA，建立一套白名单机制。</p>
+<p>​    3.系统内核服务太多：应该尽可能采取微内核方式，将更多服务放到用户态，并限制和内核交互的系统调用方式。</p>
+<p>​    4.系统调用的能力的限制和检查：高通为了让TA能快速访问CA的内存，提供了映射REE内存的接口。该接口一旦被滥用，可以获取安卓root。因此系统调用应限制TA的能力——只与相应CA通信，即限制TEE内核的系统调用的空间能力。</p>
+</li>
+<li><p>系统实现层面：</p>
+<p>​    1.TEE自身的调试能力在实际部署时一定要关闭，包括打印的信息等。</p>
+<p>​    2.软件级防御不到位：ASLR、Stack Canaries、Guard Pages、Execute Never等应该都开启。</p>
+<p>​    3.远程验证的第一个环节必须由硬件来保证，即硬件认为secure boot的第一步是对的，并提供相关证明。</p>
+<p>​    4.TA必须有方法进行撤销或反降级处理：防止版本回滚攻击。</p>
+<p>​    5.TZ的软件栈过于庞大，包括boot loader、secure monitor、Trusted kernel和TA，这里的bugs都可能导致非常严重的问题。</p>
+<p>​    6.安全机制的不当配置：外设隔离、内存保护、密钥管理都会导致严重后果。</p>
+</li>
+<li><p>硬件层面：</p>
+<p>​    1.对共享资源的并发访问，如RPMB的共享使用，可导致TOCTOU漏洞，软件自身不用constant-time实现也会导致信息泄漏。</p>
+<p>​    2.SoC上有大量外设和协处理器，如FPGA，就可以通过总线进行攻击</p>
+<p>​    3.CPU的电源状态也会导致某些问题产生，如REE通过电源配置攻击TEE</p>
+<p>​    4.微架构物理资源共享：cache、branch predictor、DRAM Rowhammer等问题。</p>
+</li>
+</ul>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong s>
+              本博客所有文章除特别声明外，均采用 <a href="https://www.apache.org/licenses/LICENSE-2.0.html" rel="external nofollow"
+                target="_blank">Apache License 2.0</a> 许可协议。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://drag0nf1y.github.io/2021/06/30/1.SoK/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%8F%AF%E4%BF%A1/" rel="tag">可信</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%A0%94%E7%A9%B6/" rel="tag">研究</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%AE%BA%E6%96%87/" rel="tag">论文</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+      <a href="/2021/06/30/06-30%E6%88%91%E5%81%9A%E4%BA%86%E4%B8%80%E4%B8%AA%E6%A2%A6/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            06-30我做了一个梦
+          
+        </div>
+      </a>
+    
+    
+      <a href="/2021/06/23/kvm%E6%A8%A1%E5%9D%97%E5%88%9D%E5%A7%8B%E5%8C%96/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">kvm模块初始化</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: '',
+        app_key: '',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'mp',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2021
+        Drag0nf1y
+      </li>
+      <li>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+    <div class="to_top">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+      </div>
+    </main>
+      <aside class="sidebar">
+        <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.svg" alt="Drag0nf1y"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives/">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/">标签</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E7%A0%94%E7%A9%B6/">研究</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about/">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="Search">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+      </aside>
+      <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>请我喝杯咖啡吧~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+      
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script src="/js/share.js"></script>
+
+
+
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+
+
+
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer:'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto',
+    onClick: (e) => {
+      $('.toc-link').removeClass('is-active-link');
+      $(`a[href=${e.target.hash}]`).addClass('is-active-link');
+      $(e.target.hash).scrollIntoView();
+      return false;
+    }
+  });
+</script>
+
+
+<script>
+  var ayerConfig = {
+    mathjax: false
+  }
+</script>
+
+
+<script src="/js/ayer.js"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+  </div>
+</body>
+
+</html>

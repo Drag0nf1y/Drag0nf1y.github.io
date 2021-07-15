@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="description" content="Drag0nf1y" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    kvm模块初始化 |  Drag0nf1y
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="/favicon.ico" />
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+<script src="/js/pace.min.js"></script>
+
+
+  
+
+  
+
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content">
+      <section class="outer">
+  <article id="post-kvm模块初始化" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  kvm模块初始化
+</h1>
+  
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2021/06/23/kvm%E6%A8%A1%E5%9D%97%E5%88%9D%E5%A7%8B%E5%8C%96/" class="article-date">
+  <time datetime="2021-06-23T08:25:57.000Z" itemprop="datePublished">2021-06-23</time>
+</a>
+      
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/qemu/">qemu</a> / <a class="article-category-link" href="/categories/qemu/kvm/">kvm</a>
+  </div>
+
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">2.5k字</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">11分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+      <h1 id="kvm模块初始化"><a href="#kvm模块初始化" class="headerlink" title="kvm模块初始化"></a>kvm模块初始化</h1><h2 id="kvm源码组织"><a href="#kvm源码组织" class="headerlink" title="kvm源码组织"></a>kvm源码组织</h2><p>所有架构通用的主体代码位于virt/kvm目录下。</p>
+<p>arch/x86/kvm下的代码表示x86架构虚拟化相关实现的代码。</p>
+<p>使用kvm需要加载两个模块，kvm.ko/kvm_intel.ko AMD(kvm-amd.ko)</p>
+<p>intel的实现为vmx.c，AMD的实现为svm.c</p>
+<p>kvm.ko：初始化代码不做任何事情，只是把代码加载到内存中，提供用户空间的接口，会调用kvm_intel.ko的代码</p>
+<p>kvm_intel.ko：kvm的开启和关闭都是通过kvm_intel.ko来完成的</p>
+<h2 id="kvm模块初始化-1"><a href="#kvm模块初始化-1" class="headerlink" title="kvm模块初始化"></a>kvm模块初始化</h2><p><img src="/2021/06/23/kvm%E6%A8%A1%E5%9D%97%E5%88%9D%E5%A7%8B%E5%8C%96/6f7f6a6c7e9c5a97fb43b3be02d04608.png" alt="6f7f6a6c7e9c5a97fb43b3be02d04608.png"></p>
+<p>KVM模块可以编译进内核中，也可以作为内核模块在Linux系统启动完成之后加载。加载时，KVM 根据主机所用的体系架构是 Intel的 VMX技术还是AMD的SVM技术，会采用略微不同的加载流程。Linux的子模块入口通常通过module_init宏进行定义，由内核进行调用。</p>
+<p>KVM的初始化流程如下图</p>
+<p><img src="/2021/06/23/kvm%E6%A8%A1%E5%9D%97%E5%88%9D%E5%A7%8B%E5%8C%96/1a9c76377fc6ed67379961ace94b13af.png" alt="1a9c76377fc6ed67379961ace94b13af.png"></p>
+<p>KVM的初始化步骤分为以下三步。</p>
+<p>1）在平台相关的KVM模块中通过module_init宏正式进入KVM的初始化阶段，并且执行相关的硬件初始化准备。(arch/x86/kvm/vmx.c)</p>
+<p>2）进入kvm_main.c中的kvm_init函数进行正式的初始化工作，期间进行了一系列子操作。(virt/kvm/kvm_main.c)</p>
+<p>注: vmx.c中定义了一个结构体vmx_x86_ops, 这是函数指针集合(各种操作的集合). 初始化很多动作以及iotcl调用也都会用到这些函数. 作为参数传给kvm_init(), 再传给kvm_arch_init(), 在传递到全局变量kvm_x86_ops.</p>
+<ul>
+<li>通过kvm_arch_init函数初始化KVM内部的一些数据结构：注册全局变量kvm_x86_ops、初始化MMU等数据结构、初始化Timer定时器架构。(arch/x86/kvm/x86.c)</li>
+<li>分配KVM内部操作所需要的内存空间。</li>
+<li>调用kvm_x86_ops的hardware_setup函数进行具体的硬件体系结构的初始化工作。</li>
+<li>注册sysfs和devfs等API接口信息。</li>
+<li>最后初始化debugfs的调试信息。<br>3）进行后续的硬件初始化准备操作。</li>
+</ul>
+<p>kvm模块的初始化主要包括初始化cpu以及与架构无关的数据和设置与架构相关的 虚拟化支持。</p>
+<p>VMM只有在cpu处于实模式下并且开启分页机制的时候才能进入VMX模式。kvm_intel.ko的模块注册函数为：vmx_init()主要任务就是为了调用架构无关的函数kvm_init进行kvm模块的初始化。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; arch&#x2F;x86&#x2F;kvm&#x2F;vmx.c</span><br><span class="line"></span><br><span class="line">static int __init vmx_init(void)</span><br><span class="line">&#123;</span><br><span class="line">    int r, cpu;</span><br><span class="line">    r &#x3D; kvm_init(&amp;vmx_x86_ops, sizeof(struct vcpu_vmx),</span><br><span class="line">             __alignof__(struct vcpu_vmx), THIS_MODULE);</span><br><span class="line">    if (r)</span><br><span class="line">        return r;</span><br><span class="line">    ···</span><br><span class="line">&#125;</span><br><span class="line">module_init(vmx_init)</span><br></pre></td></tr></table></figure>
+
+<p>调用kvm_init的</p>
+<ul>
+<li><p>第一个参数vmx_x86_ops表示的是intel VT-x具体实现的各种回调函数，这是一个非常大的结构，包括具体的硬件检测、虚拟机创建vcpu的实现，寄存器的设置，虚拟机的退出等处理函数。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">static struct kvm_x86_ops vmx_x86_ops __ro_after_init &#x3D; &#123;</span><br><span class="line">    .cpu_has_kvm_support &#x3D; cpu_has_kvm_support,</span><br><span class="line">    .disabled_by_bios &#x3D; vmx_disabled_by_bios,</span><br><span class="line">    .hardware_setup &#x3D; hardware_setup,</span><br><span class="line">    .hardware_unsetup &#x3D; hardware_unsetup,</span><br><span class="line">    ····</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>第二个参数表示vmx实现的vcpu结构体的大小<br>kvm_int函数声明在virt/kvm/kvm_main.c中</p>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line">int kvm_init(void *opaque, unsigned vcpu_size, unsigned vcpu_align,</span><br><span class="line">          struct module *module)</span><br><span class="line">&#123;</span><br><span class="line">    int r;</span><br><span class="line">    int cpu;</span><br><span class="line">    r &#x3D; kvm_arch_init(opaque);&#x2F;&#x2F;void *参数类型：主要是架构相关的检查和初始化</span><br><span class="line">    if (r)</span><br><span class="line">        goto out_fail;</span><br><span class="line">    &#x2F;*</span><br><span class="line">     * kvm_arch_init makes sure there&#39;s at most one caller</span><br><span class="line">     * for architectures that support multiple implementations,</span><br><span class="line">     * like intel and amd on x86.</span><br><span class="line">     * kvm_arch_init must be called before kvm_irqfd_init to avoid creating</span><br><span class="line">     * conflicts in case kvm is already setup for another implementation.</span><br><span class="line">     *&#x2F;</span><br><span class="line">    r &#x3D; kvm_irqfd_init();&#x2F;&#x2F;初始化irqfd相关的数据，主要是创建一个线程</span><br><span class="line">    if (r)</span><br><span class="line">        goto out_irqfd;</span><br><span class="line">    if (!zalloc_cpumask_var(&amp;cpus_hardware_enabled, GFP_KERNEL)) &#123;</span><br><span class="line">        r &#x3D; -ENOMEM;</span><br><span class="line">        goto out_free_0;</span><br><span class="line">    &#125;</span><br><span class="line">    r &#x3D; kvm_arch_hardware_setup();&#x2F;&#x2F;创建一些和启动kvm相关的数据结构以及初始化一些硬件特性。</span><br><span class="line">    if (r &lt; 0)</span><br><span class="line">        goto out_free_0a;</span><br><span class="line">    for_each_online_cpu(cpu) &#123;</span><br><span class="line">        smp_call_function_single(cpu,</span><br><span class="line">                kvm_arch_check_processor_compat,&#x2F;&#x2F;对每个cpu检测特性是否一致。</span><br><span class="line">                &amp;r, 1);</span><br><span class="line">        if (r &lt; 0)</span><br><span class="line">            goto out_free_1;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    r &#x3D; register_cpu_notifier(&amp;kvm_cpu_notifier);&#x2F;&#x2F;注册通知对象，当cpu热插拔的时候就会被通知</span><br><span class="line"></span><br><span class="line">    if (r)</span><br><span class="line">        goto out_free_2;</span><br><span class="line">    register_reboot_notifier(&amp;kvm_reboot_notifier);&#x2F;&#x2F;注册通知对象，当系统重启时，会得到通知</span><br><span class="line">    &#x2F;* A kmem cache lets us meet the alignment requirements of fx_save. *&#x2F;</span><br><span class="line">    if (!vcpu_align)</span><br><span class="line">        vcpu_align &#x3D; __alignof__(struct kvm_vcpu);</span><br><span class="line">    kvm_vcpu_cache &#x3D; kmem_cache_create(&quot;kvm_vcpu&quot;, vcpu_size, vcpu_align,</span><br><span class="line">                       SLAB_ACCOUNT, NULL);&#x2F;&#x2F;创建vcpu结构体的cache赋值给vcpu_cache,之后能比较快地分配vcpu空间</span><br><span class="line">    if (!kvm_vcpu_cache) &#123;</span><br><span class="line">        r &#x3D; -ENOMEM;</span><br><span class="line">        goto out_free_3;</span><br><span class="line">    &#125;</span><br><span class="line">    r &#x3D; kvm_async_pf_init();&#x2F;&#x2F;异步</span><br><span class="line">    if (r)</span><br><span class="line">        goto out_free;</span><br><span class="line">    kvm_chardev_ops.owner &#x3D; module; &#x2F;&#x2F;&quot;&#x2F;dev&#x2F;kvm&quot;设备对应的file_ops</span><br><span class="line">    kvm_vm_fops.owner &#x3D; module;&#x2F;&#x2F;创建的vm对应的fd的file_ops</span><br><span class="line">    kvm_vcpu_fops.owner &#x3D; module;&#x2F;&#x2F;vcpu对应的fd 的file_ops</span><br><span class="line">    r &#x3D; misc_register(&amp;kvm_dev);&#x2F;&#x2F;注册misc设备为kvm_dev</span><br><span class="line">    if (r) &#123;</span><br><span class="line">        pr_err(&quot;kvm: misc device register failed\n&quot;);</span><br><span class="line">        goto out_unreg;</span><br><span class="line">    &#125;</span><br><span class="line">    register_syscore_ops(&amp;kvm_syscore_ops);</span><br><span class="line">    kvm_preempt_ops.sched_in &#x3D; kvm_sched_in;&#x2F;&#x2F;vcpu所在线程被抢占会调用</span><br><span class="line">    kvm_preempt_ops.sched_out &#x3D; kvm_sched_out;&#x2F;&#x2F;vcpu所在线程被调度会被调用</span><br><span class="line">    r &#x3D; kvm_init_debug();&#x2F;&#x2F;初始化调试信息</span><br><span class="line">    if (r) &#123;</span><br><span class="line">        pr_err(&quot;kvm: create debugfs files failed\n&quot;);</span><br><span class="line">        goto out_undebugfs;</span><br><span class="line">    &#125;</span><br><span class="line">    r &#x3D; kvm_vfio_ops_init();&#x2F;&#x2F;vfio的操作初始化</span><br><span class="line">    ···</span><br><span class="line">    return r;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="kvm-arch-init"><a href="#kvm-arch-init" class="headerlink" title="kvm_arch_init()"></a>kvm_arch_init()</h3><p><strong>kvm_arch_init()主要是检查架构相关和初始化：</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;arch&#x2F;x86&#x2F;kvm&#x2F;x86.c</span><br><span class="line">&#x2F;&#x2F; CPUID.1:ECX.VMX[bit 5] -&gt; VT 必须支持</span><br><span class="line">ops-&gt;cpu_has_kvm_support();</span><br><span class="line">&#x2F;&#x2F; bios必须支持</span><br><span class="line">ops-&gt;disable_by_bios();</span><br><span class="line">&#x2F;&#x2F; FPU和FXSR必须支持</span><br><span class="line">!boot_cpu_has(x86_FEATURE_FPU) || !boot_cpu_has(X86_FEATURE_FXSR);</span><br><span class="line"></span><br><span class="line">int kvm_arch_init(void *opaque)</span><br><span class="line">&#123;</span><br><span class="line">    int r;</span><br><span class="line">    struct kvm_x86_ops *ops &#x3D; opaque;</span><br><span class="line">    if (kvm_x86_ops) &#123;</span><br><span class="line">        printk(KERN_ERR &quot;kvm: already loaded the other module\n&quot;);</span><br><span class="line">        r &#x3D; -EEXIST;</span><br><span class="line">        goto out;</span><br><span class="line">    &#125;</span><br><span class="line">    if (!ops-&gt;cpu_has_kvm_support()) &#123;</span><br><span class="line">        printk(KERN_ERR &quot;kvm: no hardware support\n&quot;);</span><br><span class="line">        r &#x3D; -EOPNOTSUPP;</span><br><span class="line">        goto out;</span><br><span class="line">    &#125;</span><br><span class="line">    if (ops-&gt;disabled_by_bios()) &#123;</span><br><span class="line">        printk(KERN_ERR &quot;kvm: disabled by bios\n&quot;);</span><br><span class="line">        r &#x3D; -EOPNOTSUPP;</span><br><span class="line">        goto out;</span><br><span class="line">    &#125;</span><br><span class="line">    r &#x3D; -ENOMEM;</span><br><span class="line">    shared_msrs &#x3D; alloc_percpu(struct kvm_shared_msrs);</span><br><span class="line">    if (!shared_msrs) &#123;</span><br><span class="line">        printk(KERN_ERR &quot;kvm: failed to allocate percpu kvm_shared_msrs\n&quot;);</span><br><span class="line">        goto out;</span><br><span class="line">    &#125;</span><br><span class="line">    r &#x3D; kvm_mmu_module_init();</span><br><span class="line">    if (r)</span><br><span class="line">        goto out_free_percpu;</span><br><span class="line">    kvm_set_mmio_spte_mask();</span><br><span class="line">    kvm_x86_ops &#x3D; ops;</span><br><span class="line">    kvm_mmu_set_mask_ptes(PT_USER_MASK, PT_ACCESSED_MASK,</span><br><span class="line">            PT_DIRTY_MASK, PT64_NX_MASK, 0);</span><br><span class="line">    kvm_timer_init();</span><br><span class="line">    perf_register_guest_info_callbacks(&amp;kvm_guest_cbs);</span><br><span class="line">    if (cpu_has_xsave)</span><br><span class="line">        host_xcr0 &#x3D; xgetbv(XCR_XFEATURE_ENABLED_MASK);</span><br><span class="line">    kvm_lapic_init();</span><br><span class="line">    ···</span><br><span class="line">    return r;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="kvm-arch-hardware-setup"><a href="#kvm-arch-hardware-setup" class="headerlink" title="kvm_arch_hardware_setup"></a>kvm_arch_hardware_setup</h3><p><strong>kvm_init中第二个比较特别的函数：kvm_arch_hardware_setup</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">int kvm_arch_hardware_setup(void)</span><br><span class="line">&#123;</span><br><span class="line">    int r;</span><br><span class="line">    r &#x3D; kvm_x86_ops-&gt;hardware_setup();</span><br><span class="line">    if (r !&#x3D; 0)</span><br><span class="line">        return r;</span><br><span class="line">    if (kvm_has_tsc_control) &#123;</span><br><span class="line">        &#x2F;*</span><br><span class="line">         * Make sure the user can only configure tsc_khz values that</span><br><span class="line">         * fit into a signed integer.</span><br><span class="line">         * A min value is not calculated needed because it will always</span><br><span class="line">         * be 1 on all machines.</span><br><span class="line">         *&#x2F;</span><br><span class="line">        u64 max &#x3D; min(0x7fffffffULL,</span><br><span class="line">                  __scale_tsc(kvm_max_tsc_scaling_ratio, tsc_khz));</span><br><span class="line">        kvm_max_guest_tsc_khz &#x3D; max;</span><br><span class="line">        kvm_default_tsc_scaling_ratio &#x3D; 1ULL &lt;&lt; kvm_tsc_scaling_ratio_frac_bits;</span><br><span class="line">    &#125;</span><br><span class="line">    kvm_init_msr_list();</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>本质上是调用了<code>kvm_x86_ops-&gt;hardware_setup()</code></p>
+<p>这里的成员函数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; arch&#x2F;x86&#x2F;kvm&#x2F;vmx&#x2F;capabilities.h</span><br><span class="line">extern struct vmcs_config vmcs_config;</span><br><span class="line">extern struct vmx_capability vmx_capability;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; arch&#x2F;x86&#x2F;kvm&#x2F;vmx&#x2F;vmx.c</span><br><span class="line">if (setup_vmcs_config(&amp;vmcs_config, &amp;vmx_capability) &lt; 0)</span><br><span class="line">    return -EIO;</span><br><span class="line">    </span><br><span class="line">    ···</span><br><span class="line">kvm_set_posted_intr_wakeup_handler(wakeup_handler);</span><br><span class="line">    return alloc_kvm_area();</span><br><span class="line">    ···</span><br></pre></td></tr></table></figure>
+
+<p>这里调用<code>setup_vmcs_config</code>设置一个全局变量vmcs_config，具体实现就是读取MSR寄存器，检查CPU支持VMX的能力</p>
+<p>之后会创建虚拟CPU的时候会用到这个配置来初始化VMCS，</p>
+<h3 id="kvm-arch-hardware-setup-1"><a href="#kvm-arch-hardware-setup-1" class="headerlink" title="kvm_arch_hardware_setup()"></a>kvm_arch_hardware_setup()</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">void kvm_arch_check_processor_compat(void *rtn)</span><br><span class="line">&#123;</span><br><span class="line">    kvm_x86_ops-&gt;check_processor_compatibility(rtn);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>实际上就是调用了kvm_x86_ops的成员函数<code>check_processor_compatibility</code></p>
+<p>kvm_init对每个在线的cpu都调用了<code>kvm_arch_check_processor_compat</code></p>
+<p>也就就下面这玩意中的回调函数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">static struct kvm_x86_ops vmx_x86_ops &#x3D; &#123;</span><br><span class="line">    .cpu_has_kvm_support &#x3D; cpu_has_kvm_support,</span><br><span class="line">    .disabled_by_bios &#x3D; vmx_disabled_by_bios,</span><br><span class="line">    .hardware_setup &#x3D; hardware_setup,</span><br><span class="line">    .hardware_unsetup &#x3D; hardware_unsetup,</span><br><span class="line">    .check_processor_compatibility &#x3D; vmx_check_processor_compat,</span><br><span class="line">    ···</span><br></pre></td></tr></table></figure>
+
+<p>他的具体实现为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">static void __init vmx_check_processor_compat(void *rtn)</span><br><span class="line">&#123;</span><br><span class="line">    struct vmcs_config vmcs_conf;</span><br><span class="line">    *(int *)rtn &#x3D; 0;</span><br><span class="line">    if (setup_vmcs_config(&amp;vmcs_conf) &lt; 0)</span><br><span class="line">        *(int *)rtn &#x3D; -EIO;</span><br><span class="line">    if (memcmp(&amp;vmcs_config, &amp;vmcs_conf, sizeof(struct vmcs_config)) !&#x3D; 0) &#123;</span><br><span class="line">        printk(KERN_ERR &quot;kvm: CPU %d feature inconsistency!\n&quot;,</span><br><span class="line">                smp_processor_id());</span><br><span class="line">        *(int *)rtn &#x3D; -EIO;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>实现中的主要内容为：对当前的物理cpu生成ygvmcs_conf,然后和全局的vmcs_config做比较，确保所有的cpu的配置文件是相同的，以保持一致性。这样就能保证调度的时候，不会出现错误。</p>
+<h3 id="misc设备-“-dev-kvm”"><a href="#misc设备-“-dev-kvm”" class="headerlink" title="misc设备 “/dev/kvm”"></a>misc设备 “/dev/kvm”</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">static struct file_operations kvm_chardev_ops &#x3D; &#123;</span><br><span class="line">    .unlocked_ioctl &#x3D; kvm_dev_ioctl,</span><br><span class="line">    .compat_ioctl   &#x3D; kvm_dev_ioctl,</span><br><span class="line">    .llseek     &#x3D; noop_llseek,</span><br><span class="line">&#125;;</span><br><span class="line">static struct miscdevice kvm_dev &#x3D; &#123;</span><br><span class="line">    KVM_MINOR,</span><br><span class="line">    &quot;kvm&quot;,</span><br><span class="line">    &amp;kvm_chardev_ops,</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">····</span><br><span class="line">kvm_init():</span><br><span class="line">kvm_chardev_ops.owner &#x3D; module;</span><br><span class="line">    kvm_vm_fops.owner &#x3D; module;</span><br><span class="line">    kvm_vcpu_fops.owner &#x3D; module;</span><br><span class="line">    r &#x3D; misc_register(&amp;kvm_dev);</span><br><span class="line">    if (r) &#123;</span><br><span class="line">        pr_err(&quot;kvm: misc device register failed\n&quot;);</span><br><span class="line">        goto out_unreg;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>创建一个misc设备，这个kvm_dev的file_ops是kvm_chardev_ops。可以看到这个设备只支持ioctl系统调用。这些系统调用会被misc设备框架处理。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">static long kvm_dev_ioctl(struct file *filp,</span><br><span class="line">              unsigned int ioctl, unsigned long arg)</span><br><span class="line">&#123;</span><br><span class="line">    long r &#x3D; -EINVAL;</span><br><span class="line">    switch (ioctl) &#123;</span><br><span class="line">    case KVM_GET_API_VERSION:&#x2F;&#x2F;返回kvm版本号</span><br><span class="line">        if (arg)</span><br><span class="line">            goto out;</span><br><span class="line">        r &#x3D; KVM_API_VERSION;&#x2F;&#x2F;</span><br><span class="line">        break;</span><br><span class="line">    case KVM_CREATE_VM:&#x2F;&#x2F;</span><br><span class="line">        r &#x3D; kvm_dev_ioctl_create_vm(arg);</span><br><span class="line">        break;</span><br><span class="line">    case KVM_CHECK_EXTENSION:&#x2F;&#x2F;检查对通用扩展的支持</span><br><span class="line">        r &#x3D; kvm_vm_ioctl_check_extension_generic(NULL, arg);</span><br><span class="line">        break;</span><br><span class="line">    case KVM_GET_VCPU_MMAP_SIZE:&#x2F;&#x2F;返回qemu&#x2F;kvm共享内存的大小</span><br><span class="line">        if (arg)</span><br><span class="line">            goto out;</span><br><span class="line">        r &#x3D; PAGE_SIZE;     &#x2F;* struct kvm_run *&#x2F;</span><br><span class="line">#ifdef CONFIG_X86</span><br><span class="line">        r +&#x3D; PAGE_SIZE;    &#x2F;* pio data page *&#x2F;</span><br><span class="line">#endif</span><br><span class="line">#ifdef KVM_COALESCED_MMIO_PAGE_OFFSET</span><br><span class="line">        r +&#x3D; PAGE_SIZE;    &#x2F;* coalesced mmio ring page *&#x2F;</span><br><span class="line">#endif</span><br><span class="line">        break;</span><br><span class="line">    case KVM_TRACE_ENABLE:</span><br><span class="line">    case KVM_TRACE_PAUSE:</span><br><span class="line">    case KVM_TRACE_DISABLE:</span><br><span class="line">        r &#x3D; -EOPNOTSUPP;</span><br><span class="line">        break;</span><br><span class="line">    default:</span><br><span class="line">        return kvm_arch_dev_ioctl(filp, ioctl, arg);&#x2F;&#x2F;架构相关接口</span><br><span class="line">    &#125;</span><br><span class="line">out:</span><br><span class="line">    return r;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>与kvm层面相关的交互ioctl对应的是VM层面和VCPU层面的ioctl,分别在kvm_vm_fops和kvm_vcpu_fops这两个file_ops中定义。</p>
+<h3 id="summary"><a href="#summary" class="headerlink" title="summary"></a>summary</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">vmx_init()                               &#x2F;&#x2F; 初始化入口</span><br><span class="line"> ├─ kvm_init(KVM_GET_API_VERSION)        &#x2F;&#x2F; 初始化KVM框架</span><br><span class="line"> |   ├─ kvm_arch_init()                  &#x2F;&#x2F; 架构相关初始化</span><br><span class="line"> |   |   ├─ cpu_has_kvm_support()         &#x2F;&#x2F; CPU是否支持kvm</span><br><span class="line"> |   |   ├─ disabled_by_bios()            &#x2F;&#x2F; bios是否禁用vt</span><br><span class="line"> |   |   ├─ boot_cpu_has()                &#x2F;&#x2F; CPU是否支持一些特性</span><br><span class="line"> |   |   ├─ kmem_cache_create(&quot;x86_fpu&quot;)  &#x2F;&#x2F; x86_fpu kmem_cache</span><br><span class="line"> |   |   ├─ alloc_percpu()                &#x2F;&#x2F; kvm_shared_msrs</span><br><span class="line"> |   |   ├─ kvm_mmu_module_init()         &#x2F;&#x2F; mmu模块初始化</span><br><span class="line"> |   |   ├─ kvm_mmu_set_mask_ptes()       &#x2F;&#x2F; shadow pte mask设置</span><br><span class="line"> |   |   ├─ kvm_timer_init()              &#x2F;&#x2F; 时钟初始化</span><br><span class="line"> |   |   ├─ kvm_lapic_init()              &#x2F;&#x2F; lapic初始化</span><br><span class="line"> |   ├─ kvm_irqfd_init()                 &#x2F;&#x2F;</span><br><span class="line"> |   ├─ kvm_arch_hardware_setup()        &#x2F;&#x2F;</span><br><span class="line"> |   |   ├─ kvm_x86_ops-&gt;hardware_setup() &#x2F;&#x2F; CPU是否支持kvm</span><br><span class="line"> |   |   |  ├─ rdmsrl_safe()              &#x2F;&#x2F; 读msr</span><br><span class="line"> |   |   |  ├─ store_idt()                &#x2F;&#x2F; 保存idt</span><br><span class="line"> |   |   |  ├─ setup_vmcs_config()        &#x2F;&#x2F; 建立vmcs_config和vmx_capability</span><br><span class="line"> |   |   |  ├─ boot_cpu_has()             &#x2F;&#x2F; CPU特性支持</span><br><span class="line"> |   |   |  ├─ cpu_has_vmx_vpid()         &#x2F;&#x2F; cpu是否支持vpid</span><br><span class="line"> |   |   |  ├─ cpu_has_vmx_invvpid()      &#x2F;&#x2F; cpu是否支持invvpid</span><br><span class="line"> |   |   |  ├─ cpu_has_vmx_ept()          &#x2F;&#x2F; cpu是否支持ept</span><br><span class="line"> |   |   |  ├─ kvm_configure_mmu()       &#x2F;&#x2F; mmu相关硬件判断和全局变量</span><br><span class="line"> |   |   |  ├─ cpu_has_vmx_XXX()          &#x2F;&#x2F; cpu是否有XXX</span><br><span class="line"> |   |   |  ├─ vmx_enable_tdp()           &#x2F;&#x2F; ept支持时开启tdp</span><br><span class="line"> |   |   |  ├─ kvm_disable_tdp()          &#x2F;&#x2F; 关闭tdp</span><br><span class="line"> |   |   |  ├─ kvm_set_posted_intr_wakeup_handler()     &#x2F;&#x2F; posted intr wakeup handler</span><br><span class="line"> |   |   |  └─ alloc_kvm_area()           &#x2F;&#x2F; 给每个cpu分配一个struct vmcs</span><br><span class="line"> |   |   └─ kvm_init_msr_list()           &#x2F;&#x2F; 将msr保存到全局变量msrs_to_save[]数组</span><br><span class="line"> |   ├─ smp_call_function_single()       &#x2F;&#x2F; 对每个online cpu进行兼容性检查</span><br><span class="line"> |   ├─ cpuhp_setup_state_nocalls()      &#x2F;&#x2F; 注册cpu状态变化的回调函数</span><br><span class="line"> |   ├─ register_reboot_notifier()       &#x2F;&#x2F; 注册reboot时候的通知函数</span><br><span class="line"> |   ├─ kvm_cache_create_usercopy()      &#x2F;&#x2F; 创建vcpu 的 kmem cache, 对象大小是sizeof(struct vcpu_vmx)</span><br><span class="line"> |   ├─ kvm_async_pf_init()              &#x2F;&#x2F; 异步</span><br><span class="line"> |   ├─ misc_register(&amp;kvm_dev)          &#x2F;&#x2F; 注册字符设备文件&#x2F;dev&#x2F;kvm</span><br><span class="line"> |   ├─ register_syscore_ops()           &#x2F;&#x2F; 注册系统核心函数, 这里是suspend和resume</span><br><span class="line"> |   ├─ kvm_init_debug()                 &#x2F;&#x2F; 初始化debugfs</span><br><span class="line"> |   └─ kvm_vfio_ops_init()              &#x2F;&#x2F; vfio的操作初始化</span><br><span class="line"> ├─ vmx_setup_l1d_flush()                &#x2F;&#x2F;</span><br><span class="line"> └─ vmx_check_vmcs12_offsets()</span><br></pre></td></tr></table></figure>
+
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><p>[1].<a href="https://www.codenong.com/cs106477227/" target="_blank" rel="noopener">https://www.codenong.com/cs106477227/</a></p>
+<p>[2].qemu/kvm源码解析与利用 李强</p>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong s>
+              本博客所有文章除特别声明外，均采用 <a href="https://www.apache.org/licenses/LICENSE-2.0.html" rel="external nofollow"
+                target="_blank">Apache License 2.0</a> 许可协议。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://drag0nf1y.github.io/2021/06/23/kvm%E6%A8%A1%E5%9D%97%E5%88%9D%E5%A7%8B%E5%8C%96/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/kvm/" rel="tag">kvm</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/qemu/" rel="tag">qemu</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+      <a href="/2021/06/30/1.SoK/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            1.SoK
+          
+        </div>
+      </a>
+    
+    
+      <a href="/2021/06/23/arch-x86-kvm-vmx-c-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%88%87%E6%8D%A2%E5%88%87%E5%87%BA/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">arch-x86-kvm-vmx-c-虚拟机切换切出</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: '',
+        app_key: '',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'mp',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2021
+        Drag0nf1y
+      </li>
+      <li>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+    <div class="to_top">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+      </div>
+    </main>
+      <aside class="sidebar">
+        <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.svg" alt="Drag0nf1y"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives/">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/">标签</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E7%A0%94%E7%A9%B6/">研究</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about/">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="Search">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+      </aside>
+      <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>请我喝杯咖啡吧~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+      
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script src="/js/share.js"></script>
+
+
+
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+
+
+
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer:'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto',
+    onClick: (e) => {
+      $('.toc-link').removeClass('is-active-link');
+      $(`a[href=${e.target.hash}]`).addClass('is-active-link');
+      $(e.target.hash).scrollIntoView();
+      return false;
+    }
+  });
+</script>
+
+
+<script>
+  var ayerConfig = {
+    mathjax: false
+  }
+</script>
+
+
+<script src="/js/ayer.js"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+  </div>
+</body>
+
+</html>

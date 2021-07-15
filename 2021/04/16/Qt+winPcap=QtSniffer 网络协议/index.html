@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="description" content="Drag0nf1y" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    Qt+winPcap=QtSniffer 网络协议 |  Drag0nf1y
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="/favicon.ico" />
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+<script src="/js/pace.min.js"></script>
+
+
+  
+
+  
+
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content">
+      <section class="outer">
+  <article id="post-Qt+winPcap=QtSniffer 网络协议" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  Qt+winPcap=QtSniffer 网络协议
+</h1>
+  
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2021/04/16/Qt+winPcap=QtSniffer%20%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE/" class="article-date">
+  <time datetime="2021-04-16T13:26:22.450Z" itemprop="datePublished">2021-04-16</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">681字</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">3分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+      <h1 id="Qt-winPcap-QtSniffer-网络协议"><a href="#Qt-winPcap-QtSniffer-网络协议" class="headerlink" title="Qt+winPcap=QtSniffer: 网络协议"></a>Qt+winPcap=QtSniffer: 网络协议</h1><h2 id="protocol-h"><a href="#protocol-h" class="headerlink" title="protocol.h"></a>protocol.h</h2><p>与网络协议相关的数据结构存放在protocol.h头文件中</p>
+<h3 id="MAC头"><a href="#MAC头" class="headerlink" title="MAC头"></a>MAC头</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;Mac帧头 占14个字节</span><br><span class="line">typedef struct _ethhdr</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">    u_char dest[6];                 &#x2F;&#x2F;6个字节 目标地址</span><br><span class="line"></span><br><span class="line">    u_char src[6];                          &#x2F;&#x2F;6个字节 源地址</span><br><span class="line"></span><br><span class="line">    u_short type;                           &#x2F;&#x2F;2个字节 类型</span><br><span class="line"></span><br><span class="line">&#125;ethhdr;</span><br></pre></td></tr></table></figure>
+
+<h3 id="ARP头"><a href="#ARP头" class="headerlink" title="ARP头"></a>ARP头</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;ARP头</span><br><span class="line"></span><br><span class="line">typedef struct _arphdr</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">    u_short ar_hrd;                                       &#x2F;&#x2F;硬件类型</span><br><span class="line"></span><br><span class="line">    u_short ar_pro;                                       &#x2F;&#x2F;协议类型</span><br><span class="line"></span><br><span class="line">    u_char ar_hln;                                        &#x2F;&#x2F;硬件地址长度</span><br><span class="line"></span><br><span class="line">    u_char ar_pln;                                        &#x2F;&#x2F;协议地址长度</span><br><span class="line"></span><br><span class="line">    u_short ar_op;                                        &#x2F;&#x2F;操作码，1为请求 2为回复</span><br><span class="line"></span><br><span class="line">    u_char ar_srcmac[6];                    &#x2F;&#x2F;发送方MAC</span><br><span class="line"></span><br><span class="line">    u_char ar_srcip[4];                            &#x2F;&#x2F;发送方IP</span><br><span class="line"></span><br><span class="line">    u_char ar_destmac[6];                   &#x2F;&#x2F;接收方MAC</span><br><span class="line"></span><br><span class="line">    u_char ar_destip[4];                           &#x2F;&#x2F;接收方IP</span><br><span class="line"></span><br><span class="line">&#125;arphdr;</span><br></pre></td></tr></table></figure>
+
+<h3 id="IP头"><a href="#IP头" class="headerlink" title="IP头"></a>IP头</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;定义IP头</span><br><span class="line">typedef struct _iphdr</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">#if defined(LITTLE_ENDIAN)</span><br><span class="line"></span><br><span class="line">    u_char ihl : 4;</span><br><span class="line"></span><br><span class="line">    u_char version : 4;</span><br><span class="line"></span><br><span class="line">#elif defined(BIG_ENDIAN)</span><br><span class="line"></span><br><span class="line">    u_char version : 4;</span><br><span class="line"></span><br><span class="line">    u_char  ihl : 4;</span><br><span class="line"></span><br><span class="line">#endif</span><br><span class="line"></span><br><span class="line">    u_char tos;                             &#x2F;&#x2F;TOS 服务类型</span><br><span class="line"></span><br><span class="line">    u_short tlen;                   &#x2F;&#x2F;包总长 u_short占两个字节</span><br><span class="line"></span><br><span class="line">    u_short id;                             &#x2F;&#x2F;标识</span><br><span class="line"></span><br><span class="line">    u_short frag_off; &#x2F;&#x2F;片位移</span><br><span class="line"></span><br><span class="line">    u_char ttl;                             &#x2F;&#x2F;生存时间</span><br><span class="line"></span><br><span class="line">    u_char proto;            &#x2F;&#x2F;协议</span><br><span class="line"></span><br><span class="line">    u_short check;           &#x2F;&#x2F;校验和</span><br><span class="line"></span><br><span class="line">    u_int saddr;                    &#x2F;&#x2F;源地址</span><br><span class="line"></span><br><span class="line">    u_int daddr;                    &#x2F;&#x2F;目的地址</span><br><span class="line"></span><br><span class="line">    u_int      op_pad;       &#x2F;&#x2F;选项等</span><br><span class="line"></span><br><span class="line">&#125;iphdr;</span><br></pre></td></tr></table></figure>
+
+<h3 id="TCP头"><a href="#TCP头" class="headerlink" title="TCP头"></a>TCP头</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;定义TCP头</span><br><span class="line">typedef struct _tcphdr</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">    u_short sport;                                               &#x2F;&#x2F;源端口地址  16位</span><br><span class="line"></span><br><span class="line">    u_short dport;                                               &#x2F;&#x2F;目的端口地址 16位</span><br><span class="line"></span><br><span class="line">    u_int seq;                                                          &#x2F;&#x2F;序列号 32位</span><br><span class="line"></span><br><span class="line">    u_int ack_seq;                                               &#x2F;&#x2F;确认序列号</span><br><span class="line"></span><br><span class="line">#if defined(LITTLE_ENDIAN)</span><br><span class="line"></span><br><span class="line">    u_short res1 : 4,</span><br><span class="line"></span><br><span class="line">        doff : 4,</span><br><span class="line"></span><br><span class="line">        fin : 1,</span><br><span class="line"></span><br><span class="line">        syn : 1,</span><br><span class="line"></span><br><span class="line">        rst : 1,</span><br><span class="line"></span><br><span class="line">        psh : 1,</span><br><span class="line"></span><br><span class="line">        ack : 1,</span><br><span class="line"></span><br><span class="line">        urg : 1,</span><br><span class="line"></span><br><span class="line">        ece : 1,</span><br><span class="line"></span><br><span class="line">        cwr : 1;</span><br><span class="line"></span><br><span class="line">#elif defined(BIG_ENDIAN)</span><br><span class="line"></span><br><span class="line">    u_short doff : 4,</span><br><span class="line"></span><br><span class="line">        res1 : 4,</span><br><span class="line"></span><br><span class="line">        cwr : 1,</span><br><span class="line"></span><br><span class="line">        ece : 1,</span><br><span class="line"></span><br><span class="line">        urg : 1,</span><br><span class="line"></span><br><span class="line">        ack : 1,</span><br><span class="line"></span><br><span class="line">        psh : 1,</span><br><span class="line"></span><br><span class="line">        rst : 1,</span><br><span class="line"></span><br><span class="line">        syn : 1,</span><br><span class="line"></span><br><span class="line">        fin : 1;</span><br><span class="line"></span><br><span class="line">#endif</span><br><span class="line"></span><br><span class="line">    u_short window;                                &#x2F;&#x2F;窗口大小 16位</span><br><span class="line"></span><br><span class="line">    u_short check;                                        &#x2F;&#x2F;校验和 16位</span><br><span class="line"></span><br><span class="line">    u_short urg_ptr;                               &#x2F;&#x2F;紧急指针 16位</span><br><span class="line"></span><br><span class="line">    u_int opt;                                                   &#x2F;&#x2F;选项</span><br><span class="line"></span><br><span class="line">&#125;tcphdr;</span><br></pre></td></tr></table></figure>
+
+<h3 id="UDP头"><a href="#UDP头" class="headerlink" title="UDP头"></a>UDP头</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;定义UDP头</span><br><span class="line"></span><br><span class="line">typedef struct _udphdr</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">    u_short sport;           &#x2F;&#x2F;源端口  16位</span><br><span class="line"></span><br><span class="line">    u_short dport;           &#x2F;&#x2F;目的端口 16位</span><br><span class="line"></span><br><span class="line">    u_short len;                    &#x2F;&#x2F;数据报长度 16位</span><br><span class="line"></span><br><span class="line">    u_short check;           &#x2F;&#x2F;校验和 16位</span><br><span class="line"></span><br><span class="line">&#125;udphdr;</span><br></pre></td></tr></table></figure>
+
+<h3 id="ICMP头"><a href="#ICMP头" class="headerlink" title="ICMP头"></a>ICMP头</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">typedef struct _icmphdr</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">    u_char type;                    &#x2F;&#x2F;8位 类型</span><br><span class="line"></span><br><span class="line">    u_char code;                    &#x2F;&#x2F;8位 代码</span><br><span class="line"></span><br><span class="line">    u_char seq;                     &#x2F;&#x2F;序列号 8位</span><br><span class="line"></span><br><span class="line">    u_char chksum;           &#x2F;&#x2F;8位校验和</span><br><span class="line"></span><br><span class="line">&#125;icmphdr;</span><br></pre></td></tr></table></figure>
+
+<h3 id="各类包计数"><a href="#各类包计数" class="headerlink" title="各类包计数"></a>各类包计数</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;对各种包进行计数</span><br><span class="line">typedef struct _pktcount</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">    int n_ip;</span><br><span class="line"></span><br><span class="line">    int n_arp;</span><br><span class="line"></span><br><span class="line">    int n_tcp;</span><br><span class="line"></span><br><span class="line">    int n_udp;</span><br><span class="line"></span><br><span class="line">    int n_icmp;</span><br><span class="line"></span><br><span class="line">    int n_http;</span><br><span class="line"></span><br><span class="line">    int n_other;</span><br><span class="line"></span><br><span class="line">    int n_sum;</span><br><span class="line"></span><br><span class="line">    _pktcount() &#123;</span><br><span class="line"></span><br><span class="line">        n_ip &#x3D; 0;</span><br><span class="line"></span><br><span class="line">        n_arp &#x3D; 0;</span><br><span class="line"></span><br><span class="line">        n_tcp &#x3D; 0;</span><br><span class="line"></span><br><span class="line">        n_udp &#x3D; 0;</span><br><span class="line"></span><br><span class="line">        n_icmp &#x3D; 0;</span><br><span class="line"></span><br><span class="line">        n_http &#x3D; 0;</span><br><span class="line"></span><br><span class="line">        n_other &#x3D; 0;</span><br><span class="line"></span><br><span class="line">        n_sum &#x3D; 0;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;pktcount;</span><br></pre></td></tr></table></figure>
+
+<h3 id="数据包"><a href="#数据包" class="headerlink" title="数据包"></a>数据包</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">&#x2F;&#x2F;要保存的数据结构</span><br><span class="line"></span><br><span class="line">typedef struct _datapkt</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">    char  pktType[8];                              &#x2F;&#x2F;包类型</span><br><span class="line"></span><br><span class="line">    int time[6];                                                        &#x2F;&#x2F;时间</span><br><span class="line"></span><br><span class="line">    int len;                                                            &#x2F;&#x2F;长度</span><br><span class="line">    ethhdr* ethh;                           &#x2F;&#x2F;链路层包头</span><br><span class="line">    arphdr* arph;                           &#x2F;&#x2F;ARP包头</span><br><span class="line"></span><br><span class="line">    iphdr* iph;                                    &#x2F;&#x2F;IP包头</span><br><span class="line"></span><br><span class="line">    icmphdr* icmph;          &#x2F;&#x2F;ICMP包头</span><br><span class="line"></span><br><span class="line">    udphdr* udph;                   &#x2F;&#x2F;UDP包头</span><br><span class="line"></span><br><span class="line">    tcphdr* tcph;                           &#x2F;&#x2F;TCP包头</span><br><span class="line"></span><br><span class="line">    bool isHttp;</span><br><span class="line"></span><br><span class="line">    void* apph;                                                  &#x2F;&#x2F;应用层包头</span><br><span class="line"></span><br><span class="line">&#125;datapkt;</span><br></pre></td></tr></table></figure>
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong s>
+              本博客所有文章除特别声明外，均采用 <a href="https://www.apache.org/licenses/LICENSE-2.0.html" rel="external nofollow"
+                target="_blank">Apache License 2.0</a> 许可协议。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://drag0nf1y.github.io/2021/04/16/Qt+winPcap=QtSniffer%20%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+      <a href="/2021/04/16/Qt+winPcap=QtSniffer%20GUI/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            Qt+winPcap=QtSniffer GUI
+          
+        </div>
+      </a>
+    
+    
+      <a href="/2021/04/16/Qt+winPcap=QtSniffer%20%E6%95%B0%E6%8D%AE%E5%8C%85%E8%A7%A3%E6%9E%90/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">Qt+winPcap=QtSniffer 数据包解析</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: '',
+        app_key: '',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'mp',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2021
+        Drag0nf1y
+      </li>
+      <li>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+    <div class="to_top">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+      </div>
+    </main>
+      <aside class="sidebar">
+        <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.svg" alt="Drag0nf1y"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives/">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/">标签</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E7%A0%94%E7%A9%B6/">研究</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about/">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="Search">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+      </aside>
+      <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>请我喝杯咖啡吧~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+      
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script src="/js/share.js"></script>
+
+
+
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+
+
+
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer:'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto',
+    onClick: (e) => {
+      $('.toc-link').removeClass('is-active-link');
+      $(`a[href=${e.target.hash}]`).addClass('is-active-link');
+      $(e.target.hash).scrollIntoView();
+      return false;
+    }
+  });
+</script>
+
+
+<script>
+  var ayerConfig = {
+    mathjax: false
+  }
+</script>
+
+
+<script src="/js/ayer.js"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+  </div>
+</body>
+
+</html>
