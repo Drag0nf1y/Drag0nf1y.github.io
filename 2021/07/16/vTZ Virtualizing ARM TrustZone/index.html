@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="description" content="Drag0nf1y" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    vTZ Virtualizing ARM TrustZone |  Drag0nf1y
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="/favicon.ico" />
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+<script src="/js/pace.min.js"></script>
+
+
+  
+
+  
+
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content">
+      <section class="outer">
+  <article id="post-vTZ Virtualizing ARM TrustZone" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  vTZ Virtualizing ARM TrustZone
+</h1>
+  
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2021/07/16/vTZ%20Virtualizing%20ARM%20TrustZone/" class="article-date">
+  <time datetime="2021-07-16T03:27:06.624Z" itemprop="datePublished">2021-07-16</time>
+</a>
+      
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E7%A0%94%E7%A9%B6/">研究</a> / <a class="article-category-link" href="/categories/%E7%A0%94%E7%A9%B6/%E5%8F%AF%E4%BF%A1/">可信</a>
+  </div>
+
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">5.5k字</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">19分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+      <h1 id="vTZ-Virtualizing-ARM-TrustZone"><a href="#vTZ-Virtualizing-ARM-TrustZone" class="headerlink" title="vTZ: Virtualizing ARM TrustZone"></a>vTZ: Virtualizing ARM TrustZone</h1><h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><p>本文来自Usenix  Securiry 2017。</p>
+<p>目的：使得每个VM具有自己独立的TEE</p>
+<p>贡献：介绍一种使用现有硬件ARM TrustZone，为每个客户VM安全地提供虚拟化客户TEE的解决方案。</p>
+<p>研究对象：研究真实的TrustZone具有的安全特性，在硬件TrustZone的基础上虚拟化，通过软件实现每个VM的TrustZone。</p>
+<p>本文所介绍的vTZ，它提供了TrustZone的透明虚拟化，同时仍以最少的软件TCB保持了guest TEE之间的高度隔离。</p>
+<p><strong>关键思想</strong>：通过维护一个安全的运行虚拟机充当每个guest的guest TEE，同时使用物理TrustZone与管理程序一起在它们之间强制强隔离，从而将功能与保护分开。</p>
+<p>具体地说，vTZ使用在可信环境中运行的两个安全模块，这些模块插入了内存映射和环境切换。基于此插入，vTZ进一步提供了多个约束隔离执行环境（CIEE），它们可通过利用启用TrustZone的相同特权隔离来保护运行在其中的自包含代码段，从而使管理程序无法篡改CIEE或破坏他们的执行完整性。然后，使用CIEE包含虚拟化物理TrustZone功能的逻辑，包括安全引导，每个guest TEE的内存和设备的安全配置。</p>
+<p> vTZ还提供了控制流锁定（CFLock）来强制CIEE在某些特定点被调用并且不能被绕过。在vTZ之上构建，本文还提供了各种VM管理操作，包括VM挂起和恢复，同时保留了安全属性。</p>
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><h3 id="ARM-TrustZone"><a href="#ARM-TrustZone" class="headerlink" title="ARM TrustZone"></a>ARM TrustZone</h3><p>TrustZone是Arm A配置文件体系结构中安全体系结构的名称。TrustZone在Armv6K中首次引入，在Armv7-A和Armv8-A中也受支持。TrustZone提供了两个执行环境，它们之间具有系统范围内的硬件强制隔离，如下图所示：</p>
+<p>![image-20210518121947144](vTZ Virtualizing ARM TrustZone/image-20210518121947144.png)</p>
+<p>异常模型Exception Model将ARM分为：安全和非安全部分。</p>
+<p>非安全部分包括：NS.EL0、NS.EL1、NS.EL2；安全部分包括：EL3、S.EL2(ARMv8.4新增)、S.EL1、S.EL0。</p>
+<p><strong>注意：</strong>对安全EL2的支持最初是在Armv8.4-A中引入的，并且支持在Armv8-A中仍然是可选的。</p>
+<p>TrustZone 技术的设备提供了能够支持完全可信执行环境 (TEE) 以及安全感知应用程序和安全服务的平台。一个经典的架构图</p>
+<p>![image-20210715152941518](vTZ Virtualizing ARM TrustZone/image-20210715152941518-1626334183651.png)</p>
+<p>在安全状态之间移动所涉及的步骤的示例顺序。一次采取以下步骤：</p>
+<ol>
+<li><p>输入更高的“异常”级别需要一个异常。通常，此异常将是<code>FIQ</code>或<code>SMC</code>（安全监视器调用）异常。稍后我们<code>SMC</code>将更详细地讨论中断处理。</p>
+</li>
+<li><p>在适当的异常向量处输入EL3。在EL3中运行的软件会切换该<code>SCR_EL3.NS</code>位。</p>
+</li>
+<li><p>然后，异常返回将处理器从EL3带到S.EL1。</p>
+<p>更改安全性状态不只是在异常级别和更改<code>SCR_EL3.NS</code>位之间移动。我们还必须考虑处理器状态。这个NS位实际上就是NOT SECURITY的缩写NS。通过这个位来切换特权级处理。                                                    </p>
+</li>
+</ol>
+<p>![image-20210715153519510](vTZ Virtualizing ARM TrustZone/image-20210715153519510.png)</p>
+<p> 作为一种硬件安全机制，它包括对ARM芯片上系统（SoC）的安全扩展，覆盖了处理器，内存和外围设备。对于处理器，TrustZone将其分为两个执行环境，一个正常环境和一个可信环境。这两个环境都有自己的用户空间和内核空间，以及缓存，内存和其他资源。注意只有正常环境具有hyp模式。两者资源无法互换，但后者可以访问所有资源。在可信环境中，始终会找到一个安全的小内核（TEE-kernel）。在以监视器模式运行的安全监视器的严格监督下，这两个环境可以相互切换。通常，特殊的指令称为“安全监视器调用”（smc）用于环境切换。</p>
+<p>![image-20210715153610429](vTZ Virtualizing ARM TrustZone/image-20210715153610429.png)</p>
+<h3 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h3><p>TrustZone的隔离属性使其成为存储用户的秘密数据的理想选择。例如，Web服务器私钥和访问私钥的所有代码等。不幸的是，TrustZone几乎不提供对虚拟化的支持，因此<strong>所有VM必须共享一个可信环境</strong>，这意味着<strong>可信环境中的一个TEE内核为所有VM提供不同的TA</strong>。同时，<strong>TEE内核并非绝对安全，由于TEE内核具有比任何普通环境软件更高的特权，因此一旦遭到破坏，攻击者就可以为所欲为</strong>。</p>
+<p>在移动设备上，每个TEE都只有一个根密钥，该根密钥由厂商控制并用于TA身份验证。在TEE中运行之前，需要用根密钥对新的TA进行签名。但位于虚拟化环境上，<strong>同一主机上的所有VM必须共享一个TEE内核</strong>。也会受到供应商的TEE内核中各种安全漏洞的影响。</p>
+<p>这促使本文<strong>设计vTZ以虚拟化TrustZone，以供多个虚拟机无缝衔接，同时保留基于硬件的TrustZone提供的安全属性，以便每个虚拟机可以在安全且隔离的环境中运行其自己的TEE内核</strong>。</p>
+<h2 id="设计"><a href="#设计" class="headerlink" title="设计"></a>设计</h2><p>首先，vTZ必须是强安全性保证且高性能运行。为了实现这两点，首先需要分析真实TrustZone，得到虚拟化后必要保留安全属性，如图。</p>
+<p>![image-20210715154340601](vTZ Virtualizing ARM TrustZone/image-20210715154340601.png)</p>
+<p>为了实施这些属性，vTZ需要解决以下挑战：</p>
+<ul>
+<li><p>挑战1：感染后的虚拟机管理程序可能会违反引导顺序，或者引导受到感染甚至是恶意的guest TEE内核。（启动）</p>
+</li>
+<li><p>挑战2：感染后的虚拟机管理程序可能会通过篡改guest TEE的CPU状态来劫持它的执行。执行环境切换时，它甚至可能切换到恶意TEE。（CPU状态）</p>
+</li>
+<li><p>挑战3：一旦虚拟机管理程序遭到破坏，guest TEE拥有的安全内存就没有任何保密性和完整性保证。（内存隔离）</p>
+</li>
+<li><p>挑战4：guest TEE信任配置为安全的外围设备。恶意管理程序可能会向guest TEE提供恶意虚拟外围设备。（设备）</p>
+</li>
+</ul>
+<h3 id="假设和威胁模型"><a href="#假设和威胁模型" class="headerlink" title="假设和威胁模型"></a>假设和威胁模型</h3><p>本文基于如下假设和威胁模型：</p>
+<p>vTZ假定基于ARM平台，同时实现TrustZone扩展和虚拟化扩展。所有的硬件实现都是正确且值得信赖的。vTZ还假定整个系统都已安全加载，包括可信环境和普通环境的代码，这都通过TrustZone的安全启动技术来确保。直观地讲，安全启动仅在启动过程中保证系统的完整性，而不能保证其后的完整性。本文不考虑对存储器和SoC的侧通道攻击或物理攻击，例如冷启动或总线监听。<strong>本文也不考虑guest TEE中的漏洞。</strong> </p>
+<p>针对威胁模型，本文假设<strong>任何guest VM或guest TEE可能都是恶意的</strong>。就像先前使用相同特权级别保护的工作一样，<strong>本文假设系统管理程序本身不是恶意的，在系统启动过程中可以信任它以正确进行初始化。引导后，系统管理程序可能会受损。</strong></p>
+<h3 id="设计概述"><a href="#设计概述" class="headerlink" title="设计概述"></a>设计概述</h3><p>vTZ采用将功能与保护分开的原理。具体而言，vTZ依靠hypervisor来虚拟化guest TEE的功能，但利用物理TrustZone来实施保护。</p>
+<p>为了加强引导完整性，vTZ使用可信环境来检查引导顺序以及执行完整性检查。</p>
+<p>为了提供有效的内存保护，vTZ使用可信环境中的模块安全内存映射（SMM）来控制所有第二阶段转换表以及系统管理程序的转换表。</p>
+<p>可信环境切换（SWS）挂钩并检查可信环境中的所有交换机，或者为每个guest TEE保存和恢复guest CPU状态。</p>
+<p>具体来说，vTZ以hyp模式提供了一组约束隔离执行环境（CIEE）。CIEE彼此之间以及与管理程序之间都是隔离的。为了防止像ROP这样的复杂攻击，vTZ确保每个CIEE中代码片段的控制流和数据流完整性。</p>
+<p>控制流锁定（CFLock）用于在可信环境中为CIEE和安全模块提供不可绕过的挂钩。vTZ的TCB仅包含在可信环境中运行的安全模块。</p>
+<p>![image-20210715154514676](vTZ Virtualizing ARM TrustZone/image-20210715154514676.png)</p>
+<h3 id="保护机制"><a href="#保护机制" class="headerlink" title="保护机制"></a>保护机制</h3><p>vTZ利用关键四种保护机制：SMM，CFLock，SWS和CIEE，整体架构如图所示：</p>
+<p>![image-20210715154618507](vTZ Virtualizing ARM TrustZone/image-20210715154618507.png)</p>
+<p>SMM：安全的内存映射<br>安全内存映射（SMM）模块在可信环境中运行以实现内存隔离。<strong>SMM以独占方式控制hyp模式下的虚拟地址到物理地址映射以及guest VM的中间物理地址到物理地址映射。</strong>它为虚拟机管理程序提供了两个接口，一个用于加载转换表，另一个用于修改转换表的条目。基于此，SMM在每个内存映射操作上管理并实施不同的安全策略。它仅向某些特定的CIEE提供一个接口，这些CIEE包含虚拟分区控制器仿真器来配置安全策略。</p>
+<p>CFLock：控制流锁定<br>锁定控制流，意味着在某些事件中强制将控制流转移到特定代码，这样就不会绕过代码来处理该事件。<strong>当发生任何异常时，CFLock可以“锁定”控制流，这用于确保SWS和CIEE的不可饶过性。</strong>在不同的异常处理程序的入口处强制控制流。S<strong>MM还将异常表标记为只读</strong>，以强制每个异常最终将到达一个特定的处理程序。之后，某些控制流传输指令将被植入这些处理程序中。由于SMM确保虚拟机监控程序的代码是只读的，因此此类指令将永远不会被修改。</p>
+<p>SWS：安全的环境切换<br>可信环境切换（SWS）是在可信环境中运行的模块，<strong>可强制执行guest 环境切换的安全属性</strong>。SWS设置了两种类型的切换：一个guest 的VMn和VMs之间，以及虚拟机和虚拟机管理程序之间的切换。在vTZ中，这两种类型可以统一处理，因为前者也由虚拟机管理程序处理。为了实现完整的插入，<strong>SWS确保每次切换都将首先陷入到SWS本身</strong>。</p>
+<p>CIEE：受约束的隔离执行环境<br>CIEE是处于hyp模式的环境，<strong>用于实现一些模拟TrustZone功能的关键逻辑</strong>，例如虚拟化分区控制器。每个CIEE都有自己的转换表，堆栈页和安全对象，并包含一段代码，这些代码具有强大的控制流完整性和数据流完整性。同时，SMM和SWS将为不同的CIEE分配不同的功能，因此一个CIEE只能访问其自己的安全对象。每个CIEE都有针对不同guest 的安全对象的不同副本，并且一个CIEE一次只能为一位guest VM 提供服务。相关架构图：</p>
+<p>![image-20210715154736598](vTZ Virtualizing ARM TrustZone/image-20210715154736598.png)</p>
+<h3 id="TZ虚拟化"><a href="#TZ虚拟化" class="headerlink" title="TZ虚拟化"></a>TZ虚拟化</h3><p>本文接着介绍如何实现虚拟化TrustZone，以实现的必要的安全特性：</p>
+<h4 id="1、虚拟化安全启动："><a href="#1、虚拟化安全启动：" class="headerlink" title="1、虚拟化安全启动："></a>1、虚拟化安全启动：</h4><p>如右图的顶部所示。系统管理程序初始化数据结构并为guest VMn及其对应的VMs分配内存，分别将TEE内核映像和guest 普通环境OS映像加载到内存。<br>SWS模块注册对应的VM。注册过程中，SWS首先要求SMM模块从系统管理程序的转换表中删除分配给该guest 的所有内存页面映射，并检查guest 的TEE内核的完整性。SWS通过记录guest VMn和VMs的VMID在guest VMn和VMs之间创建绑定，并将其上下文数据标记为对hypervisor只读。</p>
+<p>![image-20210715154824376](vTZ Virtualizing ARM TrustZone/image-20210715154824376.png)</p>
+<h4 id="2、保护CPU状态："><a href="#2、保护CPU状态：" class="headerlink" title="2、保护CPU状态："></a>2、保护CPU状态：</h4><p>vTZ需要提供对TrustZone的相同CPU状态保护。 SWS拦截guest VM和管理程序之间的所有切换。切换包括保存当前VM的状态，查找下一个VM并还原其状态。状态的保存和还原是由SWS在可信环境中完成的，而下一个VM的发现则由管理程序完成，如右图的下半部分所示。然后SWS可以检查已还原的目标VM 。在执行过程中，SWS还可以防止虚拟机管理程序窃取或篡改VMS的上下文。例如，如果一个VM由于调度而退出，那么它的CPU状态将无法修改。此外，普通环境系统管理程序也无法修改VMs的系统控制寄存器。</p>
+<h4 id="3、虚拟化资源分区："><a href="#3、虚拟化资源分区：" class="headerlink" title="3、虚拟化资源分区："></a>3、虚拟化资源分区：</h4><p>TrustZone可以将硬件资源分配给普通环境或可信环境。提供了三个不同的资源分区。环境设置为可信后，该资源只能由可信环境访问。安全中断必须注入到可信环境中，如果它在普通环境中发生，将导致环境切换。所有三个控制器只能用于可信环境来重新分配资源。</p>
+<h4 id="4、支持TEE管理操作"><a href="#4、支持TEE管理操作" class="headerlink" title="4、支持TEE管理操作"></a>4、支持TEE管理操作</h4><p>挂起和恢复是虚拟化的两个重要操作。 vTZ增强了这些操作的正确性和安全性，如下图所示：guest TEE暂停/恢复：管理程序需要请求暂停的CIEE来保存一个guest 的所有安全状态。暂挂的CIEE将首先调用SWS来加密和哈希与guest 的vTZ相关的数据，包括CPU状态，内存分区，中断分区，设备分区等。然后，它要求SMM对所有guest 的安全页面进行加密和哈希处理，并与管理程序共享。系统管理程序将所有这些加密的数据和哈希值以及guest VMn的状态存储到快照文件中。恢复过程与暂停过程类似，但方向相反。</p>
+<p>![image-20210715154906154](vTZ Virtualizing ARM TrustZone/image-20210715154906154.png)</p>
+<h2 id="评估"><a href="#评估" class="headerlink" title="评估"></a>评估</h2><p>在实验中，本文希望回答三个问题：</p>
+<p>一是vTZ能否提供和真实TZ相同的功能和接口，并且支持现有的trust OS。</p>
+<p>二是在vTZ中运行服务应用性能如何。</p>
+<p>三是同时运行多个虚拟机性能如何。</p>
+<p>作者在ARMv7和ARMv8的开发板上部署了他们的系统，使用XEN作为虚拟机管理器，NW的内核是linux4.1。为了说明兼容性，作者移植了两个现存的trust OS运行在vTZ中。其中sel4本身提出时不是作为TZ中的trust OS，但是被业界修改后广泛的使用，成为了实际上的trust OS。第二个是一个流行的开源的trust OS。这和把一个OS移植到新的ARM片上系统是类似的。所以vTZ的兼容性是良好的。为了测试在vTZ中运行服务应用的性能，作者使用了apache和MongoDB。为了消除网络造成的影响，实验中的guest 端和服务端被放在一起。在MongoDB中，guest 端不断做插入操作。</p>
+<h3 id="性能评估"><a href="#性能评估" class="headerlink" title="性能评估"></a>性能评估</h3><p>实验结果表明在虚拟化场景下性能会有较大的损失，但是vTZ本身造成的损失很小。在Apache中，guest 端从服务端下载100M的文件，实验结果表明vTZ引起的损失也是可以接受的。在同时运行多个实例的情况下，guest 端从服务端下载20M的文件，从实验结果可以看出，XEN虚拟化本身会造成严重的性能损失，接近40%，相比之下vTZ引起的性能损失是可以接受的。如右图所示：</p>
+<p>![image-20210715154948159](vTZ Virtualizing ARM TrustZone/image-20210715154948159.png)</p>
+<p>![image-20210715154952088](vTZ Virtualizing ARM TrustZone/image-20210715154952088.png)</p>
+<h3 id="安全性分析"><a href="#安全性分析" class="headerlink" title="安全性分析"></a>安全性分析</h3><p>本文还做了安全性分析，假设强大的对手可以直接启动恶意guest （包括恶意guest TEE），甚至危害虚拟机管理程序。</p>
+<h4 id="1、破坏TrustZone属性："><a href="#1、破坏TrustZone属性：" class="headerlink" title="1、破坏TrustZone属性："></a>1、破坏TrustZone属性：</h4><p>引导保护：受感染的管理程序可能会篡改guest TEE中加载的系统映像。SWS模块将在执行之前检查映像的完整性，并且仅允许管理程序输入注册的guest TEE。同时，攻击者可能希望在其guest VMs之前引导guest VMn，然后尝试绕过安全配置。SWS将通过确保必须首先执行guest TEE来对此进行防御。<br>内存保护：受感染的虚拟机管理程序希望将一个guest 的安全内存映射到受损的VM或虚拟机管理程序本身。SMM通过控制和检查到物理地址的所有映射并确保一个guest 的安全内存只能映射到其guest TEE来防止。</p>
+<p>CPU状态保护：当guest 在其两个环境之间切换时，受感染的管理程序可能会切换到另一个恶意环境。SWS将检查guest 发出的每个环境切换操作，并确保此后必须执行目标环境。这还将禁止虚拟机管理程序忽略环境切换操作或使一个guest 的两个环境同时执行。在环境切换期间，攻击者还可能尝试篡改CPU状态。由于SWS负责保存和还原每个VM的CPU状态，并在guest 的两个环境之间同步通用寄存器，因此它将检查并拒绝篡改。</p>
+<p>外围设备保护：vTZ使guest TEE能够将中断配置为安全或正常。受感染的管理程序可能会尝试将其注入受感染的VM。CFLock确保所有中断都将首先在CIEE中处理，CIEE会识别中断的类型并将其注入guest TEE。如果该中断是非安全的，则将在以后由管理程序进行处理。系统管理程序还可以向guest TEE提供一些恶意虚拟设备。guest TEE仅信任vTZ提供的虚拟设备，而所有其他设备必须视为不信任。</p>
+<h4 id="2、入侵vTZ"><a href="#2、入侵vTZ" class="headerlink" title="2、入侵vTZ"></a>2、入侵vTZ</h4><p>篡改系统代码：攻击者可能试图在真实的安全环境中修改虚拟机监控程序，CIEE甚至安全模块的代码。硬件提供的安全启动技术使vTZ可以在系统启动期间确保所有安全模块，系统管理程序和所有CIEE的完整性。此后，SMM将确保在hyp模式下的所有代码都被写保护。同时，SMM禁止在系统启动后以hyp模式映射任何新的可执行内存，以禁止代码注入hyp模式。良性虚拟机管理程序也不需要动态加载代码。</p>
+<p>代码重用或返回guest 攻击：攻击者可能试图重用虚拟机监控程序的代码，或者让虚拟机监控程序跳至guest VM的某些代码区域以执行关键指令（例如，转换转换表）并绕过SMM。ARM有几个ISA（例如aarch64，aarch32），它们的指令是按字节对齐的。 vTZ确保在hyp模式文本部分的任何ISA下都没有关键指令，因此代码中没有ROP小工具可重复使用。同时，SMM确保在hyp模式下仅将虚拟机管理程序的代码映射为可执行文件，从而也可以防止返回guest 的攻击。</p>
+<p>DMA攻击：攻击者可能会尝试利用直接内存访问（DMA）来访问guest 安全内存或将代码注入虚拟机监控程序的内存中。 vTZ通过控制SMMU单元来防御此攻击，该单元执行DMA的地址转换。在完全控制SMMU之后，本文可以确保所有DMA都无法访问guest 的安全内存，虚拟机管理程序的文本部分或CIEE的内存。</p>
+<p><strong>调试攻击：</strong>攻击者可能还想通过在smc指令上设置调试检查点来绕过SWS或CFLock，执行操作后再返回。 vTZ控制所有受限异常处理程序的入口点，并且调试过程也处于控制之下。因此，在hyp模式下，smc指令上的调试点将触发无限迭代，因为执行调试异常处理程序的第一条指令也是smc。这是一种DoS攻击，本文不予考虑。</p>
+<h4 id="3、安全限制："><a href="#3、安全限制：" class="headerlink" title="3、安全限制："></a>3、安全限制：</h4><p>vTZ不考虑基于硬件的攻击，例如冷启动攻击或边信道攻击。同时，vTZ无法阻止DoS攻击，例如，管理程序可能永远不会执行guest TEE。但是请注意，vTZ可以确保如果guest VM使用smc指令切换到其guest TEE，则不能忽略这种切换。</p>
+<p>TEE内核可能存在错误。此类错误使攻击者可以直接从guest TEE中获取数据，甚至可以控制它。抵御这些攻击不是vTZ的目标，因为真正的TrustZone也无法处理它。但是，vTZ确实确保受损的TEE内核只能影响其相应的guest ，而不能绕过隔离或攻击其他TEE内核。总之，vTZ旨在通过TrustZone实现相同的安全级别。</p>
+<h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p>本文介绍了vTZ，该设计旨在虚拟化ARM体系结构中的TrustZone。 vTZ为每个guest 提供一个隔离的guest TEE，该TEE具有与物理可信环境相同的功能和安全性。</p>
+<p> vTZ使用在安全环境中运行的一些模块来安全地设置内存映射，环境切换和设备访问。 vTZ进一步利用正常环境中的约束隔离执行环境（CIEE）虚拟化TrustZone的功能。 vTZ的TCB仅包含安全环境中的安全模块以及系统的引导程序。vTZ带来的性能开销很小。</p>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong s>
+              本博客所有文章除特别声明外，均采用 <a href="https://www.apache.org/licenses/LICENSE-2.0.html" rel="external nofollow"
+                target="_blank">Apache License 2.0</a> 许可协议。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://drag0nf1y.github.io/2021/07/16/vTZ%20Virtualizing%20ARM%20TrustZone/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%8F%AF%E4%BF%A1/" rel="tag">可信</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%A0%94%E7%A9%B6/" rel="tag">研究</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%AE%BA%E6%96%87/" rel="tag">论文</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+    
+      <a href="/2021/07/15/HA-VMSI%20A%20Lightweight%20Virtual%20Machine%20Isolation%20Approach%20with%20Commodity%20Hardware%20for%20ARM/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">HA-VMSI A Lightweight Virtual Machine Isolation Approach with Commodity Hardware for ARM</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: '',
+        app_key: '',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'mp',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2021
+        Drag0nf1y
+      </li>
+      <li>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+    <div class="to_top">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+      </div>
+    </main>
+      <aside class="sidebar">
+        <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.svg" alt="Drag0nf1y"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives/">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/">标签</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories/%E7%A0%94%E7%A9%B6/">研究</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about/">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="Search">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+      </aside>
+      <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>请我喝杯咖啡吧~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+      
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script src="/js/share.js"></script>
+
+
+
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+
+
+
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer:'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto',
+    onClick: (e) => {
+      $('.toc-link').removeClass('is-active-link');
+      $(`a[href=${e.target.hash}]`).addClass('is-active-link');
+      $(e.target.hash).scrollIntoView();
+      return false;
+    }
+  });
+</script>
+
+
+<script>
+  var ayerConfig = {
+    mathjax: false
+  }
+</script>
+
+
+<script src="/js/ayer.js"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+  </div>
+</body>
+
+</html>
